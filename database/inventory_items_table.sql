@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS inventory_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  item_name VARCHAR(255) NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  quantity INT NOT NULL DEFAULT 0,
+  unit VARCHAR(50) NOT NULL,
+  unit_price VARCHAR(50) NOT NULL,
+  last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_category (category),
+  INDEX idx_item_name (item_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

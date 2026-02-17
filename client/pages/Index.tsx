@@ -1,0 +1,665 @@
+import { useState, useEffect, useRef } from "react";
+import Header from "@/components/Header";
+import BookingWidget from "@/components/BookingWidget";
+import ResortMap from "@/components/ResortMap";
+import RoomDetailModal from "@/components/RoomDetailModal";
+import AmenityDetailModal from "@/components/AmenityDetailModal";
+import DayPassDetailModal from "@/components/DayPassDetailModal";
+import Recommendations from "@/components/Recommendations";
+
+export default function Index() {
+  const [searchData, setSearchData] = useState<any>(null);
+  const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+  const [selectedAmenity, setSelectedAmenity] = useState<any>(null);
+  const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
+  const [isDayPassModalOpen, setIsDayPassModalOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const isCheckingAuth = useRef(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (isCheckingAuth.current) return;
+      isCheckingAuth.current = true;
+      
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setIsLoggedIn(data.success && data.user);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        setIsLoggedIn(false);
+      } finally {
+        isCheckingAuth.current = false;
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const handleSearch = (data: any) => {
+    setSearchData(data);
+    console.log("Search data:", data);
+    // Here you would typically send this to your backend or navigate to results page
+  };
+
+  const handleRoomClick = (room: any) => {
+    setSelectedRoom(room);
+    setIsRoomModalOpen(true);
+  };
+
+  const handleAmenityClick = (amenity: any) => {
+    setSelectedAmenity(amenity);
+    setIsAmenityModalOpen(true);
+  };
+
+  const handleLoginClick = () => {
+    setIsLoginModalOpen(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white overflow-hidden">
+      {/* Header */}
+      <Header 
+        externalLoginModalOpen={isLoginModalOpen}
+        onLoginModalChange={(isOpen) => {
+          setIsLoginModalOpen(isOpen);
+        }}
+        onLoginSuccess={() => {
+          // Update login state immediately after successful login
+          setIsLoggedIn(true);
+        }}
+        onLogoutSuccess={() => {
+          // Reset login state immediately after logout
+          setIsLoggedIn(false);
+        }}
+      />
+
+      {/* Hero Section */}
+      <section className="relative w-full h-screen min-h-[600px] overflow-hidden">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-zoomSlow"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, rgba(25, 70, 50, 0.35) 0%, rgba(15, 35, 50, 0.45) 100%), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop')",
+            backgroundAttachment: "fixed",
+            backgroundPosition: "center",
+          }}
+        />
+
+        {/* Content Overlay */}
+        <div className="relative z-10 h-full flex flex-col items-center justify-center pt-24 sm:pt-32 px-4">
+          {/* Main Heading */}
+          <div className="text-center px-4 mb-12 sm:mb-16 md:mb-24">
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-white leading-tight italic mb-4 sm:mb-6">
+              Experience Nature in Luxury
+            </h1>
+            <p className="text-white/70 text-xs sm:text-sm md:text-base max-w-2xl mx-auto px-4">
+              Discover our exclusive collection of luxury accommodations
+            </p>
+          </div>
+
+          {/* Booking Widget */}
+          <div className="w-full max-w-6xl px-2 sm:px-4">
+            <BookingWidget onSearch={handleSearch} />
+          </div>
+        </div>
+
+        {/* Bottom Gradient */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 sm:h-32 bg-gradient-to-t from-gray-900 to-transparent z-20" />
+      </section>
+
+      {/* Personalized Recommendations - Only show when logged in */}
+      {isLoggedIn && (
+        <Recommendations 
+          isLoggedIn={isLoggedIn}
+          onRoomClick={handleRoomClick}
+          onAmenityClick={handleAmenityClick}
+          onDayPassClick={() => setIsDayPassModalOpen(true)}
+        />
+      )}
+
+      {/* About Section */}
+      <section className="relative py-16 sm:py-20 md:py-32 px-4 md:px-8 lg:px-12 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+            {/* Left Content */}
+            <div className="animate-slideInLeft">
+              <p className="text-yellow-700 text-xs md:text-sm font-medium tracking-[0.3em] uppercase mb-3 md:mb-4">
+                Welcome to Prisville
+              </p>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-gray-900 mb-6 md:mb-8">
+                Your Perfect Getaway in Bongabong
+              </h2>
+              
+              <div className="space-y-3 md:space-y-4 text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed mb-6 md:mb-8">
+                <p>
+                  Located at BB2, Bongabong, Prisville Triangle Resort offers the perfect blend of comfort and nature. With 10 well-appointed rooms featuring aircon and fan options, pools, function halls, and event spaces, we provide everything you need for a memorable stay.
+                </p>
+                <p>
+                  Open daily from <span className="font-semibold text-gray-900">6AM to 11PM</span> for day tours and overnight stays.
+                </p>
+              </div>
+
+              {/* Entrance Fee Box */}
+              <div className="bg-yellow-50 border-l-4 border-yellow-600 p-6 rounded-lg mb-8">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <svg className="w-6 h-6 text-yellow-700" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M11.8,10.9C9.53,10.31 8.8,9.7 8.8,8.75C8.8,7.66 9.81,6.9 11.5,6.9C13.28,6.9 13.94,7.75 14,9H16.21C16.14,7.28 15.09,5.7 13,5.19V3H10V5.16C8.06,5.58 6.5,6.84 6.5,8.77C6.5,11.08 8.41,12.23 11.2,12.9C13.7,13.5 14.2,14.38 14.2,15.31C14.2,16 13.71,17.1 11.5,17.1C9.44,17.1 8.63,16.18 8.52,15H6.32C6.44,17.19 8.08,18.42 10,18.83V21H13V18.85C14.95,18.5 16.5,17.35 16.5,15.3C16.5,12.46 14.07,11.5 11.8,10.9Z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Entrance Fee: ₱100 per person</h3>
+                    <p className="text-sm text-gray-600">
+                      Required for all guests upon entry. Grants access to all resort facilities including swimming pools and common areas.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="space-y-3 mb-8">
+                <h3 className="font-semibold text-gray-900 mb-4">Contact us:</h3>
+                <div className="flex items-center gap-3 text-gray-700">
+                  <svg className="w-5 h-5 text-yellow-700" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"/>
+                  </svg>
+                  <span>Phone: <a href="tel:09515601087" className="text-yellow-700 hover:text-yellow-800 font-medium">09515601087</a></span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-700">
+                  <svg className="w-5 h-5 text-yellow-700" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>
+                  </svg>
+                  <span>Email: <a href="mailto:prisvilletriangleresort@yahoo.com" className="text-yellow-700 hover:text-yellow-800 font-medium">prisvilletriangleresort@yahoo.com</a></span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-700">
+                  <svg className="w-5 h-5 text-yellow-700" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12,2.04C6.5,2.04 2,6.53 2,12.06C2,17.06 5.66,21.21 10.44,21.96V14.96H7.9V12.06H10.44V9.85C10.44,7.34 11.93,5.96 14.22,5.96C15.31,5.96 16.45,6.15 16.45,6.15V8.62H15.19C13.95,8.62 13.56,9.39 13.56,10.18V12.06H16.34L15.89,14.96H13.56V21.96A10,10 0 0,0 22,12.06C22,6.53 17.5,2.04 12,2.04Z"/>
+                  </svg>
+                  <span>Facebook: <a href="https://www.facebook.com/prisvilletriangleresort" target="_blank" rel="noopener noreferrer" className="text-yellow-700 hover:text-yellow-800 font-medium">Prisville Triangle Resort</a></span>
+                </div>
+              </div>
+
+              {/* Book Now Button */}
+              <button className="px-8 sm:px-10 py-3 sm:py-4 border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold uppercase tracking-widest transition-all duration-300 text-sm sm:text-base w-full sm:w-auto">
+                Book Now
+              </button>
+            </div>
+
+            {/* Right Image */}
+            <div className="relative animate-slideInRight mt-8 lg:mt-0" style={{ animationDelay: '0.2s' }}>
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <img
+                  src="https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&h=600&fit=crop"
+                  alt="Prisville Triangle Resort Pool"
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+              {/* Decorative Element */}
+              <div className="absolute -bottom-6 -right-6 w-32 sm:w-48 h-32 sm:h-48 bg-yellow-600/20 rounded-2xl -z-10 animate-float"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Rooms & Cottages Section */}
+      <section id="rooms" className="relative py-16 sm:py-20 md:py-32 px-4 md:px-8 lg:px-12 bg-gray-900 overflow-hidden">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.1),transparent_50%)] animate-pulse" />
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          {/* Section Header with fade-in animation */}
+          <div className="text-center mb-12 md:mb-16 animate-fadeInUp">
+            <p className="text-yellow-600/80 text-xs md:text-sm font-medium tracking-[0.3em] uppercase mb-3 md:mb-4">
+              10 Comfortable Rooms Available
+            </p>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-6xl text-white mb-4">
+              Rooms & Cottages
+            </h2>
+          </div>
+
+          {/* Room Cards Grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Standard Room (Aircon) */}
+            <div 
+              onClick={() => handleRoomClick({
+                name: "Standard Room (Aircon)",
+                price: "₱1,500 - ₱1,800",
+                entranceFee: "₱100 entrance fee per person",
+                capacity: "2-4 PEOPLE",
+                roomNumbers: "ROOMS 101, 102, 103",
+                features: "AIRCON",
+                image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=400&fit=crop"
+              })}
+              className="group bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-fadeInUp cursor-pointer" 
+              style={{ animationDelay: '0.1s' }}
+            >
+              <div className="relative h-64 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=400&fit=crop"
+                  alt="Standard Room (Aircon)"
+                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+              <div className="p-6">
+                <h3 className="font-serif text-2xl text-gray-900 mb-4">Standard Room<br />(Aircon)</h3>
+                <p className="text-yellow-700 text-2xl font-bold mb-4">₱1,500 - ₱1,800 <span className="text-sm font-normal text-gray-500">/ NIGHT</span></p>
+                <p className="text-xs text-gray-600 mb-4">💰 ₱100 entrance fee per person</p>
+                <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <span>❄️</span>
+                    <span>AIRCON</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>👥</span>
+                    <span>2-4 PEOPLE</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>🛏️</span>
+                    <span>ROOMS 101, 102, 103</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Large Family Room */}
+            <div 
+              onClick={() => handleRoomClick({
+                name: "Large Family Room",
+                price: "₱3,700",
+                entranceFee: "₱100 entrance fee per person",
+                capacity: "10 PEOPLE",
+                roomNumbers: "ROOMS 104, 108",
+                features: "AIRCON",
+                image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop"
+              })}
+              className="group bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-fadeInUp cursor-pointer" 
+              style={{ animationDelay: '0.2s' }}
+            >
+              <div className="relative h-64 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop"
+                  alt="Large Family Room"
+                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+              <div className="p-6">
+                <h3 className="font-serif text-2xl text-gray-900 mb-4">Large Family<br />Room</h3>
+                <p className="text-yellow-700 text-2xl font-bold mb-4">₱3,700 <span className="text-sm font-normal text-gray-500">/ NIGHT</span></p>
+                <p className="text-xs text-gray-600 mb-4">💰 ₱100 entrance fee per person</p>
+                <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <span>👥</span>
+                    <span>10 PEOPLE</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>🛏️</span>
+                    <span>ROOMS 104, 108</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>❄️</span>
+                    <span>AIRCON</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Family Fan Room */}
+            <div 
+              onClick={() => handleRoomClick({
+                name: "Family Fan Room",
+                price: "₱2,700",
+                entranceFee: "₱100 entrance fee per person",
+                capacity: "6-8 PEOPLE",
+                roomNumbers: "ROOMS 105, 106, 107",
+                features: "FAN ROOM",
+                image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&h=400&fit=crop"
+              })}
+              className="group bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-fadeInUp cursor-pointer" 
+              style={{ animationDelay: '0.3s' }}
+            >
+              <div className="relative h-64 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&h=400&fit=crop"
+                  alt="Family Fan Room"
+                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+              <div className="p-6">
+                <h3 className="font-serif text-2xl text-gray-900 mb-4">Family Fan<br />Room</h3>
+                <p className="text-yellow-700 text-2xl font-bold mb-4">₱2,700 <span className="text-sm font-normal text-gray-500">/ NIGHT</span></p>
+                <p className="text-xs text-gray-600 mb-4">💰 ₱100 entrance fee per person</p>
+                <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <span>6-8</span>
+                    <span>PEOPLE</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>🛏️</span>
+                    <span>ROOMS 105, 106, 107</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>🌀</span>
+                    <span>FAN ROOM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Non-Aircon Room */}
+            <div 
+              onClick={() => handleRoomClick({
+                name: "Non-Aircon Room",
+                price: "₱1,000 - ₱1,200",
+                entranceFee: "₱100 entrance fee per person",
+                capacity: "2-4 PEOPLE",
+                roomNumbers: "ROOMS 109, 110",
+                features: "FAN",
+                image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&h=400&fit=crop"
+              })}
+              className="group bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-fadeInUp cursor-pointer" 
+              style={{ animationDelay: '0.4s' }}
+            >
+              <div className="relative h-64 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&h=400&fit=crop"
+                  alt="Non-Aircon Room"
+                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+              <div className="p-6">
+                <h3 className="font-serif text-2xl text-gray-900 mb-4">Non-Aircon<br />Room</h3>
+                <p className="text-yellow-700 text-2xl font-bold mb-4">₱1,000 - ₱1,200 <span className="text-sm font-normal text-gray-500">/ NIGHT</span></p>
+                <p className="text-xs text-gray-600 mb-4">💰 ₱100 entrance fee per person</p>
+                <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <span>🌀</span>
+                    <span>FAN</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>👥</span>
+                    <span>2-4 PEOPLE</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>🛏️</span>
+                    <span>ROOMS 201-206</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Section */}
+      <section id="amenities" className="relative py-20 md:py-32 px-4 md:px-12 bg-gradient-to-b from-gray-900 to-gray-800 overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,215,0,0.15),transparent_50%)] animate-pulse" />
+        </div>
+
+        <div className="max-w-6xl mx-auto relative z-10">
+          {/* Section Header */}
+          <div className="text-center mb-16 animate-fadeInDown">
+            <p className="text-yellow-600/80 text-xs md:text-sm font-medium tracking-[0.3em] uppercase mb-4">
+              Amenities & Services
+            </p>
+            <h2 className="font-serif text-4xl md:text-6xl text-white mb-4">
+              Resort Facilities
+            </h2>
+          </div>
+
+          {/* Facilities Grid */}
+          <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+            {/* Swimming Pools */}
+            <div 
+              className="text-center group animate-scaleIn cursor-pointer" 
+              style={{ animationDelay: '0.1s' }}
+              onClick={() => setIsDayPassModalOpen(true)}
+            >
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-yellow-600/50 flex items-center justify-center group-hover:border-yellow-500 group-hover:scale-110 transition-all duration-500">
+                <svg className="w-10 h-10 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M2 15c1.67-2.83 4.33-4 7-4s5.33 1.17 7 4c1.67-2.83 4.33-4 7-4v2c-2 0-4 1.33-5 3h-2c-1-1.67-3-3-5-3s-4 1.33-5 3H4c-1-1.67-3-3-5-3v-2m0 4c1.67-2.83 4.33-4 7-4s5.33 1.17 7 4c1.67-2.83 4.33-4 7-4v2c-2 0-4 1.33-5 3h-2c-1-1.67-3-3-5-3s-4 1.33-5 3H4c-1-1.67-3-3-5-3v-2z"/>
+                </svg>
+              </div>
+              <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Swimming Pools</h3>
+              <p className="text-yellow-600 text-lg font-semibold mb-2">₱100 per pax</p>
+              <button className="text-yellow-600/80 hover:text-yellow-500 text-sm transition">Click for day pass</button>
+            </div>
+
+            {/* Function Hall */}
+            <div 
+              className="text-center group animate-scaleIn cursor-pointer" 
+              style={{ animationDelay: '0.2s' }}
+              onClick={() => handleAmenityClick({
+                name: 'Function Hall',
+                type: 'Function Hall',
+                price: '₱10,000',
+                capacity: 'Up to 150 guests',
+                features: 'Air-conditioned, Stage, Sound System, Catering Services',
+                image: 'https://images.unsplash.com/photo-1519167758481-83f29da8c8b0?w=800&h=600&fit=crop'
+              })}
+            >
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-yellow-600/50 flex items-center justify-center group-hover:border-yellow-500 group-hover:scale-110 transition-all duration-500">
+                <svg className="w-10 h-10 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,19L8,15H10.5V12H13.5V15H16L12,19Z"/>
+                </svg>
+              </div>
+              <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Function Hall</h3>
+              <p className="text-yellow-600 text-lg font-semibold mb-2">₱10,000</p>
+              <button className="text-yellow-600/80 hover:text-yellow-500 text-sm transition">Click for details</button>
+            </div>
+
+            {/* Event Space */}
+            <div 
+              className="text-center group animate-scaleIn cursor-pointer" 
+              style={{ animationDelay: '0.3s' }}
+              onClick={() => handleAmenityClick({
+                name: 'Event Space',
+                type: 'Event Space',
+                price: '₱25,000',
+                capacity: 'Up to 300 guests',
+                features: 'Open-air, Garden Setting, Lighting, Full Catering, Bar Service',
+                image: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&h=600&fit=crop'
+              })}
+            >
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-yellow-600/50 flex items-center justify-center group-hover:border-yellow-500 group-hover:scale-110 transition-all duration-500">
+                <svg className="w-10 h-10 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12,3L2,21H22M12,8.5L16.5,16H7.5M12,13A0.5,0.5 0 0,1 12.5,13.5A0.5,0.5 0 0,1 12,14A0.5,0.5 0 0,1 11.5,13.5A0.5,0.5 0 0,1 12,13Z"/>
+                </svg>
+              </div>
+              <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Event Space</h3>
+              <p className="text-yellow-600 text-lg font-semibold mb-2">₱25,000</p>
+              <button className="text-yellow-600/80 hover:text-yellow-500 text-sm transition">Click for details</button>
+            </div>
+
+            {/* 10 Rooms Available */}
+            <div className="text-center group animate-scaleIn" style={{ animationDelay: '0.4s' }}>
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-yellow-600/50 flex items-center justify-center group-hover:border-yellow-500 group-hover:scale-110 transition-all duration-500">
+                <svg className="w-10 h-10 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12,3L2,12H5V20H19V12H22L12,3M11,8H13V11H16V13H13V16H11V13H8V11H11V8Z"/>
+                </svg>
+              </div>
+              <h3 className="font-serif text-xl md:text-2xl text-white mb-2">10 Rooms Available</h3>
+            </div>
+
+            {/* Cottages & Huts */}
+            <div className="text-center group animate-scaleIn" style={{ animationDelay: '0.5s' }}>
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-yellow-600/50 flex items-center justify-center group-hover:border-yellow-500 group-hover:scale-110 transition-all duration-500">
+                <svg className="w-10 h-10 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19,9.3V4H17V7.6L12,3L2,12H5V20H11V14H13V20H19V12H22L19,9.3M10,10C10,8.9 10.9,8 12,8C13.1,8 14,8.9 14,10H10Z"/>
+                </svg>
+              </div>
+              <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Cottages & Huts</h3>
+            </div>
+
+            {/* Maximum 5 Hours */}
+            <div className="text-center group animate-scaleIn" style={{ animationDelay: '0.6s' }}>
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-yellow-600/50 flex items-center justify-center group-hover:border-yellow-500 group-hover:scale-110 transition-all duration-500">
+                <svg className="w-10 h-10 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22A9,9 0 0,0 21,13A9,9 0 0,0 12,4M12.5,8H11V14L15.2,16.2L16,14.9L12.5,13.2V8Z"/>
+                </svg>
+              </div>
+              <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Maximum 5 Hours</h3>
+              <p className="text-white/60 text-sm">Amenity Use</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Resort Map Section */}
+      <section id="experiences" className="py-20 md:py-32 px-4 md:px-12 bg-white">
+        <ResortMap />
+      </section>
+
+      {/* Accommodation Check-in/Check-out Section */}
+      <section id="accommodation" className="relative h-[600px] md:h-[700px] overflow-hidden">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=1080&fit=crop')",
+          }}
+        />
+        
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/60" />
+        
+        {/* Content */}
+        <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
+          <div className="animate-fadeInDown">
+            <p className="text-white/80 text-xs md:text-sm font-medium tracking-[0.3em] uppercase mb-6">
+              Check-in & Check-out
+            </p>
+            <h2 className="font-serif text-4xl md:text-6xl text-white mb-4">
+              Check-in: After 12 PM
+            </h2>
+            <h2 className="font-serif text-4xl md:text-6xl text-white mb-8">
+              Check-out: Before 12 PM
+            </h2>
+            <div className="max-w-2xl mx-auto mb-10">
+              <p className="text-white/90 text-base md:text-lg mb-2">
+                Strict check-in and check-out policy. Valid ID required upon check-in.
+              </p>
+              <p className="text-white/90 text-base md:text-lg">
+                No cancellation, no refund. Rebooking in case of bad weather.
+              </p>
+            </div>
+            <button className="px-10 py-3 border-2 border-white text-white hover:bg-white hover:text-gray-900 font-medium uppercase tracking-widest transition-all duration-300">
+              Book Now
+            </button>
+          </div>
+        </div>
+      </section>
+
+
+
+      {/* CTA Section */}
+      <section className="py-20 md:py-32 px-4 md:px-12 bg-gradient-to-r from-green-900/30 to-gray-900 border-t border-green-700/20">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="font-serif text-3xl md:text-5xl text-white mb-6">
+            Ready to Escape?
+          </h2>
+          <p className="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
+            Join us for an unforgettable experience where luxury meets nature. 
+            Book your stay today and discover the ultimate in hospitality.
+          </p>
+          <button className="px-12 py-3 rounded-full bg-yellow-700 hover:bg-yellow-800 text-white font-medium uppercase tracking-widest transition">
+            Start Booking
+          </button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-950 border-t border-green-700/20 py-12 px-4 md:px-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
+            <div>
+              <h4 className="font-serif text-xl text-white mb-4">About Us</h4>
+              <p className="text-white/60 text-sm">
+                A premier luxury resort destination blending nature with sophistication.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-serif text-xl text-white mb-4">Rooms</h4>
+              <ul className="space-y-2 text-white/60 text-sm">
+                <li><a href="#" className="hover:text-yellow-600 transition">Suites</a></li>
+                <li><a href="#" className="hover:text-yellow-600 transition">Villas</a></li>
+                <li><a href="#" className="hover:text-yellow-600 transition">Cottages</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-serif text-xl text-white mb-4">Services</h4>
+              <ul className="space-y-2 text-white/60 text-sm">
+                <li><a href="#" className="hover:text-yellow-600 transition">Spa</a></li>
+                <li><a href="#" className="hover:text-yellow-600 transition">Restaurant</a></li>
+                <li><a href="#" className="hover:text-yellow-600 transition">Events</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-serif text-xl text-white mb-4">Contact</h4>
+              <p className="text-white/60 text-sm">
+                Email: info@luxury.com<br />
+                Phone: +1 (555) 123-4567
+              </p>
+            </div>
+          </div>
+          <div className="border-t border-green-700/20 pt-8 text-center text-white/50 text-sm">
+            <p>&copy; 2025 Luxury Resort. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Room Detail Modal */}
+      {selectedRoom && (
+        <RoomDetailModal 
+          isOpen={isRoomModalOpen}
+          onClose={() => {
+            setIsRoomModalOpen(false);
+            setSelectedRoom(null);
+          }}
+          isLoggedIn={isLoggedIn}
+          onLoginClick={() => setIsLoginModalOpen(true)}
+          room={selectedRoom}
+        />
+      )}
+
+      {/* Amenity Detail Modal */}
+      {selectedAmenity && (
+        <AmenityDetailModal
+          isOpen={isAmenityModalOpen}
+          onClose={() => {
+            setIsAmenityModalOpen(false);
+            setSelectedAmenity(null);
+          }}
+          isLoggedIn={isLoggedIn}
+          onLoginClick={handleLoginClick}
+          amenity={selectedAmenity}
+        />
+      )}
+
+      {/* Day Pass Detail Modal */}
+      <DayPassDetailModal
+        isOpen={isDayPassModalOpen}
+        onClose={() => setIsDayPassModalOpen(false)}
+        isLoggedIn={isLoggedIn}
+        onLoginClick={handleLoginClick}
+        pricePerPax="₱100"
+      />
+    </div>
+  );
+}
