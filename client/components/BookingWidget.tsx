@@ -1,18 +1,116 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 interface BookingWidgetProps {
   onSearch?: (data: { checkIn: string; checkOut: string; guests: number }) => void;
+  onAvailabilityCheck?: (data: { 
+    availabilityCalendar: {
+      date: string;
+      availableRooms: number;
+      availableAmenities: number;
+    }[];
+    startDate: string;
+    endDate: string;
+    guests: number;
+  }) => void;
 }
 
-export default function BookingWidget({ onSearch }: BookingWidgetProps) {
+export default function BookingWidget({ onSearch, onAvailabilityCheck }: BookingWidgetProps) {
   const [checkInDate, setCheckInDate] = useState("2025-01-16");
   const [checkOutDate, setCheckOutDate] = useState("2025-01-18");
   const [guests, setGuests] = useState(4);
   const [showGuestMenu, setShowGuestMenu] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+
+  const roomsData = [
+    { name: "Standard Room (Aircon)", roomNumbers: "101, 102, 103", capacity: 4 },
+    { name: "Large Family Room", roomNumbers: "104, 108", capacity: 10 },
+    { name: "Family Fan Room", roomNumbers: "105, 106, 107", capacity: 8 },
+    { name: "Non-Aircon Room", roomNumbers: "109, 110", capacity: 4 },
+  ];
+
+  const amenitiesData = [
+    { name: "Function Hall", type: "function_hall", capacity: 100 },
+    { name: "Event Space", type: "event_space", capacity: 50 },
+  ];
+
+  const checkAvailability = async () => {
+    setIsChecking(true);
+    
+    try {
+      // Generate dates for the next 60 days starting from today
+      const today = new Date();
+      const dates: string[] = [];
+      for (let i = 0; i < 60; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() + i);
+        dates.push(date.toISOString().split('T')[0]);
+      }
+
+      // Check availability for each date
+      const availabilityCalendar = await Promise.all(
+        dates.map(async (date) => {
+          const nextDay = new Date(date);
+          nextDay.setDate(nextDay.getDate() + 1);
+          const checkOut = nextDay.toISOString().split('T')[0];
+
+          // Check room availability for this date
+          const roomChecks = await Promise.all(
+            roomsData.map(async (room) => {
+              try {
+                const response = await fetch(
+                  `/api/bookings/room/check-availability?roomNumbers=${encodeURIComponent(room.roomNumbers)}&checkIn=${date}&checkOut=${checkOut}`,
+                  { credentials: 'include' }
+                );
+                const data = await response.json();
+                return data.available;
+              } catch (error) {
+                return false;
+              }
+            })
+          );
+
+          // Check amenity availability for this date
+          const amenityChecks = await Promise.all(
+            amenitiesData.map(async (amenity) => {
+              try {
+                const response = await fetch(
+                  `/api/bookings/amenity/check-availability?amenityType=${encodeURIComponent(amenity.type)}&bookingDate=${date}&startTime=09:00&endTime=17:00`,
+                  { credentials: 'include' }
+                );
+                const data = await response.json();
+                return data.available;
+              } catch (error) {
+                return false;
+              }
+            })
+          );
+
+          return {
+            date,
+            availableRooms: roomChecks.filter(Boolean).length,
+            availableAmenities: amenityChecks.filter(Boolean).length,
+          };
+        })
+      );
+
+      // Call the callback with calendar results
+      onAvailabilityCheck?.({
+        availabilityCalendar,
+        startDate: dates[0],
+        endDate: dates[dates.length - 1],
+        guests,
+      });
+
+    } catch (error) {
+      console.error('Error checking availability:', error);
+    } finally {
+      setIsChecking(false);
+    }
+  };
 
   const handleSearch = () => {
-    onSearch?.({ checkIn: checkInDate, checkOut: checkOutDate, guests });
+    checkAvailability();
   };
 
   return (
@@ -73,10 +171,21 @@ export default function BookingWidget({ onSearch }: BookingWidgetProps) {
         {/* Search Button */}
         <button
           onClick={handleSearch}
-          className="px-6 sm:px-7 py-3 md:py-2 rounded-full bg-yellow-700 hover:bg-yellow-800 text-white font-medium text-xs md:text-sm uppercase tracking-widest transition w-full md:w-auto flex-shrink-0"
+          disabled={isChecking}
+          className="px-6 sm:px-7 py-3 md:py-2 rounded-full bg-yellow-700 hover:bg-yellow-800 text-white font-medium text-xs md:text-sm uppercase tracking-widest transition w-full md:w-auto flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          <span className="hidden sm:inline">Check Availability</span>
-          <span className="sm:hidden">Search</span>
+          {isChecking ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="hidden sm:inline">Checking...</span>
+              <span className="sm:hidden">...</span>
+            </>
+          ) : (
+            <>
+              <span className="hidden sm:inline">Check Availability</span>
+              <span className="sm:hidden">Search</span>
+            </>
+          )}
         </button>
       </div>
     </div>

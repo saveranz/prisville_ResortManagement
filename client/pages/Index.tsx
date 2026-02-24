@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import BookingWidget from "@/components/BookingWidget";
-import ResortMap from "@/components/ResortMap";
 import RoomDetailModal from "@/components/RoomDetailModal";
 import AmenityDetailModal from "@/components/AmenityDetailModal";
 import DayPassDetailModal from "@/components/DayPassDetailModal";
@@ -9,6 +8,7 @@ import Recommendations from "@/components/Recommendations";
 
 export default function Index() {
   const [searchData, setSearchData] = useState<any>(null);
+  const [availabilityResults, setAvailabilityResults] = useState<any>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [selectedAmenity, setSelectedAmenity] = useState<any>(null);
@@ -46,7 +46,18 @@ export default function Index() {
   const handleSearch = (data: any) => {
     setSearchData(data);
     console.log("Search data:", data);
-    // Here you would typically send this to your backend or navigate to results page
+  };
+
+  const handleAvailabilityCheck = (results: any) => {
+    console.log("Availability results:", results);
+    setAvailabilityResults(results);
+    // Scroll to results section
+    setTimeout(() => {
+      const resultsSection = document.getElementById('availability-results');
+      if (resultsSection) {
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const handleRoomClick = (room: any) => {
@@ -108,13 +119,131 @@ export default function Index() {
 
           {/* Booking Widget */}
           <div className="w-full max-w-6xl px-2 sm:px-4">
-            <BookingWidget onSearch={handleSearch} />
+            <BookingWidget 
+              onSearch={handleSearch}
+              onAvailabilityCheck={handleAvailabilityCheck}
+            />
           </div>
         </div>
 
         {/* Bottom Gradient */}
         <div className="absolute bottom-0 left-0 right-0 h-24 sm:h-32 bg-gradient-to-t from-gray-900 to-transparent z-20" />
       </section>
+
+      {/* Availability Calendar Section */}
+      {availabilityResults && availabilityResults.availabilityCalendar && (
+        <section id="availability-results" className="py-16 px-4 md:px-8 lg:px-12 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-serif text-gray-900 mb-4">
+                Availability Calendar
+              </h2>
+              <p className="text-gray-600">
+                Showing availability for the next 60 days • {availabilityResults.guests} {availabilityResults.guests === 1 ? 'Guest' : 'Guests'}
+              </p>
+            </div>
+
+            {/* Legend */}
+            <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-green-500"></div>
+                <span className="text-sm text-gray-700">High Availability (3-4 options)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-yellow-500"></div>
+                <span className="text-sm text-gray-700">Limited Availability (1-2 options)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-red-200"></div>
+                <span className="text-sm text-gray-700">No Availability</span>
+              </div>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
+              {(() => {
+                const calendar = availabilityResults.availabilityCalendar;
+                const monthGroups: { [key: string]: typeof calendar } = {};
+                
+                calendar.forEach((day: any) => {
+                  const date = new Date(day.date);
+                  const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                  if (!monthGroups[monthKey]) monthGroups[monthKey] = [];
+                  monthGroups[monthKey].push(day);
+                });
+
+                return Object.entries(monthGroups).map(([monthKey, days]) => {
+                  const [year, month] = monthKey.split('-');
+                  const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                  
+                  return (
+                    <div key={monthKey} className="mb-8 last:mb-0">
+                      <h3 className="text-xl font-serif text-gray-900 mb-4">{monthName}</h3>
+                      <div className="grid grid-cols-7 gap-2">
+                        {/* Day headers */}
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                          <div key={day} className="text-center text-xs font-semibold text-gray-500 py-2">
+                            {day}
+                          </div>
+                        ))}
+                        
+                        {/* Add empty cells for days before the month starts */}
+                        {(() => {
+                          const firstDay = new Date(days[0].date);
+                          const firstDayOfWeek = firstDay.getDay();
+                          return Array(firstDayOfWeek).fill(null).map((_, i) => (
+                            <div key={`empty-${i}`}></div>
+                          ));
+                        })()}
+                        
+                        {/* Calendar days */}
+                        {days.map((day: any) => {
+                          const date = new Date(day.date);
+                          const dayNum = date.getDate();
+                          const totalAvailable = day.availableRooms + day.availableAmenities;
+                          
+                          let bgColor = 'bg-red-200';
+                          if (totalAvailable >= 3) bgColor = 'bg-green-500';
+                          else if (totalAvailable > 0) bgColor = 'bg-yellow-500';
+                          
+                          return (
+                            <div
+                              key={day.date}
+                              className={`${bgColor} rounded-lg p-3 text-center cursor-pointer hover:opacity-80 transition group relative`}
+                              title={`${day.date}: ${day.availableRooms} rooms, ${day.availableAmenities} amenities`}
+                            >
+                              <div className="font-semibold text-gray-900">{dayNum}</div>
+                              <div className="text-xs text-gray-700 mt-1">
+                                {totalAvailable > 0 ? `${totalAvailable} available` : 'Booked'}
+                              </div>
+                              
+                              {/* Tooltip on hover */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap z-10">
+                                <div>{day.availableRooms} rooms</div>
+                                <div>{day.availableAmenities} amenities</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Close Button */}
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setAvailabilityResults(null)}
+                className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg transition"
+              >
+                Close Calendar
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Personalized Recommendations - Only show when logged in */}
       {isLoggedIn && (
@@ -519,11 +648,6 @@ export default function Index() {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Resort Map Section */}
-      <section id="experiences" className="py-20 md:py-32 px-4 md:px-12 bg-white">
-        <ResortMap />
       </section>
 
       {/* Accommodation Check-in/Check-out Section */}
