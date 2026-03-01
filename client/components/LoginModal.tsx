@@ -1,5 +1,6 @@
 import { X, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -8,12 +9,12 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps) {
+  const { toast } = useToast();
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -28,7 +29,6 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
@@ -42,14 +42,17 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
       const data = await response.json();
 
       if (data.success) {
-        // Show success message
-        setSuccess(data.message || 'Registration successful! Please login with your credentials.');
+        // Show toast notification
+        toast({
+          variant: "success",
+          title: "Registration Successful",
+          description: "Your account has been created. Please sign in.",
+        });
         setName("");
         setPassword("");
         
         // Switch to login form after 2 seconds
         setTimeout(() => {
-          setSuccess("");
           setIsRegistering(false);
         }, 2000);
       } else {
@@ -80,13 +83,22 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
       if (data.success) {
         // Check if user is receptionist or admin
         if (data.user.role === 'receptionist' || data.user.role === 'admin') {
-          // Redirect to receptionist dashboard
-          setSuccess(`Welcome, ${data.user.name}! Redirecting to dashboard...`);
+          // Show toast and redirect to receptionist dashboard
+          toast({
+            variant: "success",
+            title: "Login Successful",
+            description: `Welcome back, ${data.user.name}`,
+          });
           setTimeout(() => {
             window.location.href = '/receptionist/dashboard';
           }, 1000);
         } else {
           // Regular client - stay on main site
+          toast({
+            variant: "success",
+            title: "Login Successful",
+            description: `Welcome back, ${data.user.name}`,
+          });
           onLogin(email, data.user.role);
           setEmail("");
           setPassword("");
@@ -120,8 +132,8 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
         <div className="p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-primary flex items-center justify-center">
-              <span className="text-primary font-serif text-xl font-medium">PTR</span>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center overflow-hidden bg-white">
+              <img src="/PTR-logo.png" alt="PTR Logo" className="w-full h-full object-cover scale-150" />
             </div>
             <h2 className="font-serif text-3xl text-gray-900 mb-2">
               {isRegistering ? "Create Account" : "Welcome Back"}
@@ -133,16 +145,6 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
 
           {/* Form */}
           <form className="space-y-6" onSubmit={isRegistering ? handleRegister : handleLogin}>
-            {/* Success Message */}
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>{success}</span>
-              </div>
-            )}
-
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">

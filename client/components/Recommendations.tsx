@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface Recommendation {
   type: 'room' | 'amenity' | 'daypass' | 'promotion';
@@ -34,7 +34,6 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [scrollPosition, setScrollPosition] = useState(0);
 
   // Room and amenity data
   const roomsData = [
@@ -45,7 +44,7 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
   ];
 
   const amenitiesData = [
-    { name: "Function Hall", type: "function_hall", price: "₱8,000/day", capacity: "100 guests", features: "• Air conditioned\n• Sound system\n• Tables and chairs\n• Stage area", image: "https://images.unsplash.com/photo-1519167758481-83f29da8c265?w=800&h=600&fit=crop" },
+    { name: "Function Hall", type: "function_hall", price: "₱8,000/day", capacity: "100 guests", features: "• Air conditioned\n• Sound system\n• Tables and chairs\n• Stage area", image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop" },
     { name: "Event Space", type: "event_space", price: "₱5,000/day", capacity: "50 guests", features: "• Semi-outdoor\n• Garden view\n• Decorations included\n• Catering available", image: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&h=600&fit=crop" },
   ];
 
@@ -96,20 +95,6 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
     }
   };
 
-  const scrollLeft = () => {
-    const container = document.getElementById('recommendations-scroll');
-    if (container) {
-      container.scrollBy({ left: -400, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    const container = document.getElementById('recommendations-scroll');
-    if (container) {
-      container.scrollBy({ left: 400, behavior: 'smooth' });
-    }
-  };
-
   const handleItemClick = (rec: Recommendation) => {
     if (rec.type === 'room' && rec.itemData && onRoomClick) {
       onRoomClick(rec.itemData);
@@ -143,18 +128,18 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
   console.log(`🎯 Showing ${displayableRecommendations.length} recommendations`);
 
   return (
-    <div className="bg-gray-900 py-12 px-4">
+    <div className="bg-gray-900 py-8 sm:py-12 px-2 sm:px-4">
       <div className="max-w-[1800px] mx-auto">
         {/* Header - Netflix style */}
-        <div className="flex items-center gap-3 mb-6 px-4">
-          <Sparkles className="text-yellow-500" size={28} />
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 px-2 sm:px-4">
+          <Sparkles className="text-yellow-500 flex-shrink-0" size={24} />
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
               {recommendations.some(r => r.reason.includes('Viewed')) 
                 ? 'Because You Viewed' 
                 : 'Recommended For You'}
             </h2>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="text-gray-400 text-xs sm:text-sm mt-0.5 sm:mt-1">
               {recommendations.some(r => r.reason.includes('Viewed')) 
                 ? 'Based on your recent browsing' 
                 : 'Discover what makes Prisville special'}
@@ -164,26 +149,17 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
 
         {/* Carousel Container - Netflix style */}
         <div className="relative group">
-          {/* Left Arrow */}
-          <button
-            onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/80 hover:bg-black/90 text-white p-2 rounded-r-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft size={32} />
-          </button>
-
           {/* Scrollable Items */}
           <div
             id="recommendations-scroll"
-            className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4 pb-4"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-2 sm:px-4 pb-4 snap-x snap-mandatory"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
           >
             {displayableRecommendations.map((rec, index) => (
               <div
                 key={index}
                 onClick={() => handleItemClick(rec)}
-                className="flex-shrink-0 w-[280px] md:w-[320px] cursor-pointer group/card transform transition-all duration-300 hover:scale-105 hover:z-10"
+                className="flex-shrink-0 w-[260px] sm:w-[280px] md:w-[320px] cursor-pointer group/card transform transition-all duration-300 hover:scale-105 hover:z-10 snap-start touch-manipulation"
               >
                 {rec.itemData ? (
                   // Room/Amenity Card with Image
@@ -238,15 +214,6 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
               </div>
             ))}
           </div>
-
-          {/* Right Arrow */}
-          <button
-            onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/80 hover:bg-black/90 text-white p-2 rounded-l-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            aria-label="Scroll right"
-          >
-            <ChevronRight size={32} />
-          </button>
         </div>
       </div>
     </div>

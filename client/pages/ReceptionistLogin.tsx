@@ -47,49 +47,52 @@ export default function ReceptionistLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border-2 border-blue-200">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Receptionist Portal</h1>
-          <p className="text-gray-600">Login to manage bookings and inventory</p>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full shadow-md flex items-center justify-center overflow-hidden bg-white">
+            <img src="/PTR-logo.png" alt="Prisville Logo" className="w-full h-full object-cover scale-150" />
+          </div>
+          <h1 className="text-3xl font-display font-bold text-gray-900 mb-2 tracking-tight">Receptionist Portal</h1>
+          <p className="text-gray-600 font-medium">Login to manage bookings and inventory</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg shadow-sm">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            <div className="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg shadow-sm">
               {success}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Email Address
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-gray-900"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-900 font-medium"
               placeholder="receptionist@prisville.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-gray-900"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-900 font-medium"
               placeholder="••••••••"
               required
             />
@@ -98,14 +101,14 @@ export default function ReceptionistLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:bg-gray-400"
+            className="w-full bg-blue-50 hover:bg-blue-100 border-2 border-blue-300 text-blue-600 py-3.5 rounded-xl font-bold tracking-wide transition-all disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:border-gray-300 hover:shadow-md"
           >
             {loading ? 'Logging in...' : 'Login to Dashboard'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <a href="/" className="text-sm text-blue-600 hover:text-blue-700">
+          <a href="/" className="text-sm text-blue-600 hover:text-blue-700 font-semibold">
             ← Back to Main Site
           </a>
         </div>

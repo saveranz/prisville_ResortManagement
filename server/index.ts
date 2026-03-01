@@ -14,6 +14,10 @@ import { setupDatabase } from "./routes/setup";
 import { getInventoryItems, addInventoryItem, updateInventoryQuantity, getTransactions, addTransaction } from "./routes/inventory";
 import { getUserRecommendations, saveUserPreferences, getUserPreferences } from "./routes/recommendations";
 import { trackActivity, getUserActivity, getUserActivityStats } from "./routes/activityTracking";
+import { getAllRoomStatus, updateRoomStatus, markRoomCleaned, getRoomStatusByNumbers } from "./routes/roomStatus";
+import { checkInGuest, checkOutGuest, getCurrentlyCheckedIn } from "./routes/checkInOut";
+import { getUserStayHistory, getAllStayHistory, getGuestStatistics, updateStayHistory } from "./routes/stayHistory";
+import { createBookingIssue, getAllBookingIssues, getUserBookingIssues, getBookingIssueById, updateBookingIssueStatus, updateBookingIssuePriority, deleteBookingIssue } from "./routes/bookingIssues";
 
 const MySQLStore = MySQLStoreFactory(session);
 
@@ -120,6 +124,32 @@ export function createServer() {
   app.post("/api/activity/track", trackActivity);
   app.get("/api/activity/history", getUserActivity);
   app.get("/api/activity/stats", getUserActivityStats);
+  
+  // Room Status routes
+  app.get("/api/room-status", getAllRoomStatus);
+  app.put("/api/room-status", updateRoomStatus);
+  app.put("/api/room-status/cleaned", markRoomCleaned);
+  app.get("/api/room-status/by-number", getRoomStatusByNumbers);
+  
+  // Check-in/Check-out routes
+  app.post("/api/checkin", checkInGuest);
+  app.post("/api/checkout", checkOutGuest);
+  app.get("/api/checkin/current", getCurrentlyCheckedIn);
+  
+  // Stay History routes
+  app.get("/api/stay-history/user", getUserStayHistory);
+  app.get("/api/stay-history/all", getAllStayHistory);
+  app.get("/api/stay-history/statistics", getGuestStatistics);
+  app.put("/api/stay-history", updateStayHistory);
+  
+  // Booking Issues routes
+  app.post("/api/booking-issues", createBookingIssue);
+  app.get("/api/booking-issues", getAllBookingIssues);
+  app.get("/api/booking-issues/user", getUserBookingIssues);
+  app.get("/api/booking-issues/:id", getBookingIssueById);
+  app.put("/api/booking-issues/status", updateBookingIssueStatus);
+  app.put("/api/booking-issues/priority", updateBookingIssuePriority);
+  app.delete("/api/booking-issues/:id", deleteBookingIssue);
   
   return app;
 }

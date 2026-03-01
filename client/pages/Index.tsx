@@ -16,7 +16,11 @@ export default function Index() {
   const [isDayPassModalOpen, setIsDayPassModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [recommendationsKey, setRecommendationsKey] = useState(0);
   const isCheckingAuth = useRef(false);
+  const lastScrollY = useRef(0);
+  const hasScrolledDown = useRef(false);
+  const isRefreshing = useRef(false);
 
   // Check if user is logged in
   useEffect(() => {
@@ -42,6 +46,41 @@ export default function Index() {
     };
     checkAuth();
   }, []);
+
+  // Scroll to top refresh functionality
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Track if user has scrolled down significantly (at least 300px)
+      if (currentScrollY > 300) {
+        hasScrolledDown.current = true;
+      }
+      
+      // Trigger refresh when reaching the very top after scrolling down
+      if (currentScrollY === 0 && hasScrolledDown.current && !isRefreshing.current) {
+        handleRefresh();
+        hasScrolledDown.current = false;
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleRefresh = async () => {
+    isRefreshing.current = true;
+    
+    // Force recommendations to refresh by changing key
+    setRecommendationsKey(prev => prev + 1);
+    
+    // Wait a bit before allowing another refresh
+    setTimeout(() => {
+      isRefreshing.current = false;
+    }, 1000);
+  };
 
   const handleSearch = (data: any) => {
     setSearchData(data);
@@ -144,23 +183,23 @@ export default function Index() {
             </div>
 
             {/* Legend */}
-            <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-500"></div>
-                <span className="text-sm text-gray-700">High Availability (3-4 options)</span>
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8 px-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-green-500 flex-shrink-0"></div>
+                <span className="text-xs sm:text-sm text-gray-700">High Availability (3-4 options)</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-yellow-500"></div>
-                <span className="text-sm text-gray-700">Limited Availability (1-2 options)</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-yellow-500 flex-shrink-0"></div>
+                <span className="text-xs sm:text-sm text-gray-700">Limited Availability (1-2 options)</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-red-200"></div>
-                <span className="text-sm text-gray-700">No Availability</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-red-200 flex-shrink-0"></div>
+                <span className="text-xs sm:text-sm text-gray-700">No Availability</span>
               </div>
             </div>
 
             {/* Calendar Grid */}
-            <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
+            <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 md:p-8">
               {(() => {
                 const calendar = availabilityResults.availabilityCalendar;
                 const monthGroups: { [key: string]: typeof calendar } = {};
@@ -177,12 +216,12 @@ export default function Index() {
                   const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
                   
                   return (
-                    <div key={monthKey} className="mb-8 last:mb-0">
-                      <h3 className="text-xl font-serif text-gray-900 mb-4">{monthName}</h3>
-                      <div className="grid grid-cols-7 gap-2">
+                    <div key={monthKey} className="mb-6 sm:mb-8 last:mb-0">
+                      <h3 className="text-lg sm:text-xl font-serif text-gray-900 mb-3 sm:mb-4">{monthName}</h3>
+                      <div className="grid grid-cols-7 gap-1 sm:gap-2">
                         {/* Day headers */}
                         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                          <div key={day} className="text-center text-xs font-semibold text-gray-500 py-2">
+                          <div key={day} className="text-center text-[10px] sm:text-xs font-semibold text-gray-500 py-1 sm:py-2">
                             {day}
                           </div>
                         ))}
@@ -209,16 +248,16 @@ export default function Index() {
                           return (
                             <div
                               key={day.date}
-                              className={`${bgColor} rounded-lg p-3 text-center cursor-pointer hover:opacity-80 transition group relative`}
+                              className={`${bgColor} rounded sm:rounded-lg p-2 sm:p-3 text-center cursor-pointer hover:opacity-80 active:opacity-70 transition group relative touch-manipulation`}
                               title={`${day.date}: ${day.availableRooms} rooms, ${day.availableAmenities} amenities`}
                             >
-                              <div className="font-semibold text-gray-900">{dayNum}</div>
-                              <div className="text-xs text-gray-700 mt-1">
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{dayNum}</div>
+                              <div className="text-[9px] sm:text-xs text-gray-700 mt-0.5 sm:mt-1 leading-tight">
                                 {totalAvailable > 0 ? `${totalAvailable} available` : 'Booked'}
                               </div>
                               
-                              {/* Tooltip on hover */}
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap z-10">
+                              {/* Tooltip on hover - hide on mobile */}
+                              <div className="hidden sm:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap z-10">
                                 <div>{day.availableRooms} rooms</div>
                                 <div>{day.availableAmenities} amenities</div>
                               </div>
@@ -233,10 +272,10 @@ export default function Index() {
             </div>
 
             {/* Close Button */}
-            <div className="text-center mt-8">
+            <div className="text-center mt-6 sm:mt-8">
               <button
                 onClick={() => setAvailabilityResults(null)}
-                className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg transition"
+                className="bg-primary hover:bg-primary/90 active:bg-primary/80 text-white px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition touch-manipulation text-sm sm:text-base font-medium"
               >
                 Close Calendar
               </button>
@@ -248,6 +287,7 @@ export default function Index() {
       {/* Personalized Recommendations - Only show when logged in */}
       {isLoggedIn && (
         <Recommendations 
+          key={recommendationsKey}
           isLoggedIn={isLoggedIn}
           onRoomClick={handleRoomClick}
           onAmenityClick={handleAmenityClick}
@@ -580,7 +620,7 @@ export default function Index() {
                 price: '₱10,000',
                 capacity: 'Up to 150 guests',
                 features: 'Air-conditioned, Stage, Sound System, Catering Services',
-                image: 'https://images.unsplash.com/photo-1519167758481-83f29da8c8b0?w=800&h=600&fit=crop'
+                image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop'
               })}
             >
               <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-yellow-600/50 flex items-center justify-center group-hover:border-yellow-500 group-hover:scale-110 transition-all duration-500">

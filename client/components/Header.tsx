@@ -178,8 +178,8 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
           </div>
 
           {/* Center Logo */}
-          <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-2 sm:mx-4 md:mx-6 lg:mx-8 rounded-full border-2 border-white/40 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-serif text-[10px] sm:text-xs md:text-sm font-medium">PTR</span>
+          <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-2 sm:mx-4 md:mx-6 lg:mx-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-white">
+            <img src="/PTR-logo.png" alt="PTR Logo" className="w-full h-full object-cover scale-150" />
           </div>
 
           {/* Right Navigation Items */}
