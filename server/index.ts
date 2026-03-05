@@ -4,13 +4,13 @@ import cors from "cors";
 import session from "express-session";
 import MySQLStoreFactory from "express-mysql-session";
 import { handleDemo } from "./routes/demo";
-import { testConnection } from "./db";
+import pool, { testConnection } from "./db";
 import { testDatabase } from "./routes/database";
 import { register, login, getCurrentUser, logout } from "./routes/auth";
-import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability } from "./routes/bookings";
+import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates } from "./routes/bookings";
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
-import { setupDatabase } from "./routes/setup";
+import { setupDatabase, migrateRoomType } from "./routes/setup";
 import { getInventoryItems, addInventoryItem, updateInventoryQuantity, getTransactions, addTransaction } from "./routes/inventory";
 import { getUserRecommendations, saveUserPreferences, getUserPreferences } from "./routes/recommendations";
 import { trackActivity, getUserActivity, getUserActivityStats } from "./routes/activityTracking";
@@ -18,6 +18,8 @@ import { getAllRoomStatus, updateRoomStatus, markRoomCleaned, getRoomStatusByNum
 import { checkInGuest, checkOutGuest, getCurrentlyCheckedIn } from "./routes/checkInOut";
 import { getUserStayHistory, getAllStayHistory, getGuestStatistics, updateStayHistory } from "./routes/stayHistory";
 import { createBookingIssue, getAllBookingIssues, getUserBookingIssues, getBookingIssueById, updateBookingIssueStatus, updateBookingIssuePriority, deleteBookingIssue } from "./routes/bookingIssues";
+import { getUserNotifications, getUnreadCount, markAsRead, markAllAsRead, createNotification, deleteNotification } from "./routes/notifications";
+import { getAnnouncements, getAllAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, markAnnouncementViewed, toggleAnnouncementStatus } from "./routes/announcements";
 
 const MySQLStore = MySQLStoreFactory(session);
 
@@ -32,19 +34,13 @@ export function createServer() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
   
-  // Session middleware with MySQL store
+  // Session middleware with MySQL store (using existing pool)
   app.use(session({
     store: new MySQLStore({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '3306'),
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'prisville_02',
-      clearExpired: false, // Disable to reduce connection usage
-      checkExpirationInterval: 0, // Disable automatic cleanup
+      clearExpired: true,
+      checkExpirationInterval: 900000, // 15 minutes
       expiration: 86400000, // 24 hours in milliseconds
-      createDatabaseTable: true, // Auto-create sessions table
-      connectionLimit: 1, // Single connection for sessions
+      createDatabaseTable: true, // Auto-create table if it doesn't exist
       endConnectionOnClose: false,
       schema: {
         tableName: 'sessions',
@@ -54,7 +50,7 @@ export function createServer() {
           data: 'data'
         }
       }
-    }),
+    }, pool),
     secret: process.env.SESSION_SECRET || 'prisville-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
@@ -80,6 +76,7 @@ export function createServer() {
   app.get("/api/demo", handleDemo);
   app.get("/api/test-db", testDatabase);
   app.get("/api/setup-db", setupDatabase);
+  app.get("/api/migrate-room-type", migrateRoomType);
   
   // Auth routes
   app.post("/api/auth/register", register);
@@ -88,6 +85,7 @@ export function createServer() {
   app.post("/api/auth/logout", logout);
 
   // Booking routes
+  app.get("/api/bookings/room/unavailable-dates", getUnavailableDates);
   app.get("/api/bookings/room/check-availability", checkRoomAvailability);
   app.post("/api/bookings/room", createRoomBooking);
   app.get("/api/bookings/room", getUserRoomBookings);
@@ -150,6 +148,23 @@ export function createServer() {
   app.put("/api/booking-issues/status", updateBookingIssueStatus);
   app.put("/api/booking-issues/priority", updateBookingIssuePriority);
   app.delete("/api/booking-issues/:id", deleteBookingIssue);
+  
+  // Notification routes
+  app.get("/api/notifications", getUserNotifications);
+  app.get("/api/notifications/unread-count", getUnreadCount);
+  app.put("/api/notifications/:notificationId/read", markAsRead);
+  app.put("/api/notifications/read-all", markAllAsRead);
+  app.post("/api/notifications", createNotification);
+  app.delete("/api/notifications/:notificationId", deleteNotification);
+  
+  // Announcement routes
+  app.get("/api/announcements", getAnnouncements);
+  app.get("/api/announcements/all", getAllAnnouncements);
+  app.post("/api/announcements", createAnnouncement);
+  app.put("/api/announcements/:announcementId", updateAnnouncement);
+  app.delete("/api/announcements/:announcementId", deleteAnnouncement);
+  app.post("/api/announcements/:announcementId/view", markAnnouncementViewed);
+  app.put("/api/announcements/:announcementId/toggle-status", toggleAnnouncementStatus);
   
   return app;
 }

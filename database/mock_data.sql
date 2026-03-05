@@ -170,6 +170,45 @@ INSERT INTO booking_issues (booking_id, booking_type, user_email, issue_type, pr
 UPDATE booking_issues SET resolved_at = '2026-03-01 20:30:00', resolved_by = 2, resolution = 'Spoke with guests in adjacent room. Issue resolved peacefully.' WHERE id = 3;
 UPDATE booking_issues SET resolved_at = '2026-02-28 16:00:00', resolved_by = 2, resolution = 'Provided 5 additional life vests from pool equipment inventory.' WHERE id = 4;
 
+-- ============================================
+-- 10. NOTIFICATIONS
+-- ============================================
+
+INSERT INTO notifications (user_id, type, title, message, link, related_booking_id, related_booking_type, priority) VALUES
+(3, 'booking', 'Room Booking Pending', 'Your room booking for Standard Room (Aircon) is pending approval. We will notify you once it is reviewed.', NULL, 1, 'room', 'normal'),
+(4, 'booking', 'Room Booking Pending', 'Your room booking for Large Family Room is pending approval. We will notify you once it is reviewed.', NULL, 2, 'room', 'normal'),
+(6, 'booking', 'Booking Approved', 'Great news! Your room booking for Standard Room (Aircon) has been approved.', NULL, 4, 'room', 'high'),
+(7, 'booking', 'Booking Approved', 'Great news! Your room booking for Large Family Room has been approved.', NULL, 5, 'room', 'high'),
+(9, 'status_change', 'Check-In Successful', 'You have been checked in to room 103. Enjoy your stay!', NULL, 7, 'room', 'high'),
+(10, 'status_change', 'Check-In Successful', 'You have been checked in to room 109. Enjoy your stay!', NULL, 8, 'room', 'high'),
+(4, 'amenity', 'Amenity Booking Approved', 'Your Picnic Area A booking has been approved for March 5, 2026.', NULL, 3, 'amenity', 'normal'),
+(7, 'amenity', 'Amenity Booking Approved', 'Your Karaoke Room booking has been approved for March 8, 2026.', NULL, 4, 'amenity', 'normal'),
+(10, 'booking', 'Day Pass Approved', 'Your day pass booking for 6 people on March 2, 2026 has been approved.', NULL, 3, 'day_pass', 'normal');
+
+-- ============================================
+-- 11. ANNOUNCEMENTS
+-- ============================================
+
+INSERT INTO announcements (title, content, target_audience, start_date, end_date, priority, banner_color, icon, created_by) VALUES
+('Welcome to Prisville Resort!', 'We are excited to welcome you to our beautiful resort. Check out our new amenities and special offers!', 'all', '2026-03-01', '2026-03-31', 'normal', '#3b82f6', 'info', 1),
+('Pool Maintenance Schedule', 'The main swimming pool will undergo maintenance on March 10, 2026 from 6:00 AM to 12:00 PM. We apologize for any inconvenience.', 'all', '2026-03-04', '2026-03-10', 'high', '#ea580c', 'alert', 1),
+('Special Weekend Rates', 'Enjoy 20% off on all room bookings for stays between March 15-17, 2026. Book now!', 'clients', '2026-03-04', '2026-03-14', 'normal', '#10b981', 'megaphone', 1),
+('Staff Meeting Notice', 'Mandatory staff meeting on March 8, 2026 at 3:00 PM in the conference room. Attendance is required.', 'staff', '2026-03-04', '2026-03-08', 'high', '#f59e0b', 'info', 1);
+
+-- ============================================
+-- 12. ANNOUNCEMENT VIEWS
+-- ============================================
+
+INSERT INTO announcement_views (announcement_id, user_id) VALUES
+(1, 3), (1, 4), (1, 5), (1, 6),
+(2, 3), (2, 7),
+(3, 4), (3, 5), (3, 8);
+
+-- Update views count
+UPDATE announcements SET views_count = 4 WHERE id = 1;
+UPDATE announcements SET views_count = 2 WHERE id = 2;
+UPDATE announcements SET views_count = 3 WHERE id = 3;
+
 -- Re-enable foreign key checks
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -186,6 +225,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- - Updated room statuses for 10 rooms
 -- - 4 stay history records
 -- - 4 booking issues (open and resolved)
+-- - 9 notifications (booking updates and status changes)
+-- - 4 announcements (general, clients, and staff targeted)
 -- ============================================
 
 SELECT 'Mock data inserted successfully!' AS status;

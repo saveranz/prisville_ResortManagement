@@ -5,6 +5,7 @@ import LoginModal from "./LoginModal";
 import RoomBookingsModal from "./RoomBookingsModal";
 import AmenityBookingsModal from "./AmenityBookingsModal";
 import DayPassBookingsModal from "./DayPassBookingsModal";
+import { NotificationBell } from "./NotificationBell";
 
 type UserRole = 'client' | 'admin' | 'receptionist' | null;
 
@@ -13,13 +14,16 @@ interface HeaderProps {
   externalLoginModalOpen?: boolean;
   onLoginSuccess?: () => void;
   onLogoutSuccess?: () => void;
+  onOpenRoomBookings?: () => void;
+  openRoomBookingsTrigger?: number;
 }
 
-export default function Header({ onLoginModalChange, externalLoginModalOpen, onLoginSuccess, onLogoutSuccess }: HeaderProps = {}) {
+export default function Header({ onLoginModalChange, externalLoginModalOpen, onLoginSuccess, onLogoutSuccess, onOpenRoomBookings, openRoomBookingsTrigger }: HeaderProps = {}) {
   const navigate = useNavigate();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [userId, setUserId] = useState<number | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -27,6 +31,13 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
   const [isRoomBookingsModalOpen, setIsRoomBookingsModalOpen] = useState(false);
   const [isAmenityBookingsModalOpen, setIsAmenityBookingsModalOpen] = useState(false);
   const [isDayPassBookingsModalOpen, setIsDayPassBookingsModalOpen] = useState(false);
+
+  // Watch for trigger to open room bookings modal
+  useEffect(() => {
+    if (openRoomBookingsTrigger && openRoomBookingsTrigger > 0) {
+      setIsRoomBookingsModalOpen(true);
+    }
+  }, [openRoomBookingsTrigger]);
 
   // Check if user is logged in from server session on mount
   useEffect(() => {
@@ -45,6 +56,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.user) {
+            setUserId(data.user.id);
             setUserEmail(data.user.email);
             setUserRole(data.user.role);
             setIsLoggedIn(true);
@@ -106,6 +118,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
       
       if (response.ok) {
         setIsLoggedIn(false);
+        setUserId(null);
         setUserEmail("");
         setUserRole(null);
         setIsDropdownOpen(false);
@@ -118,6 +131,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
     } catch (error) {
       console.error('Logout failed:', error);
       setIsLoggedIn(false);
+      setUserId(null);
       setUserEmail("");
       setUserRole(null);
       setIsDropdownOpen(false);
@@ -228,6 +242,9 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
             </>
           ) : userRole === 'client' ? (
             <>
+              {/* Notification Bell for Clients */}
+              {userId && <NotificationBell userId={userId} />}
+              
               <Link
                   to="/"
                   className="px-6 py-2 rounded-full bg-primary hover:bg-primary/90 text-white text-xs md:text-sm font-medium transition"

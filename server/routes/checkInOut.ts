@@ -4,16 +4,25 @@ import { RowDataPacket, ResultSetHeader } from "mysql2";
 
 // Check-in a guest
 export const checkInGuest: RequestHandler = async (req, res) => {
+  console.log('=== CHECK-IN REQUEST RECEIVED ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  
   try {
     const { bookingId, bookingType } = req.body;
 
     if (!bookingId || !bookingType) {
+      console.log('❌ ERROR: Missing required fields');
       res.status(400).json({ success: false, message: 'Booking ID and type are required' });
       return;
     }
 
+    console.log(`📋 Processing check-in for booking ID: ${bookingId}, type: ${bookingType}`);
+    
     const connection = await db.getConnection();
+    console.log('✅ Database connection established');
+    
     await connection.beginTransaction();
+    console.log('✅ Transaction started');
 
     try {
       let tableName = '';
@@ -29,6 +38,8 @@ export const checkInGuest: RequestHandler = async (req, res) => {
       // Get booking details based on type
       if (bookingType === 'room') {
         tableName = 'room_bookings';
+        console.log(`[Check-In] Looking for booking ID: ${bookingId}`);
+        
         const [bookings] = await connection.query<RowDataPacket[]>(
           `SELECT * FROM ${tableName} WHERE id = ?`,
           [bookingId]
@@ -37,14 +48,18 @@ export const checkInGuest: RequestHandler = async (req, res) => {
         if (bookings.length === 0) {
           await connection.rollback();
           connection.release();
+          console.log('[Check-In] Error: Booking not found');
           res.status(404).json({ success: false, message: 'Booking not found' });
           return;
         }
 
         const booking = bookings[0];
+        console.log(`[Check-In] Booking found - Status: ${booking.status}, Room: ${booking.room_numbers}`);
+        
         if (booking.status !== 'approved') {
           await connection.rollback();
           connection.release();
+          console.log('[Check-In] Error: Booking not approved');
           res.status(400).json({ success: false, message: 'Only approved bookings can be checked in' });
           return;
         }
@@ -52,6 +67,7 @@ export const checkInGuest: RequestHandler = async (req, res) => {
         if (booking.actual_check_in) {
           await connection.rollback();
           connection.release();
+          console.log('[Check-In] Error: Already checked in');
           res.status(400).json({ success: false, message: 'Guest is already checked in' });
           return;
         }
@@ -64,18 +80,22 @@ export const checkInGuest: RequestHandler = async (req, res) => {
         checkInDate = booking.check_in;
         checkOutDate = booking.check_out;
 
+        console.log('[Check-In] Step 1: Updating booking record...');
         // Update booking with actual check-in
         await connection.query(
           `UPDATE ${tableName} SET actual_check_in = NOW(), room_status = 'checked_in' WHERE id = ?`,
           [bookingId]
         );
 
+        console.log('[Check-In] Step 2: Updating room status...');
         // Update room status to occupied
-        await connection.query(
+        const [updateResult] = await connection.query<ResultSetHeader>(
           `UPDATE room_status SET status = 'occupied', current_booking_id = ?, current_guest_email = ? WHERE room_numbers = ?`,
           [bookingId, userEmail, roomNumbers]
         );
+        console.log(`[Check-In] Room status updated, affected rows: ${updateResult.affectedRows}`);
 
+        console.log('[Check-In] Step 3: Creating stay history...');
         // Create/update stay history
         await connection.query(
           `INSERT INTO stay_history (user_id, user_email, booking_id, booking_type, room_name, check_in_date, check_out_date, actual_check_in, guests, total_spent)
@@ -83,6 +103,7 @@ export const checkInGuest: RequestHandler = async (req, res) => {
            FROM ${tableName} WHERE id = ?`,
           [bookingId]
         );
+        console.log('[Check-In] Stay history created successfully');
       } else if (bookingType === 'amenity') {
         tableName = 'amenity_bookings';
         const [bookings] = await connection.query<RowDataPacket[]>(
@@ -163,11 +184,33 @@ export const checkInGuest: RequestHandler = async (req, res) => {
     } catch (error) {
       await connection.rollback();
       connection.release();
+      console.error('❌ Transaction error (inner catch):', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   } catch (error) {
-    console.error('Check-in error:', error);
-    res.status(500).json({ success: false, message: 'Failed to check in guest' });
+    console.error('❌ CHECK-IN ERROR (outer catch):', error);
+    console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorCode = (error as any).code || 'UNKNOWN';
+    const sqlMessage = (error as any).sqlMessage || '';
+    
+    console.error('Error breakdown:', {
+      message: errorMessage,
+      code: errorCode,
+      sqlMessage: sqlMessage
+    });
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to check in guest',
+      error: errorMessage,
+      details: sqlMessage || errorCode
+    });
   }
 };
 

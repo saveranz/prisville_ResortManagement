@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import db from "../db";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
+import { sendNotificationToUser } from "./notifications";
 
 // Check day pass availability
 export const checkDayPassAvailability: RequestHandler = async (req, res) => {
@@ -218,9 +219,49 @@ export const updateDayPassBookingStatus: RequestHandler = async (req, res) => {
       return res.json({ success: false, message: "Invalid status" });
     }
 
+    // Get booking details before updating
+    const [bookings] = await db.query<DayPassBooking[]>(
+      'SELECT user_id, booking_date, number_of_pax FROM day_pass_bookings WHERE id = ?',
+      [bookingId]
+    );
+
+    if (bookings.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Booking not found' 
+      });
+    }
+
+    const booking = bookings[0];
+
     await db.query(
       `UPDATE day_pass_bookings SET status = ? WHERE id = ?`,
       [status, bookingId]
+    );
+
+    // Send notification to user
+    const notificationTitles = {
+      approved: 'Day Pass Booking Approved',
+      rejected: 'Day Pass Booking Rejected',
+      pending: 'Day Pass Booking Under Review'
+    };
+
+    const notificationMessages = {
+      approved: `Great news! Your day pass booking for ${booking.number_of_pax} guest(s) has been approved.`,
+      rejected: `Unfortunately, your day pass booking has been rejected. Please contact us for more information.`,
+      pending: `Your day pass booking is now under review.`
+    };
+
+    await sendNotificationToUser(
+      booking.user_id,
+      'booking',
+      notificationTitles[status as keyof typeof notificationTitles],
+      notificationMessages[status as keyof typeof notificationMessages],
+      {
+        relatedBookingId: bookingId,
+        relatedBookingType: 'day_pass',
+        priority: status === 'approved' ? 'high' : 'normal'
+      }
     );
 
     return res.json({ success: true, message: "Booking status updated" });

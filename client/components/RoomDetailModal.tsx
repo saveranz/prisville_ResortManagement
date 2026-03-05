@@ -1,6 +1,7 @@
 import { X, Upload } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTimeTracker, useClickTracker } from "@/hooks/use-activity-tracker";
+import { compressImage, validateImageFile, createThumbnail } from "@/lib/imageUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +18,7 @@ interface RoomDetailModalProps {
   onClose: () => void;
   isLoggedIn: boolean;
   onLoginClick: () => void;
+  onBookingSuccess?: () => void;
   room: {
     name: string;
     price: string;
@@ -38,7 +40,7 @@ const extractRoomType = (roomName: string): string => {
   return 'standard';
 };
 
-export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginClick, room }: RoomDetailModalProps) {
+export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginClick, onBookingSuccess, room }: RoomDetailModalProps) {
   const roomType = extractRoomType(room.name);
   
   // Track time spent viewing this room
@@ -53,6 +55,8 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
   
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [unavailableDates, setUnavailableDates] = useState<Array<{checkIn: string, checkOut: string}>>([]);
+  const [dateCheckLoading, setDateCheckLoading] = useState(false);
   const [formData, setFormData] = useState({
     checkIn: "",
     checkOut: "",
@@ -62,9 +66,79 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
     paymentProof: null as File | null,
   });
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const modalContentRef = useRef<HTMLDivElement>(null);
+
+  // Fetch unavailable dates when booking form opens
+  useEffect(() => {
+    if (showBookingForm && room.roomNumbers) {
+      fetchUnavailableDates();
+    }
+  }, [showBookingForm, room.roomNumbers]);
+
+  // Fetch unavailable dates for this room
+  const fetchUnavailableDates = async () => {
+    try {
+      setDateCheckLoading(true);
+      const response = await fetch(`/api/bookings/room/unavailable-dates?roomNumbers=${encodeURIComponent(room.roomNumbers)}`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUnavailableDates(data.unavailableDates || []);
+      }
+    } catch (error) {
+      console.error('Error fetching unavailable dates:', error);
+    } finally {
+      setDateCheckLoading(false);
+    }
+  };
+
+  // Check if selected dates overlap with unavailable dates
+  const checkDateAvailability = (checkIn: string, checkOut: string): boolean => {
+    if (!checkIn || !checkOut) return true;
+    
+    const selectedStart = new Date(checkIn);
+    const selectedEnd = new Date(checkOut);
+    
+    console.log('🔍 Checking availability for:', { checkIn, checkOut });
+    console.log('📅 Unavailable dates:', unavailableDates);
+    
+    for (const booking of unavailableDates) {
+      const bookedStart = new Date(booking.checkIn);
+      const bookedEnd = new Date(booking.checkOut);
+      
+      console.log('Comparing with booking:', {
+        bookedStart: booking.checkIn,
+        bookedEnd: booking.checkOut,
+        selectedStart: checkIn,
+        selectedEnd: checkOut
+      });
+      
+      // Two date ranges overlap if: selectedStart < bookedEnd AND selectedEnd > bookedStart
+      const overlaps = selectedStart < bookedEnd && selectedEnd > bookedStart;
+      
+      console.log('Overlap detected?', overlaps);
+      
+      if (overlaps) {
+        console.log('❌ DATES OVERLAP - Not available!');
+        return false; // Dates overlap with a booked period
+      }
+    }
+    
+    console.log('✅ No overlap - Dates available!');
+    return true; // No overlap, dates are available
+  };
+
+  // Scroll to top when error or loading message changes
+  useEffect(() => {
+    if ((error || loadingMessage || success) && modalContentRef.current) {
+      modalContentRef.current.scrollTop = 0;
+    }
+  }, [error, loadingMessage, success]);
 
   if (!isOpen) return null;
 
@@ -104,15 +178,35 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file
+      const validation = validateImageFile(file, 10);
+      if (!validation.valid) {
+        setError(validation.error || 'Invalid file');
+        return;
+      }
+
       setFormData({ ...formData, paymentProof: file });
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setError("");
+      setLoadingMessage("Processing image...");
+      
+      // Create ultra-fast thumbnail for instant preview
+      try {
+        const thumbnail = await createThumbnail(file);
+        setPreviewUrl(thumbnail);
+        setLoadingMessage("");
+      } catch (err) {
+        console.error('Failed to compress image:', err);
+        setLoadingMessage("");
+        // Fallback to original if compression fails
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -123,6 +217,12 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
     // Validate form before showing confirmation
     if (!formData.checkIn || !formData.checkOut || !formData.guests || !formData.contactNumber) {
       setError("Please fill in all required fields");
+      return;
+    }
+
+    // Check if selected dates are available
+    if (!checkDateAvailability(formData.checkIn, formData.checkOut)) {
+      setError("❌ These dates are not available. This room is already booked for the selected period. Please choose different dates.");
       return;
     }
 
@@ -139,6 +239,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
     setError("");
     setSuccess("");
     setLoading(true);
+    setLoadingMessage("Submitting booking...");
     setShowConfirmDialog(false);
 
     try {
@@ -152,9 +253,11 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
       if (!formData.paymentProof) {
         setError("Please upload payment proof");
         setLoading(false);
+        setLoadingMessage("");
         return;
       }
 
+      setLoadingMessage("Checking availability...");
       // Check room availability first
       const availabilityResponse = await fetch(
         `/api/bookings/room/check-availability?roomNumbers=${encodeURIComponent(room.roomNumbers)}&checkIn=${formData.checkIn}&checkOut=${formData.checkOut}`,
@@ -169,19 +272,20 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
       if (availabilityData.success && !availabilityData.available) {
         setError("Sorry, this room is not available for the selected dates. Please choose different dates.");
         setLoading(false);
+        setLoadingMessage("");
         return;
       }
 
       // If availability check failed (e.g., table doesn't exist yet), proceed anyway
       // The backend will handle the validation when creating the booking
 
-      // Convert image to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(formData.paymentProof);
-      reader.onloadend = async () => {
-        const base64Image = reader.result as string;
+      setLoadingMessage("Compressing image...");
+      // Compress image before uploading
+      const base64Image = await compressImage(formData.paymentProof, 1200, 1200, 0.8);
+      
+      setLoadingMessage("Submitting booking...");
 
-        const response = await fetch('/api/bookings/room', {
+      const response = await fetch('/api/bookings/room', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -199,32 +303,40 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
           }),
         });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (data.success) {
-          setSuccess("Booking submitted successfully! Waiting for approval.");
-          setTimeout(() => {
-            onClose();
-            setShowBookingForm(false);
-            setFormData({
-              checkIn: "",
-              checkOut: "",
-              guests: "",
-              contactNumber: "",
-              specialRequests: "",
-              paymentProof: null,
-            });
-            setPreviewUrl("");
-            setSuccess("");
-          }, 2000);
-        } else {
-          setError(data.message || "Booking failed");
-        }
-        setLoading(false);
-      };
+      if (data.success) {        setLoadingMessage("");
+        setSuccess("Booking submitted successfully!");
+        
+        // Wait briefly to show success message, then navigate to bookings
+        setTimeout(() => {
+          onClose();
+          setShowBookingForm(false);
+          setFormData({
+            checkIn: "",
+            checkOut: "",
+            guests: "",
+            contactNumber: "",
+            specialRequests: "",
+            paymentProof: null,
+          });
+          setPreviewUrl("");
+          setSuccess("");
+          
+          // Navigate to room booking history
+          if (onBookingSuccess) {
+            onBookingSuccess();
+          }
+        }, 1500);
+      } else {
+        setError(data.message || "Booking failed");
+      }
+      setLoading(false);
+      setLoadingMessage("");
     } catch (err) {
       setError("Booking failed. Please try again.");
       setLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -233,7 +345,20 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn p-2 sm:p-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-lg sm:max-w-xl lg:max-w-2xl bg-white rounded-xl sm:rounded-2xl shadow-2xl animate-scaleIn max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+      <div 
+        ref={modalContentRef}
+        className="relative w-full max-w-lg sm:max-w-xl lg:max-w-2xl bg-white rounded-xl sm:rounded-2xl shadow-2xl animate-scaleIn max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+      >
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center rounded-xl sm:rounded-2xl">
+            <div className="text-center p-8">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-600 mx-auto mb-4"></div>
+              <p className="text-gray-900 font-semibold text-lg mb-2">{loadingMessage || "Processing..."}</p>
+              <p className="text-gray-600 text-sm">Please wait, do not close this window</p>
+            </div>
+          </div>
+        )}
         {/* Close Button */}
         <button
           onClick={() => {
@@ -329,8 +454,18 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
             )}
 
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+              <div className="mb-4 p-4 bg-green-50 border-2 border-green-300 rounded-lg text-green-700 text-base font-medium flex items-center gap-2">
+                <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
                 {success}
+              </div>
+            )}
+
+            {loadingMessage && !loading && !loading && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
+                {loadingMessage}
               </div>
             )}
 
@@ -350,7 +485,18 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                     <input
                       type="date"
                       value={formData.checkIn}
-                      onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })}
+                      onChange={(e) => {
+                        const newCheckIn = e.target.value;
+                        setFormData({ ...formData, checkIn: newCheckIn });
+                        setError(""); // Clear previous errors
+                        
+                        // Check availability if both dates are selected
+                        if (newCheckIn && formData.checkOut) {
+                          if (!checkDateAvailability(newCheckIn, formData.checkOut)) {
+                            setError("❌ These dates are not available. This room is already booked for the selected period. Please choose different dates.");
+                          }
+                        }
+                      }}
                       min={new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base"
                       required
@@ -363,13 +509,38 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                     <input
                       type="date"
                       value={formData.checkOut}
-                      onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })}
+                      onChange={(e) => {
+                        const newCheckOut = e.target.value;
+                        setFormData({ ...formData, checkOut: newCheckOut });
+                        setError(""); // Clear previous errors
+                        
+                        // Check availability if both dates are selected
+                        if (formData.checkIn && newCheckOut) {
+                          if (!checkDateAvailability(formData.checkIn, newCheckOut)) {
+                            setError("❌ These dates are not available. This room is already booked for the selected period. Please choose different dates.");
+                          }
+                        }
+                      }}
                       min={formData.checkIn || new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base"
                       required
                     />
                   </div>
                 </div>
+
+                {/* Show booked dates info */}
+                {unavailableDates.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-blue-900 mb-2">📅 Currently Booked Dates:</p>
+                    <div className="text-xs text-blue-700 space-y-1 max-h-24 overflow-y-auto">
+                      {unavailableDates.map((booking, index) => (
+                        <div key={index}>
+                          {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Pricing Breakdown */}
                 {formData.checkIn && formData.checkOut && calculateNights() > 0 && (
@@ -545,14 +716,14 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                   disabled={loading}
                   className="flex-1 py-3.5 sm:py-3 bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation text-base sm:text-sm"
                 >
-                  {loading ? "Submitting..." : "Submit Booking"}
+                  {loading ? (loadingMessage || "Submitting...") : "Submit Booking"}
                 </button>
               </div>
             </form>
 
             {/* Confirmation Dialog */}
             <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-              <AlertDialogContent>
+              <AlertDialogContent className="z-[200]">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirm Your Booking</AlertDialogTitle>
                   <AlertDialogDescription>

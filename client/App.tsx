@@ -11,6 +11,8 @@ import NotFound from "./pages/NotFound";
 import ReceptionistDashboard from "./pages/ReceptionistDashboard";
 import ReceptionistInventory from "./pages/ReceptionistInventory";
 import Debug from "./pages/Debug";
+import Announcements from "./pages/Announcements";
+import AdminAnnouncements from "./pages/AdminAnnouncements";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +25,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/debug" element={<Debug />} />
+          <Route path="/announcements" element={<Announcements />} />
+          <Route path="/admin/announcements" element={<AdminAnnouncements />} />
           <Route path="/receptionist/dashboard" element={<ReceptionistDashboard />} />
           <Route path="/receptionist/inventory" element={<ReceptionistInventory />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

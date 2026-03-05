@@ -3,9 +3,13 @@ CREATE TABLE IF NOT EXISTS room_bookings (
   user_id INT NOT NULL,
   user_email VARCHAR(255) NOT NULL,
   room_name VARCHAR(255) NOT NULL,
+  room_type VARCHAR(50),
   room_numbers VARCHAR(255) NOT NULL,
   check_in DATE NOT NULL,
   check_out DATE NOT NULL,
+  actual_check_in TIMESTAMP NULL,
+  actual_check_out TIMESTAMP NULL,
+  room_status VARCHAR(50) DEFAULT 'pending',
   guests INT NOT NULL,
   contact_number VARCHAR(50) NOT NULL,
   special_requests TEXT,
@@ -17,5 +21,9 @@ CREATE TABLE IF NOT EXISTS room_bookings (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_user_email (user_email),
   INDEX idx_status (status),
-  INDEX idx_check_in (check_in)
+  INDEX idx_check_in (check_in),
+  INDEX idx_room_type (room_type),
+  INDEX idx_actual_check_in (actual_check_in),
+  INDEX idx_actual_check_out (actual_check_out),
+  INDEX idx_room_status (room_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

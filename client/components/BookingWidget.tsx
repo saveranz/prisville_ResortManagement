@@ -16,8 +16,14 @@ interface BookingWidgetProps {
 }
 
 export default function BookingWidget({ onSearch, onAvailabilityCheck }: BookingWidgetProps) {
-  const [checkInDate, setCheckInDate] = useState("2025-01-16");
-  const [checkOutDate, setCheckOutDate] = useState("2025-01-18");
+  // Set default dates starting from today
+  const today = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  
+  const [checkInDate, setCheckInDate] = useState(today);
+  const [checkOutDate, setCheckOutDate] = useState(tomorrowStr);
   const [guests, setGuests] = useState(4);
   const [showGuestMenu, setShowGuestMenu] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
@@ -123,6 +129,7 @@ export default function BookingWidget({ onSearch, onAvailabilityCheck }: Booking
           <input
             type="date"
             value={checkInDate}
+            min={today}
             onChange={(e) => setCheckInDate(e.target.value)}
             className="text-white font-serif text-sm md:text-base lg:text-lg bg-transparent border-none outline-none cursor-pointer w-full"
           />
@@ -134,6 +141,7 @@ export default function BookingWidget({ onSearch, onAvailabilityCheck }: Booking
           <input
             type="date"
             value={checkOutDate}
+            min={checkInDate || today}
             onChange={(e) => setCheckOutDate(e.target.value)}
             className="text-white font-serif text-sm md:text-base lg:text-lg bg-transparent border-none outline-none cursor-pointer w-full"
           />

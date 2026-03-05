@@ -217,3 +217,52 @@ export const setupDatabase: RequestHandler = async (_req, res) => {
     });
   }
 };
+
+export const migrateRoomType: RequestHandler = async (_req, res) => {
+  try {
+    console.log('🔄 Running migration to add room_type column...');
+    
+    // Check if column exists
+    const [columns] = await db.query(
+      `SELECT COUNT(*) as count FROM information_schema.columns 
+       WHERE table_schema = DATABASE() 
+       AND table_name = 'room_bookings' 
+       AND column_name = 'room_type'`
+    );
+    
+    const columnExists = (columns as any)[0].count > 0;
+    
+    if (columnExists) {
+      console.log('✅ Column room_type already exists');
+      res.json({
+        success: true,
+        message: 'Column room_type already exists - no migration needed'
+      });
+      return;
+    }
+    
+    // Add column
+    await db.query(
+      `ALTER TABLE room_bookings ADD COLUMN room_type VARCHAR(50) AFTER room_name`
+    );
+    console.log('✅ Added room_type column');
+    
+    // Add index
+    await db.query(
+      `ALTER TABLE room_bookings ADD INDEX idx_room_type (room_type)`
+    );
+    console.log('✅ Added idx_room_type index');
+    
+    res.json({
+      success: true,
+      message: 'Migration completed successfully - room_type column added'
+    });
+  } catch (error) {
+    console.error('❌ Migration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Migration failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};

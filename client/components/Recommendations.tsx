@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Sparkles } from "lucide-react";
 
 interface Recommendation {
@@ -52,6 +52,11 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
     // Fetch recommendations when component mounts or login state changes
     if (isLoggedIn) {
       fetchRecommendations();
+    } else {
+      // Clear recommendations when logged out
+      setRecommendations([]);
+      setUserStats(null);
+      setLoading(false);
     }
   }, [isLoggedIn]);
 
@@ -95,7 +100,7 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
     }
   };
 
-  const handleItemClick = (rec: Recommendation) => {
+  const handleItemClick = useCallback((rec: Recommendation) => {
     if (rec.type === 'room' && rec.itemData && onRoomClick) {
       onRoomClick(rec.itemData);
     } else if (rec.type === 'amenity' && rec.itemData && onAmenityClick) {
@@ -103,22 +108,19 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
     } else if (rec.type === 'daypass' && onDayPassClick) {
       onDayPassClick();
     }
-  };
+  }, [onRoomClick, onAmenityClick, onDayPassClick]);
+
+  // Memoize displayable recommendations
+  const displayableRecommendations = useMemo(() => {
+    return recommendations.filter(rec => 
+      rec.itemData || rec.type === 'promotion' || rec.type === 'daypass'
+    );
+  }, [recommendations]);
 
   if (loading) {
     console.log('⏳ Recommendations loading...');
     return null;
   }
-
-  if (recommendations.length === 0) {
-    console.log('ℹ️ Recommendations hidden: No recommendations available');
-    return null;
-  }
-
-  // Filter to only show items with actual data (rooms/amenities we can display)
-  const displayableRecommendations = recommendations.filter(rec => 
-    rec.itemData || rec.type === 'promotion' || rec.type === 'daypass'
-  );
 
   if (displayableRecommendations.length === 0) {
     console.log('ℹ️ No displayable recommendations');
@@ -170,6 +172,7 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
                         src={rec.itemData.image}
                         alt={rec.itemData.name}
                         className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-500"
+                        loading="lazy"
                       />
                       {/* Overlay gradient */}
                       <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent"></div>

@@ -1,6 +1,7 @@
 import { X, Upload, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTimeTracker, useClickTracker } from "@/hooks/use-activity-tracker";
+import { compressImage, validateImageFile, createThumbnail } from "@/lib/imageUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,9 +50,18 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
   const [guests, setGuests] = useState<Guest[]>([]);
   const [currentGuest, setCurrentGuest] = useState<Guest>({ name: "", age: "", gender: "" });
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const modalContentRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when error or loading message changes
+  useEffect(() => {
+    if ((error || loadingMessage || success) && modalContentRef.current) {
+      modalContentRef.current.scrollTop = 0;
+    }
+  }, [error, loadingMessage, success]);
 
   if (!isOpen) return null;
 
@@ -64,15 +74,35 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file
+      const validation = validateImageFile(file, 10);
+      if (!validation.valid) {
+        setError(validation.error || 'Invalid file');
+        return;
+      }
+
       setFormData({ ...formData, paymentProof: file });
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setError("");
+      setLoadingMessage("Processing image...");
+      
+      // Create ultra-fast thumbnail for instant preview
+      try {
+        const thumbnail = await createThumbnail(file);
+        setPreviewUrl(thumbnail);
+        setLoadingMessage("");
+      } catch (err) {
+        console.error('Failed to compress image:', err);
+        setLoadingMessage("");
+        // Fallback to original if compression fails
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -138,6 +168,7 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
     setError("");
     setSuccess("");
     setLoading(true);
+    setLoadingMessage("Checking availability...");
     setShowConfirmDialog(false);
 
     try {
@@ -158,20 +189,20 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
         console.error("❌ Date not available");
         setError("Sorry, day pass is fully booked for this date. Please choose another date.");
         setLoading(false);
+        setLoadingMessage("");
         return;
       }
-
       console.log("✅ Date is available");
 
-      // Convert image to base64
-      console.log("📤 Converting payment proof to base64...");
-      const reader = new FileReader();
-      reader.readAsDataURL(formData.paymentProof);
-      reader.onloadend = async () => {
-        const base64Image = reader.result as string;
-        const totalAmount = calculateTotalAmount();
+      setLoadingMessage("Compressing image...");
+      // Compress image before uploading
+      console.log("📤 Compressing payment proof...");
+      const base64Image = await compressImage(formData.paymentProof, 1200, 1200, 0.8);
+      const totalAmount = calculateTotalAmount();
 
-        const bookingPayload = {
+      setLoadingMessage("Submitting booking...");
+
+      const bookingPayload = {
           bookingDate: formData.bookingDate,
           numberOfPax: parseInt(formData.numberOfPax),
           contactNumber: formData.contactNumber,
@@ -181,25 +212,26 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
           guests: guests,
         };
 
-        console.log("📤 Sending booking request:", {
+      console.log("📤 Sending booking request:", {
           ...bookingPayload,
           paymentProof: `[base64 string, ${base64Image.length} characters]`
         });
 
-        const response = await fetch('/api/bookings/day-pass', {
+      const response = await fetch('/api/bookings/day-pass', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify(bookingPayload),
         });
 
-        console.log("📥 Response status:", response.status, response.statusText);
+      console.log("📥 Response status:", response.status, response.statusText);
 
-        const data = await response.json();
+      const data = await response.json();
         console.log("📥 Response data:", data);
 
         if (data.success) {
           console.log("✅ Booking submitted successfully!");
+          setLoadingMessage("");
           setSuccess("Day pass booking submitted successfully! Waiting for approval.");
           setTimeout(() => {
             onClose();
@@ -216,22 +248,17 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
             setPreviewUrl("");
             setSuccess("");
           }, 2000);
-        } else {
-          console.error("❌ Booking failed:", data.message);
-          setError(data.message || "Booking failed");
-        }
-        setLoading(false);
-      };
-
-      reader.onerror = (error) => {
-        console.error("❌ Error reading payment proof file:", error);
-        setError("Failed to process payment proof image");
-        setLoading(false);
-      };
+      } else {
+        console.error("❌ Booking failed:", data.message);
+        setError(data.message || "Booking failed");
+      }
+      setLoading(false);
+      setLoadingMessage("");
     } catch (err) {
       console.error("❌ Exception during booking submission:", err);
       setError("Booking failed. Please try again.");
       setLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -240,7 +267,20 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn p-2 sm:p-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-lg sm:max-w-xl lg:max-w-2xl bg-white rounded-xl sm:rounded-2xl shadow-2xl animate-scaleIn max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+      <div 
+        ref={modalContentRef}
+        className="relative w-full max-w-lg sm:max-w-xl lg:max-w-2xl bg-white rounded-xl sm:rounded-2xl shadow-2xl animate-scaleIn max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+      >
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center rounded-xl sm:rounded-2xl">
+            <div className="text-center p-8">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-600 mx-auto mb-4"></div>
+              <p className="text-gray-900 font-semibold text-lg mb-2">{loadingMessage || "Processing..."}</p>
+              <p className="text-gray-600 text-sm">Please wait, do not close this window</p>
+            </div>
+          </div>
+        )}
         {/* Close Button */}
         <button
           onClick={() => {
@@ -335,8 +375,18 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
             )}
 
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+              <div className="mb-4 p-4 bg-green-50 border-2 border-green-300 rounded-lg text-green-700 text-base font-medium flex items-center gap-2">
+                <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
                 {success}
+              </div>
+            )}
+
+            {loadingMessage && !loading && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
+                {loadingMessage}
               </div>
             )}
 
@@ -587,14 +637,14 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
                   disabled={loading}
                   className="flex-1 py-3.5 sm:py-3 bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation text-base sm:text-sm"
                 >
-                  {loading ? "Submitting..." : "Submit Booking"}
+                  {loading ? (loadingMessage || "Submitting...") : "Submit Booking"}
                 </button>
               </div>
             </form>
 
             {/* Confirmation Dialog */}
             <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-              <AlertDialogContent>
+              <AlertDialogContent className="z-[200]">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirm Your Booking</AlertDialogTitle>
                   <AlertDialogDescription>

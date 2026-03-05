@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Header from "@/components/Header";
 import BookingWidget from "@/components/BookingWidget";
 import RoomDetailModal from "@/components/RoomDetailModal";
 import AmenityDetailModal from "@/components/AmenityDetailModal";
 import DayPassDetailModal from "@/components/DayPassDetailModal";
 import Recommendations from "@/components/Recommendations";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 
 export default function Index() {
   const [searchData, setSearchData] = useState<any>(null);
@@ -17,6 +18,9 @@ export default function Index() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [recommendationsKey, setRecommendationsKey] = useState(0);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<string>("");
+  const [openRoomBookingsTrigger, setOpenRoomBookingsTrigger] = useState(0);
   const isCheckingAuth = useRef(false);
   const lastScrollY = useRef(0);
   const hasScrolledDown = useRef(false);
@@ -34,7 +38,13 @@ export default function Index() {
         });
         if (response.ok) {
           const data = await response.json();
-          setIsLoggedIn(data.success && data.user);
+          if (data.success && data.user) {
+            setIsLoggedIn(true);
+            setUserId(data.user.id);
+            setUserRole(data.user.role);
+          } else {
+            setIsLoggedIn(false);
+          }
         } else {
           setIsLoggedIn(false);
         }
@@ -47,27 +57,39 @@ export default function Index() {
     checkAuth();
   }, []);
 
-  // Scroll to top refresh functionality
+  // Scroll to top refresh functionality with throttle
   useEffect(() => {
+    let throttleTimeout: NodeJS.Timeout | null = null;
+    
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      // Throttle to max once per 150ms
+      if (throttleTimeout) return;
       
-      // Track if user has scrolled down significantly (at least 300px)
-      if (currentScrollY > 300) {
-        hasScrolledDown.current = true;
-      }
-      
-      // Trigger refresh when reaching the very top after scrolling down
-      if (currentScrollY === 0 && hasScrolledDown.current && !isRefreshing.current) {
-        handleRefresh();
-        hasScrolledDown.current = false;
-      }
-      
-      lastScrollY.current = currentScrollY;
+      throttleTimeout = setTimeout(() => {
+        throttleTimeout = null;
+        
+        const currentScrollY = window.scrollY;
+        
+        // Track if user has scrolled down significantly (at least 300px)
+        if (currentScrollY > 300) {
+          hasScrolledDown.current = true;
+        }
+        
+        // Trigger refresh when reaching the very top after scrolling down
+        if (currentScrollY === 0 && hasScrolledDown.current && !isRefreshing.current) {
+          handleRefresh();
+          hasScrolledDown.current = false;
+        }
+        
+        lastScrollY.current = currentScrollY;
+      }, 150);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (throttleTimeout) clearTimeout(throttleTimeout);
+    };
   }, []);
 
   const handleRefresh = async () => {
@@ -82,13 +104,11 @@ export default function Index() {
     }, 1000);
   };
 
-  const handleSearch = (data: any) => {
+  const handleSearch = useCallback((data: any) => {
     setSearchData(data);
-    console.log("Search data:", data);
-  };
+  }, []);
 
-  const handleAvailabilityCheck = (results: any) => {
-    console.log("Availability results:", results);
+  const handleAvailabilityCheck = useCallback((results: any) => {
     setAvailabilityResults(results);
     // Scroll to results section
     setTimeout(() => {
@@ -97,21 +117,21 @@ export default function Index() {
         resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
-  };
+  }, []);
 
-  const handleRoomClick = (room: any) => {
+  const handleRoomClick = useCallback((room: any) => {
     setSelectedRoom(room);
     setIsRoomModalOpen(true);
-  };
+  }, []);
 
-  const handleAmenityClick = (amenity: any) => {
+  const handleAmenityClick = useCallback((amenity: any) => {
     setSelectedAmenity(amenity);
     setIsAmenityModalOpen(true);
-  };
+  }, []);
 
-  const handleLoginClick = () => {
+  const handleLoginClick = useCallback(() => {
     setIsLoginModalOpen(true);
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white overflow-hidden">
@@ -129,7 +149,17 @@ export default function Index() {
           // Reset login state immediately after logout
           setIsLoggedIn(false);
         }}
+        onOpenRoomBookings={() => {
+          // Trigger is watched by Header to open room bookings modal
+          setOpenRoomBookingsTrigger(prev => prev + 1);
+        }}
+        openRoomBookingsTrigger={openRoomBookingsTrigger}
       />
+      
+      {/* Announcement Banner */}
+      {isLoggedIn && userId && userRole && (
+        <AnnouncementBanner userId={userId} userRole={userRole} />
+      )}
 
       {/* Hero Section */}
       <section className="relative w-full h-screen min-h-[600px] overflow-hidden">
@@ -370,6 +400,7 @@ export default function Index() {
                   src="https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&h=600&fit=crop"
                   alt="Prisville Triangle Resort Pool"
                   className="w-full h-auto object-cover"
+                  loading="lazy"
                 />
               </div>
               {/* Decorative Element */}
@@ -418,6 +449,7 @@ export default function Index() {
                   src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=400&fit=crop"
                   alt="Standard Room (Aircon)"
                   className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
@@ -461,6 +493,7 @@ export default function Index() {
                   src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop"
                   alt="Large Family Room"
                   className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
@@ -504,6 +537,7 @@ export default function Index() {
                   src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&h=400&fit=crop"
                   alt="Family Fan Room"
                   className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
@@ -547,6 +581,7 @@ export default function Index() {
                   src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&h=400&fit=crop"
                   alt="Non-Aircon Room"
                   className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
@@ -798,6 +833,10 @@ export default function Index() {
           }}
           isLoggedIn={isLoggedIn}
           onLoginClick={() => setIsLoginModalOpen(true)}
+          onBookingSuccess={() => {
+            // Open room bookings modal after successful booking
+            setOpenRoomBookingsTrigger(prev => prev + 1);
+          }}
           room={selectedRoom}
         />
       )}
