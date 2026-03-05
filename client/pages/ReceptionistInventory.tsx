@@ -10,6 +10,7 @@ interface InventoryItem {
   unit: string;
   unit_price: string;
   last_updated: string;
+  created_at: string;
 }
 
 interface Transaction {
@@ -29,6 +30,9 @@ export default function ReceptionistInventory() {
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const inventoryItemsPerPage = 20;
+  const [inventorySearchTerm, setInventorySearchTerm] = useState('');
   const navigate = useNavigate();
 
   // Transaction filters
@@ -39,6 +43,7 @@ export default function ReceptionistInventory() {
     startDate: '',
     endDate: ''
   });
+  const [transactionSearchTerm, setTransactionSearchTerm] = useState('');
 
   const [newItem, setNewItem] = useState({
     item_name: '',
@@ -67,13 +72,13 @@ export default function ReceptionistInventory() {
       const response = await fetch('/api/auth/me', { credentials: 'include' });
       const data = await response.json();
       
-      // TEMPORARY: Auth check disabled for easier navigation during development
-      // if (!data.success || (data.user.role !== 'receptionist' && data.user.role !== 'admin')) {
-      //   navigate('/');
-      // }
+      // Enforce receptionist-only access (admin uses separate dashboard)
+      if (!data.success || data.user.role !== 'receptionist') {
+        navigate('/');
+      }
     } catch (error) {
-      // TEMPORARY: Don't redirect on error during development
-      // navigate('/');
+      // Redirect on auth error
+      navigate('/');
     }
   };
 
@@ -198,18 +203,34 @@ export default function ReceptionistInventory() {
       if (filters.startDate && t.transaction_date < filters.startDate) return false;
       if (filters.endDate && t.transaction_date > filters.endDate) return false;
       
+      // Search filter
+      if (transactionSearchTerm) {
+        const searchLower = transactionSearchTerm.toLowerCase();
+        return (
+          t.description.toLowerCase().includes(searchLower) ||
+          t.category.toLowerCase().includes(searchLower) ||
+          t.amount.toLowerCase().includes(searchLower)
+        );
+      }
+      
       return true;
     });
-  }, [transactions, filters]);
+  }, [transactions, filters, transactionSearchTerm]);
 
   const calculateTotals = () => {
     const income = filteredTransactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[₱,]/g, '')), 0);
+      .reduce((sum, t) => {
+        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
     
     const expenses = filteredTransactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[₱,]/g, '')), 0);
+      .reduce((sum, t) => {
+        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
 
     return { income, expenses, profit: income - expenses };
   };
@@ -226,6 +247,40 @@ export default function ReceptionistInventory() {
   };
 
   const hasActiveFilters = filters.type !== 'all' || filters.category !== 'all' || filters.startDate || filters.endDate;
+
+  // Calculate total price for new item
+  const calculatedTotal = useMemo(() => {
+    const qty = parseFloat(newItem.quantity) || 0;
+    const price = parseFloat(newItem.unit_price) || 0;
+    return qty * price;
+  }, [newItem.quantity, newItem.unit_price]);
+
+  // Format price without .00 if not needed
+  const formatPrice = (price: string) => {
+    const numPrice = parseFloat(price.replace(/[₱,]/g, ''));
+    return numPrice % 1 === 0 ? numPrice.toLocaleString() : numPrice.toLocaleString();
+  };
+
+  // Filtered inventory items
+  const filteredInventory = useMemo(() => {
+    if (!inventorySearchTerm) return inventory;
+    
+    const searchLower = inventorySearchTerm.toLowerCase();
+    return inventory.filter(item => 
+      item.item_name.toLowerCase().includes(searchLower) ||
+      item.category.toLowerCase().includes(searchLower) ||
+      item.unit.toLowerCase().includes(searchLower)
+    );
+  }, [inventory, inventorySearchTerm]);
+
+  // Paginated inventory items
+  const paginatedInventory = useMemo(() => {
+    const startIndex = (inventoryPage - 1) * inventoryItemsPerPage;
+    const endIndex = startIndex + inventoryItemsPerPage;
+    return filteredInventory.slice(startIndex, endIndex);
+  }, [filteredInventory, inventoryPage]);
+
+  const totalInventoryPages = Math.ceil(filteredInventory.length / inventoryItemsPerPage);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -315,60 +370,90 @@ export default function ReceptionistInventory() {
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-gray-900">Inventory Items</h2>
-              <button
-                onClick={() => setShowAddItem(!showAddItem)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-              >
-                <Plus size={20} />
-                Add Item
-              </button>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Search items..."
+                  value={inventorySearchTerm}
+                  onChange={(e) => {
+                    setInventorySearchTerm(e.target.value);
+                    setInventoryPage(1); // Reset to first page on search
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  onClick={() => setShowAddItem(!showAddItem)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                >
+                  <Plus size={20} />
+                  Add Item
+                </button>
+              </div>
             </div>
 
             {showAddItem && (
               <div className="p-6 border-b border-gray-200 bg-gray-50">
-                <form onSubmit={handleAddItem} className="grid grid-cols-5 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Item Name"
-                    value={newItem.item_name}
-                    onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
-                    className="px-4 py-2 border rounded-lg text-gray-900"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Category"
-                    value={newItem.category}
-                    onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                    className="px-4 py-2 border rounded-lg text-gray-900"
-                    required
-                  />
-                  <input
-                    type="number"
-                    placeholder="Quantity"
-                    value={newItem.quantity}
-                    onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
-                    className="px-4 py-2 border rounded-lg text-gray-900"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Unit (pcs, kg, etc)"
-                    value={newItem.unit}
-                    onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
-                    className="px-4 py-2 border rounded-lg text-gray-900"
-                    required
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Unit Price"
-                    value={newItem.unit_price}
-                    onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
-                    className="px-4 py-2 border rounded-lg text-gray-900"
-                    required
-                  />
-                  <button type="submit" className="col-span-5 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                <form onSubmit={handleAddItem} className="space-y-4">
+                  <div className="grid grid-cols-5 gap-4">
+                    <input
+                      type="text"
+                      placeholder="Item Name"
+                      value={newItem.item_name}
+                      onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
+                      className="px-4 py-2 border rounded-lg text-gray-900"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Category"
+                      value={newItem.category}
+                      onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                      className="px-4 py-2 border rounded-lg text-gray-900"
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Quantity"
+                      value={newItem.quantity}
+                      onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                      className="px-4 py-2 border rounded-lg text-gray-900"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Unit (pcs, kg, etc)"
+                      value={newItem.unit}
+                      onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
+                      className="px-4 py-2 border rounded-lg text-gray-900"
+                      required
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Unit Price"
+                      value={newItem.unit_price}
+                      onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
+                      className="px-4 py-2 border rounded-lg text-gray-900"
+                      required
+                    />
+                  </div>
+                  
+                  {/* Calculated Total Display */}
+                  {(newItem.quantity && newItem.unit_price) && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Calculated Total Value:</span>
+                        <span className="text-2xl font-bold text-blue-600">
+                          ₱{calculatedTotal.toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {newItem.quantity} × ₱{parseFloat(newItem.unit_price).toLocaleString()} = Total Value
+                      </p>
+                    </div>
+                  )}
+                  
+                  <button type="submit" className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
                     Save Item
                   </button>
                 </form>
@@ -384,18 +469,22 @@ export default function ReceptionistInventory() {
                     <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Quantity</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Unit Price</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Total Value</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Date Added</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {inventory.map((item) => (
+                  {paginatedInventory.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-100">
                       <td className="px-6 py-4 text-sm font-semibold text-black">{item.item_name}</td>
                       <td className="px-6 py-4 text-sm text-black">{item.category}</td>
                       <td className="px-6 py-4 text-sm text-black">{item.quantity} {item.unit}</td>
-                      <td className="px-6 py-4 text-sm text-black">{item.unit_price}</td>
+                      <td className="px-6 py-4 text-sm text-black">₱{formatPrice(item.unit_price)}</td>
                       <td className="px-6 py-4 text-sm font-semibold text-black">
                         ₱{(item.quantity * parseFloat(item.unit_price.replace(/[₱,]/g, ''))).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <div className="flex gap-2">
@@ -418,6 +507,49 @@ export default function ReceptionistInventory() {
                 </tbody>
               </table>
             </div>
+            
+            {/* Pagination Controls */}
+            {totalInventoryPages > 1 && (
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {((inventoryPage - 1) * inventoryItemsPerPage) + 1} to {Math.min(inventoryPage * inventoryItemsPerPage, filteredInventory.length)} of {filteredInventory.length} items
+                  {inventorySearchTerm && ` (filtered from ${inventory.length} total)`}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setInventoryPage(prev => Math.max(1, prev - 1))}
+                    disabled={inventoryPage === 1}
+                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalInventoryPages }, (_, i) => i + 1).map(pageNum => (
+                      <button
+                        key={pageNum}
+                        onClick={() => setInventoryPage(pageNum)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          pageNum === inventoryPage
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button
+                    onClick={() => setInventoryPage(prev => Math.min(totalInventoryPages, prev + 1))}
+                    disabled={inventoryPage === totalInventoryPages}
+                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -425,7 +557,14 @@ export default function ReceptionistInventory() {
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-gray-900">Financial Transactions</h2>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Search transactions..."
+                  value={transactionSearchTerm}
+                  onChange={(e) => setTransactionSearchTerm(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
@@ -584,7 +723,9 @@ export default function ReceptionistInventory() {
                   ) : (
                     filteredTransactions.map((transaction) => (
                     <tr key={transaction.id} className="hover:bg-gray-100">
-                      <td className="px-6 py-4 text-sm font-semibold text-black">{transaction.transaction_date}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-black">
+                        {new Date(transaction.transaction_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </td>
                       <td className="px-6 py-4 text-sm">
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                           transaction.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -597,7 +738,7 @@ export default function ReceptionistInventory() {
                       <td className={`px-6 py-4 text-sm font-semibold ${
                         transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {transaction.type === 'income' ? '+' : '-'}₱{parseFloat(transaction.amount.replace(/[₱,]/g, '')).toLocaleString()}
+                        {transaction.type === 'income' ? '+' : '-'}{transaction.amount}
                       </td>
                     </tr>
                   )))}

@@ -44,7 +44,7 @@ INSERT INTO room_bookings (user_id, user_email, room_name, room_numbers, check_i
 
 INSERT INTO room_bookings (user_id, user_email, room_name, room_numbers, check_in, check_out, guests, contact_number, special_requests, total_amount, payment_proof, status, actual_check_in, room_status) VALUES 
 (9, 'david.lim@gmail.com', 'Standard Room (Aircon)', '103', '2026-03-01', '2026-03-04', 2, '+63 923-789-0123', 'Honeymooners', '₱4,800', 'data:image/jpeg;base64,/9j/4AAQSkZJRg...', 'approved', '2026-03-01 14:30:00', 'checked_in'),
-(10, 'lisa.martinez@outlook.com', 'Non-Aircon Room', '109', '2026-02-29', '2026-03-03', 3, '+63 924-890-1234', 'Budget stay', '₱2,400', 'data:image/jpeg;base64,/9j/4AAQSkZJRg...', 'approved', '2026-02-29 15:00:00', 'checked_in');
+(10, 'lisa.martinez@outlook.com', 'Non-Aircon Room', '109', '2026-02-28', '2026-03-03', 3, '+63 924-890-1234', 'Budget stay', '₱2,400', 'data:image/jpeg;base64,/9j/4AAQSkZJRg...', 'approved', '2026-02-28 15:00:00', 'checked_in');
 
 INSERT INTO room_bookings (user_id, user_email, room_name, room_numbers, check_in, check_out, guests, contact_number, special_requests, total_amount, payment_proof, status, actual_check_in, actual_check_out, room_status) VALUES 
 (3, 'john.doe@gmail.com', 'Family Fan Room', '107', '2026-02-20', '2026-02-22', 4, '+63 917-123-4567', 'Family weekend getaway', '₱3,200', 'data:image/jpeg;base64,/9j/4AAQSkZJRg...', 'approved', '2026-02-20 14:00:00', '2026-02-22 11:30:00', 'checked_out'),
@@ -117,7 +117,7 @@ INSERT INTO financial_transactions (type, category, description, amount, transac
 ('income', 'Room Booking', 'Room 103 - David Lim - 3 nights', '₱4,800', '2026-03-01'),
 ('income', 'Amenity Booking', 'Conference Room - Sarah Cruz', '₱12,000', '2026-02-25'),
 ('income', 'Day Pass', 'Day Pass - 4 pax', '₱1,200', '2026-02-28'),
-('income', 'Room Booking', 'Room 109 - Lisa Martinez - 3 nights', '₱2,400', '2026-02-29'),
+('income', 'Room Booking', 'Room 109 - Lisa Martinez - 3 nights', '₱2,400', '2026-02-28'),
 ('income', 'Food & Beverage', 'Restaurant sales - Feb 28', '₱8,500', '2026-02-28'),
 ('income', 'Food & Beverage', 'Restaurant sales - Mar 1', '₱9,200', '2026-03-01'),
 ('income', 'Miscellaneous', 'Extra bedding charge', '₱500', '2026-03-01'),
@@ -127,7 +127,7 @@ INSERT INTO financial_transactions (type, category, description, amount, transac
 ('expense', 'Maintenance', 'Aircon servicing - Rooms 101-103', '₱6,500', '2026-02-27'),
 ('expense', 'Supplies', 'Pool chemicals and cleaning supplies', '₱8,200', '2026-02-26'),
 ('expense', 'Staff', 'Staff salaries - February', '₱85,000', '2026-02-28'),
-('expense', 'Food & Beverage', 'Kitchen supplies and ingredients', '₱18,500', '2026-02-29'),
+('expense', 'Food & Beverage', 'Kitchen supplies and ingredients', '₱18,500', '2026-02-28'),
 ('expense', 'Maintenance', 'Plumbing repair - Room 105', '₱3,200', '2026-02-25'),
 ('expense', 'Marketing', 'Social media advertising', '₱5,000', '2026-03-01'),
 ('expense', 'Miscellaneous', 'Office supplies', '₱2,800', '2026-02-28');
@@ -137,7 +137,7 @@ INSERT INTO financial_transactions (type, category, description, amount, transac
 -- ============================================
 
 UPDATE room_status SET status = 'occupied' , current_booking_id = 9, current_guest_email = 'david.lim@gmail.com', last_cleaned = '2026-03-01 13:00:00' WHERE room_numbers = '103';
-UPDATE room_status SET status = 'occupied', current_booking_id = 10, current_guest_email = 'lisa.martinez@outlook.com', last_cleaned = '2026-02-29 13:30:00' WHERE room_numbers = '109';
+UPDATE room_status SET status = 'occupied', current_booking_id = 10, current_guest_email = 'lisa.martinez@outlook.com', last_cleaned = '2026-02-28 13:30:00' WHERE room_numbers = '109';
 UPDATE room_status SET status = 'reserved', last_cleaned = '2026-03-01 10:00:00' WHERE room_numbers = '102';
 UPDATE room_status SET status = 'reserved', last_cleaned = '2026-03-01 10:30:00' WHERE room_numbers = '108';
 UPDATE room_status SET status = 'reserved', last_cleaned = '2026-03-01 11:00:00' WHERE room_numbers = '106';
@@ -155,7 +155,7 @@ INSERT INTO stay_history (user_id, user_email, booking_id, booking_type, room_na
 (3, 'john.doe@gmail.com', 11, 'room', 'Family Fan Room', '2026-02-20', '2026-02-22', '2026-02-20 14:00:00', '2026-02-22 11:30:00', 2, 4, 3200.00, 'completed', 'Very satisfied guests, left a tip', 5),
 (4, 'maria.santos@yahoo.com', 12, 'room', 'Standard Room (Aircon)', '2026-02-15', '2026-02-17', '2026-02-15 15:30:00', '2026-02-17 10:00:00', 2, 2, 3200.00, 'completed', 'Requested late checkout, room in good condition', 4),
 (9, 'david.lim@gmail.com', 9, 'room', 'Standard Room (Aircon)', '2026-03-01', '2026-03-04', '2026-03-01 14:30:00', NULL, 0, 2, 4800.00, 'completed', 'Honeymooners - very quiet guests', NULL),
-(10, 'lisa.martinez@outlook.com', 10, 'room', 'Non-Aircon Room', '2026-02-29', '2026-03-03', '2026-02-29 15:00:00', NULL, 0, 3, 2400.00, 'completed', 'Budget-conscious family', NULL);
+(10, 'lisa.martinez@outlook.com', 10, 'room', 'Non-Aircon Room', '2026-02-28', '2026-03-03', '2026-02-28 15:00:00', NULL, 0, 3, 2400.00, 'completed', 'Budget-conscious family', NULL);
 
 -- ============================================
 -- 9. BOOKING ISSUES
@@ -181,8 +181,8 @@ INSERT INTO notifications (user_id, type, title, message, link, related_booking_
 (7, 'booking', 'Booking Approved', 'Great news! Your room booking for Large Family Room has been approved.', NULL, 5, 'room', 'high'),
 (9, 'status_change', 'Check-In Successful', 'You have been checked in to room 103. Enjoy your stay!', NULL, 7, 'room', 'high'),
 (10, 'status_change', 'Check-In Successful', 'You have been checked in to room 109. Enjoy your stay!', NULL, 8, 'room', 'high'),
-(4, 'amenity', 'Amenity Booking Approved', 'Your Picnic Area A booking has been approved for March 5, 2026.', NULL, 3, 'amenity', 'normal'),
-(7, 'amenity', 'Amenity Booking Approved', 'Your Karaoke Room booking has been approved for March 8, 2026.', NULL, 4, 'amenity', 'normal'),
+(4, 'booking', 'Amenity Booking Approved', 'Your Picnic Area A booking has been approved for March 5, 2026.', NULL, 3, 'amenity', 'normal'),
+(7, 'booking', 'Amenity Booking Approved', 'Your Karaoke Room booking has been approved for March 8, 2026.', NULL, 4, 'amenity', 'normal'),
 (10, 'booking', 'Day Pass Approved', 'Your day pass booking for 6 people on March 2, 2026 has been approved.', NULL, 3, 'day_pass', 'normal');
 
 -- ============================================

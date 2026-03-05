@@ -87,6 +87,7 @@ interface InventoryItem {
   unit: string;
   unit_price: string;
   last_updated: string;
+  created_at: string;
 }
 
 interface Transaction {
@@ -167,6 +168,7 @@ export default function ReceptionistDashboard() {
     startDate: '',
     endDate: ''
   });
+  const [transactionSearchTerm, setTransactionSearchTerm] = useState('');
   
   // Booking filters and search
   const [roomSearchTerm, setRoomSearchTerm] = useState('');
@@ -175,6 +177,11 @@ export default function ReceptionistDashboard() {
   const [amenityStatusFilter, setAmenityStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [dayPassSearchTerm, setDayPassSearchTerm] = useState('');
   const [dayPassStatusFilter, setDayPassStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  
+  // Pagination for inventory
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const inventoryItemsPerPage = 20;
+  const [inventorySearchTerm, setInventorySearchTerm] = useState('');
   
   const navigate = useNavigate();
 
@@ -236,9 +243,19 @@ export default function ReceptionistDashboard() {
       if (filters.startDate && t.transaction_date < filters.startDate) return false;
       if (filters.endDate && t.transaction_date > filters.endDate) return false;
       
+      // Search filter
+      if (transactionSearchTerm) {
+        const searchLower = transactionSearchTerm.toLowerCase();
+        return (
+          t.description.toLowerCase().includes(searchLower) ||
+          t.category.toLowerCase().includes(searchLower) ||
+          t.amount.toLowerCase().includes(searchLower)
+        );
+      }
+      
       return true;
     });
-  }, [transactions, filters]);
+  }, [transactions, filters, transactionSearchTerm]);
 
   const clearFilters = () => {
     setFilters({
@@ -250,6 +267,27 @@ export default function ReceptionistDashboard() {
   };
 
   const hasActiveFilters = filters.type !== 'all' || filters.category !== 'all' || filters.startDate || filters.endDate;
+
+  // Filtered inventory items
+  const filteredInventory = useMemo(() => {
+    if (!inventorySearchTerm) return inventory;
+    
+    const searchLower = inventorySearchTerm.toLowerCase();
+    return inventory.filter(item => 
+      item.item_name.toLowerCase().includes(searchLower) ||
+      item.category.toLowerCase().includes(searchLower) ||
+      item.unit.toLowerCase().includes(searchLower)
+    );
+  }, [inventory, inventorySearchTerm]);
+
+  // Paginated inventory items
+  const paginatedInventory = useMemo(() => {
+    const startIndex = (inventoryPage - 1) * inventoryItemsPerPage;
+    const endIndex = startIndex + inventoryItemsPerPage;
+    return filteredInventory.slice(startIndex, endIndex);
+  }, [filteredInventory, inventoryPage, inventoryItemsPerPage]);
+
+  const totalInventoryPages = Math.ceil(filteredInventory.length / inventoryItemsPerPage);
 
   // Filtered room bookings
   const filteredRoomBookings = useMemo(() => {
@@ -351,15 +389,10 @@ export default function ReceptionistDashboard() {
       const response = await fetch('/api/auth/me', { credentials: 'include' });
       const data = await response.json();
       
-      // TEMPORARY: Auth check disabled for easier navigation during development
-      // if (!data.success || (data.user.role !== 'receptionist' && data.user.role !== 'admin')) {
-      //   window.location.href = '/';
-      // } else {
-      //   setUser(data.user);
-      // }
-      
-      // Set user if logged in, but allow access anyway
-      if (data.success && data.user) {
+      // Enforce receptionist-only access (admin uses separate dashboard)
+      if (!data.success || data.user.role !== 'receptionist') {
+        window.location.href = '/';
+      } else {
         setUser(data.user);
       }
     } catch (error) {
@@ -715,11 +748,17 @@ export default function ReceptionistDashboard() {
   const calculateTotals = () => {
     const income = filteredTransactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[₱,]/g, '')), 0);
+      .reduce((sum, t) => {
+        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
     
     const expenses = filteredTransactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[₱,]/g, '')), 0);
+      .reduce((sum, t) => {
+        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
     
     return {
       income,
@@ -802,17 +841,17 @@ export default function ReceptionistDashboard() {
       <div className="overflow-x-auto">
         <table className="w-full table-auto">
           <thead>
-            <tr className="bg-gradient-to-r from-primary to-primary/90">
-              <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">ID</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest</th>
-              {type === 'room' && <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room</th>}
-              {type === 'amenity' && <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amenity</th>}
-              <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Date</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Pax</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amount</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Proof</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
+            <tr className="bg-gray-800">
+              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Booking ID</th>
+              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Email</th>
+              {type === 'room' && <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Type</th>}
+              {type === 'amenity' && <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amenity</th>}
+              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Date</th>
+              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guests</th>
+              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Total Price</th>
+              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Payment Proof</th>
+              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
+              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
@@ -839,7 +878,9 @@ export default function ReceptionistDashboard() {
                 <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700 text-center">
                   {booking.guests || booking.number_of_pax}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">{booking.total_amount}</td>
+                <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
+                  {booking.total_amount}
+                </td>
                 <td className="px-3 py-3 whitespace-nowrap">
                   {booking.payment_proof ? (
                     <button
@@ -1265,6 +1306,12 @@ export default function ReceptionistDashboard() {
           
           {activeTab === 'rooms' && (
             <div className="bg-white rounded-2xl shadow-md border border-gray-200">
+              {/* Title Header */}
+              <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900">Room Booking Reservations</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage and review all room booking requests</p>
+              </div>
+              
               {/* Search and Filter UI */}
               <div className="p-6 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -1316,6 +1363,12 @@ export default function ReceptionistDashboard() {
           
           {activeTab === 'amenities' && (
             <div className="bg-white rounded-2xl shadow-md border border-gray-200">
+              {/* Title Header */}
+              <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900">Amenity Booking Reservations</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage and review all amenity booking requests</p>
+              </div>
+              
               {/* Search and Filter UI */}
               <div className="p-6 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -1367,6 +1420,12 @@ export default function ReceptionistDashboard() {
           
           {activeTab === 'daypass' && (
             <div className="bg-white rounded-2xl shadow-md border border-gray-200">
+              {/* Title Header */}
+              <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900">Day Pass Reservations</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage and review all day pass booking requests</p>
+              </div>
+              
               {/* Search and Filter UI */}
               <div className="p-6 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -1490,13 +1549,25 @@ export default function ReceptionistDashboard() {
                 <div className="bg-white rounded-xl shadow-md border border-gray-200">
                   <div className="p-6 border-b border-gray-200 flex justify-between items-center">
                     <h2 className="text-lg font-display font-bold text-gray-900 tracking-tight">Inventory Items</h2>
-                    <button
-                      onClick={() => setShowAddItem(!showAddItem)}
-                      className="bg-accent hover:bg-accent/90 text-accent-foreground px-5 py-2.5 rounded-xl border border-accent/50 hover:shadow-accent/20 hover:shadow-lg transition-all flex items-center gap-2 font-semibold"
-                    >
-                      <Plus size={20} />
-                      Add Item
-                    </button>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        placeholder="Search items..."
+                        value={inventorySearchTerm}
+                        onChange={(e) => {
+                          setInventorySearchTerm(e.target.value);
+                          setInventoryPage(1); // Reset to first page on search
+                        }}
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                      />
+                      <button
+                        onClick={() => setShowAddItem(!showAddItem)}
+                        className="bg-accent hover:bg-accent/90 text-accent-foreground px-5 py-2.5 rounded-xl border border-accent/50 hover:shadow-accent/20 hover:shadow-lg transition-all flex items-center gap-2 font-semibold"
+                      >
+                        <Plus size={20} />
+                        Add Item
+                      </button>
+                    </div>
                   </div>
 
                   {showAddItem && (
@@ -1559,11 +1630,12 @@ export default function ReceptionistDashboard() {
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Qty</th>
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Price</th>
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Total</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Date Added</th>
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-700/50 bg-gray-800">
-                        {inventory.map((item) => (
+                        {paginatedInventory.map((item) => (
                           <tr key={item.id} className="hover:bg-gray-700/30 transition-colors">
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.item_name}</td>
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.category}</td>
@@ -1571,6 +1643,9 @@ export default function ReceptionistDashboard() {
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.unit_price}</td>
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">
                               ₱{(item.quantity * parseFloat(item.unit_price.replace(/[₱,]/g, ''))).toLocaleString()}
+                            </td>
+                            <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">
+                              {new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                             </td>
                             <td className="px-3 py-2 text-xs whitespace-nowrap">
                               <div className="flex gap-1">
@@ -1595,6 +1670,49 @@ export default function ReceptionistDashboard() {
                       </tbody>
                     </table>
                   </div>
+                  
+                  {/* Pagination Controls */}
+                  {totalInventoryPages > 1 && (
+                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Showing {((inventoryPage - 1) * inventoryItemsPerPage) + 1} to {Math.min(inventoryPage * inventoryItemsPerPage, filteredInventory.length)} of {filteredInventory.length} items
+                        {inventorySearchTerm && ` (filtered from ${inventory.length} total)`}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setInventoryPage(prev => Math.max(1, prev - 1))}
+                          disabled={inventoryPage === 1}
+                          className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Previous
+                        </button>
+                        
+                        <div className="flex gap-1">
+                          {Array.from({ length: totalInventoryPages }, (_, i) => i + 1).map(pageNum => (
+                            <button
+                              key={pageNum}
+                              onClick={() => setInventoryPage(pageNum)}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                pageNum === inventoryPage
+                                  ? 'bg-primary text-white'
+                                  : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        <button
+                          onClick={() => setInventoryPage(prev => Math.min(totalInventoryPages, prev + 1))}
+                          disabled={inventoryPage === totalInventoryPages}
+                          className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1603,7 +1721,14 @@ export default function ReceptionistDashboard() {
                 <div className="bg-white rounded-xl shadow-md">
                   <div className="p-6 border-b border-gray-200 flex justify-between items-center">
                     <h2 className="text-lg font-display font-bold text-gray-900 tracking-tight">Financial Transactions</h2>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        placeholder="Search transactions..."
+                        value={transactionSearchTerm}
+                        onChange={(e) => setTransactionSearchTerm(e.target.value)}
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                      />
                       <button
                         onClick={() => setShowFilters(!showFilters)}
                         className={`px-4 py-2.5 rounded-xl flex items-center gap-2 font-semibold transition-all border-2 ${
@@ -1762,7 +1887,9 @@ export default function ReceptionistDashboard() {
                         ) : (
                           filteredTransactions.map((transaction) => (
                           <tr key={transaction.id} className="hover:bg-gray-700/30 transition-colors">
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{transaction.transaction_date}</td>
+                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">
+                              {new Date(transaction.transaction_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                            </td>
                             <td className="px-3 py-2 text-xs whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                                 transaction.type === 'income' ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-primary/20 text-primary border border-primary/30'
@@ -1775,7 +1902,7 @@ export default function ReceptionistDashboard() {
                             <td className={`px-3 py-2 text-xs font-semibold whitespace-nowrap ${
                               transaction.type === 'income' ? 'text-accent' : 'text-primary'
                             }`}>
-                              {transaction.type === 'income' ? '+' : '-'}₱{parseFloat(transaction.amount.replace(/[₱,]/g, '')).toLocaleString()}
+                              {transaction.type === 'income' ? '+' : '-'}{transaction.amount}
                             </td>
                           </tr>
                         )))}
@@ -1816,7 +1943,7 @@ export default function ReceptionistDashboard() {
                           </div>
                           <button
                             onClick={() => handleCheckIn(booking, 'room')}
-                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 sm:py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-lg text-sm"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 sm:py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-lg text-sm"
                           >
                             <LogIn size={16} />
                             Check In

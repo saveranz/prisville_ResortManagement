@@ -81,9 +81,19 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
       const data = await response.json();
 
       if (data.success) {
-        // Check if user is receptionist or admin
-        if (data.user.role === 'receptionist' || data.user.role === 'admin') {
-          // Show toast and redirect to receptionist dashboard
+        // Redirect based on user role
+        if (data.user.role === 'admin') {
+          // Admin - redirect to admin dashboard
+          toast({
+            variant: "success",
+            title: "Login Successful",
+            description: `Welcome back, ${data.user.name}`,
+          });
+          setTimeout(() => {
+            window.location.href = '/admin/dashboard';
+          }, 1000);
+        } else if (data.user.role === 'receptionist') {
+          // Receptionist - redirect to receptionist dashboard
           toast({
             variant: "success",
             title: "Login Successful",
@@ -116,14 +126,14 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn p-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl animate-scaleIn">
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl animate-scaleIn max-h-[95vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition z-10"
         >
           <X size={24} />
         </button>
@@ -233,7 +243,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
             >
               {loading ? "Please wait..." : (isRegistering ? "Sign Up" : "Sign In")}
             </button>

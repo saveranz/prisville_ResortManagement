@@ -34,12 +34,18 @@ export const getAnnouncements: RequestHandler = async (req, res) => {
         AND (a.end_date IS NULL OR a.end_date >= NOW())
     `;
 
-    const params: any[] = [userId];
+    const params: any[] = [userId || 0];
 
     // Filter by target audience
-    if (userRole) {
+    // For guests (not logged in) or 'guest' role, show only 'all' announcements
+    // For clients, show 'all' and 'clients' announcements
+    // For staff, show 'all' and 'staff' announcements
+    if (userRole && userRole !== 'guest') {
       query += ` AND (a.target_audience = 'all' OR a.target_audience = ?)`;
       params.push(userRole === 'client' ? 'clients' : 'staff');
+    } else {
+      // For guests, only show announcements targeted to 'all'
+      query += ` AND a.target_audience = 'all'`;
     }
 
     query += ` ORDER BY a.priority DESC, a.created_at DESC`;

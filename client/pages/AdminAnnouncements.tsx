@@ -336,7 +336,10 @@ export default function AdminAnnouncements() {
                 </p>
               </div>
             </div>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create Announcement
             </Button>
@@ -480,7 +483,7 @@ export default function AdminAnnouncements() {
             }
           }}
         >
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
             <DialogHeader>
               <DialogTitle>
                 {isCreateModalOpen ? "Create Announcement" : "Edit Announcement"}
@@ -647,6 +650,7 @@ export default function AdminAnnouncements() {
               </Button>
               <Button
                 onClick={isCreateModalOpen ? handleCreate : handleUpdate}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {isCreateModalOpen ? "Create" : "Update"}
               </Button>

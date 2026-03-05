@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, User, Calendar, Home, Umbrella, LogOut, ChevronDown } from "lucide-react";
+import { Menu, User, Calendar, Home, Umbrella, LogOut, ChevronDown, LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import LoginModal from "./LoginModal";
 import RoomBookingsModal from "./RoomBookingsModal";
@@ -240,17 +240,19 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                 <Calendar size={16} className="sm:hidden" />
               </Link>
             </>
-          ) : userRole === 'client' ? (
+          ) : (
             <>
-              {/* Notification Bell for Clients */}
+              {/* Notification Bell for All Logged-in Users */}
               {userId && <NotificationBell userId={userId} />}
               
-              <Link
-                  to="/"
-                  className="px-6 py-2 rounded-full bg-primary hover:bg-primary/90 text-white text-xs md:text-sm font-medium transition"
-                >
-                  Booking ↗
-                </Link>
+              {userRole === 'client' ? (
+                <>
+                  <Link
+                      to="/"
+                      className="px-6 py-2 rounded-full bg-primary hover:bg-primary/90 text-white text-xs md:text-sm font-medium transition"
+                    >
+                      Booking ↗
+                    </Link>
                 {/* User Dropdown - Only for Clients */}
                 <div className="relative z-[300]">
                   <button
@@ -267,7 +269,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl overflow-hidden animate-fadeInDown z-[300]">
                       {/* User Info */}
                       <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                        <p className="text-xs text-gray-500">Signed in as Client</p>
+                        <p className="text-xs text-gray-500">Signed in as {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'Client'}</p>
                         <p className="text-sm font-semibold text-black truncate">{userEmail}</p>
                       </div>
 
@@ -316,6 +318,42 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                         </button>
                       </div>
 
+                      {/* Admin/Receptionist Dashboard Links */}
+                      {(userRole === 'admin' || userRole === 'receptionist') && (
+                        <div className="border-t border-gray-200 py-2">
+                          {userRole === 'admin' && (
+                            <button
+                              onClick={() => {
+                                navigate('/admin/dashboard');
+                                setIsDropdownOpen(false);
+                              }}
+                              className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-primary/5 transition text-primary"
+                            >
+                              <LayoutDashboard size={18} />
+                              <div>
+                                <p className="text-sm font-medium">Admin Dashboard</p>
+                                <p className="text-xs text-primary/70">System management</p>
+                              </div>
+                            </button>
+                          )}
+                          {userRole === 'receptionist' && (
+                            <button
+                              onClick={() => {
+                                navigate('/receptionist/dashboard');
+                                setIsDropdownOpen(false);
+                              }}
+                              className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-primary/5 transition text-primary"
+                            >
+                              <LayoutDashboard size={18} />
+                              <div>
+                                <p className="text-sm font-medium">Receptionist Dashboard</p>
+                                <p className="text-xs text-primary/70">Manage bookings</p>
+                              </div>
+                            </button>
+                          )}
+                        </div>
+                      )}
+
                       {/* Logout */}
                       <div className="border-t border-gray-200">
                         <button
@@ -330,7 +368,60 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                   )}
                 </div>
               </>
-            ) : null}
+              ) : (userRole === 'admin' || userRole === 'receptionist') ? (
+                <>
+                  {/* Dashboard Link for Admin/Receptionist */}
+                  <button
+                    onClick={() => {
+                      if (userRole === 'admin') {
+                        navigate('/admin/dashboard');
+                      } else if (userRole === 'receptionist') {
+                        navigate('/receptionist/dashboard');
+                      }
+                    }}
+                    className="px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-white text-xs md:text-sm font-medium transition"
+                  >
+                    <LayoutDashboard className="inline h-4 w-4 mr-2" />
+                    Dashboard
+                  </button>
+                  
+                  {/* User Dropdown for Admin/Receptionist */}
+                  <div className="relative z-[300]">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/40 hover:border-white text-white text-xs md:text-sm font-medium transition"
+                    >
+                      <User size={16} />
+                      <span className="hidden md:inline">Account</span>
+                      <ChevronDown size={14} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {isDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl overflow-hidden animate-fadeInDown z-[300]">
+                        {/* User Info */}
+                        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                          <p className="text-xs text-gray-500">Signed in as {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User'}</p>
+                          <p className="text-sm font-semibold text-black truncate">{userEmail}</p>
+                        </div>
+
+                        {/* Logout */}
+                        <div className="py-2">
+                          <button
+                            onClick={handleLogout}
+                            className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 transition text-red-600"
+                          >
+                            <LogOut size={18} />
+                            <span className="text-sm font-medium">Logout</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </>
+          )}
         </div>
       </nav>
 

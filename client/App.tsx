@@ -13,26 +13,38 @@ import ReceptionistInventory from "./pages/ReceptionistInventory";
 import Debug from "./pages/Debug";
 import Announcements from "./pages/Announcements";
 import AdminAnnouncements from "./pages/AdminAnnouncements";
+import AdminDashboard from "./pages/AdminDashboard";
+import { useSiteSettings } from "./hooks/use-site-settings";
 
 const queryClient = new QueryClient();
+
+const AppContent = () => {
+  // Load and apply site settings globally
+  useSiteSettings();
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/debug" element={<Debug />} />
+        <Route path="/announcements" element={<Announcements />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+        <Route path="/receptionist/dashboard" element={<ReceptionistDashboard />} />
+        <Route path="/receptionist/inventory" element={<ReceptionistInventory />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/debug" element={<Debug />} />
-          <Route path="/announcements" element={<Announcements />} />
-          <Route path="/admin/announcements" element={<AdminAnnouncements />} />
-          <Route path="/receptionist/dashboard" element={<ReceptionistDashboard />} />
-          <Route path="/receptionist/inventory" element={<ReceptionistInventory />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AppContent />
     </TooltipProvider>
   </QueryClientProvider>
 );

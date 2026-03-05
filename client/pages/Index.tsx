@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { HelpCircle } from "lucide-react";
 import Header from "@/components/Header";
 import BookingWidget from "@/components/BookingWidget";
 import RoomDetailModal from "@/components/RoomDetailModal";
@@ -6,6 +7,7 @@ import AmenityDetailModal from "@/components/AmenityDetailModal";
 import DayPassDetailModal from "@/components/DayPassDetailModal";
 import Recommendations from "@/components/Recommendations";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import FAQModal from "@/components/FAQModal";
 
 export default function Index() {
   const [searchData, setSearchData] = useState<any>(null);
@@ -21,6 +23,7 @@ export default function Index() {
   const [userId, setUserId] = useState<number | null>(null);
   const [userRole, setUserRole] = useState<string>("");
   const [openRoomBookingsTrigger, setOpenRoomBookingsTrigger] = useState(0);
+  const [isFAQModalOpen, setIsFAQModalOpen] = useState(false);
   const isCheckingAuth = useRef(false);
   const lastScrollY = useRef(0);
   const hasScrolledDown = useRef(false);
@@ -157,9 +160,10 @@ export default function Index() {
       />
       
       {/* Announcement Banner */}
-      {isLoggedIn && userId && userRole && (
-        <AnnouncementBanner userId={userId} userRole={userRole} />
-      )}
+      <AnnouncementBanner 
+        userId={userId || 0} 
+        userRole={userRole || 'guest'} 
+      />
 
       {/* Hero Section */}
       <section className="relative w-full h-screen min-h-[600px] overflow-hidden">
@@ -863,6 +867,24 @@ export default function Index() {
         onLoginClick={handleLoginClick}
         pricePerPax="₱100"
       />
+
+      {/* FAQ Modal */}
+      <FAQModal
+        isOpen={isFAQModalOpen}
+        onClose={() => setIsFAQModalOpen(false)}
+      />
+
+      {/* Floating FAQ Button */}
+      <button
+        onClick={() => setIsFAQModalOpen(true)}
+        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-primary to-accent text-white p-4 rounded-full shadow-2xl hover:scale-110 hover:shadow-primary/50 transition-all duration-300 group"
+        aria-label="Help & FAQ"
+      >
+        <HelpCircle size={28} className="group-hover:rotate-12 transition-transform" />
+        <span className="absolute -top-2 -right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+          ?
+        </span>
+      </button>
     </div>
   );
 }

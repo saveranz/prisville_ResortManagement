@@ -20,6 +20,12 @@ import { getUserStayHistory, getAllStayHistory, getGuestStatistics, updateStayHi
 import { createBookingIssue, getAllBookingIssues, getUserBookingIssues, getBookingIssueById, updateBookingIssueStatus, updateBookingIssuePriority, deleteBookingIssue } from "./routes/bookingIssues";
 import { getUserNotifications, getUnreadCount, markAsRead, markAllAsRead, createNotification, deleteNotification } from "./routes/notifications";
 import { getAnnouncements, getAllAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, markAnnouncementViewed, toggleAnnouncementStatus } from "./routes/announcements";
+import { getDashboardStats, getAllUsers, updateUserRole, getGuestActivity, getRoomOccupancy, getBookingIssues } from "./routes/admin";
+import { generateBookingReport, generateRevenueReport, generateOccupancyReport, generateGuestReport } from "./routes/reports";
+import { getAllRooms, getAllAmenities, getDayPassStats, getRoomAvailabilityCalendar } from "./routes/facilities";
+import { getAllSettings, updateSetting, updateMultipleSettings, resetSettings } from "./routes/siteSettings";
+import { getAllFAQs, getAdminFAQs, createFAQ, updateFAQ, deleteFAQ, submitInquiry, getAllInquiries, getInquiryStats, updateInquiryStatus, respondToInquiry } from "./routes/faq";
+import { requireAuth, requireAdmin, requireStaff, requireReceptionist } from "./middleware/auth";
 
 const MySQLStore = MySQLStoreFactory(session);
 
@@ -89,29 +95,29 @@ export function createServer() {
   app.get("/api/bookings/room/check-availability", checkRoomAvailability);
   app.post("/api/bookings/room", createRoomBooking);
   app.get("/api/bookings/room", getUserRoomBookings);
-  app.get("/api/bookings/room/all", getAllRoomBookings);
-  app.put("/api/bookings/room/status", updateBookingStatus);
+  app.get("/api/bookings/room/all", requireStaff, getAllRoomBookings);
+  app.put("/api/bookings/room/status", requireStaff, updateBookingStatus);
 
   // Amenity Booking routes
   app.get("/api/bookings/amenity/check-availability", checkAmenityAvailability);
   app.post("/api/bookings/amenity", createAmenityBooking);
   app.get("/api/bookings/amenity", getUserAmenityBookings);
-  app.get("/api/bookings/amenity/all", getAllAmenityBookings);
-  app.put("/api/bookings/amenity/status", updateAmenityBookingStatus);
+  app.get("/api/bookings/amenity/all", requireStaff, getAllAmenityBookings);
+  app.put("/api/bookings/amenity/status", requireStaff, updateAmenityBookingStatus);
 
   // Day Pass Booking routes
   app.get("/api/bookings/day-pass/check-availability", checkDayPassAvailability);
   app.post("/api/bookings/day-pass", createDayPassBooking);
   app.get("/api/bookings/day-pass", getUserDayPassBookings);
-  app.get("/api/bookings/day-pass/all", getAllDayPassBookings);
-  app.put("/api/bookings/day-pass/status", updateDayPassBookingStatus);
+  app.get("/api/bookings/day-pass/all", requireStaff, getAllDayPassBookings);
+  app.put("/api/bookings/day-pass/status", requireStaff, updateDayPassBookingStatus);
 
-  // Inventory routes
-  app.get("/api/inventory", getInventoryItems);
-  app.post("/api/inventory", addInventoryItem);
-  app.put("/api/inventory/update-quantity", updateInventoryQuantity);
-  app.get("/api/inventory/transactions", getTransactions);
-  app.post("/api/inventory/transactions", addTransaction);
+  // Inventory routes - Require receptionist/admin authorization
+  app.get("/api/inventory", requireReceptionist, getInventoryItems);
+  app.post("/api/inventory", requireReceptionist, addInventoryItem);
+  app.put("/api/inventory/update-quantity", requireReceptionist, updateInventoryQuantity);
+  app.get("/api/inventory/transactions", requireReceptionist, getTransactions);
+  app.post("/api/inventory/transactions", requireReceptionist, addTransaction);
   
   // Recommendation routes
   app.get("/api/recommendations", getUserRecommendations);
@@ -123,31 +129,31 @@ export function createServer() {
   app.get("/api/activity/history", getUserActivity);
   app.get("/api/activity/stats", getUserActivityStats);
   
-  // Room Status routes
-  app.get("/api/room-status", getAllRoomStatus);
-  app.put("/api/room-status", updateRoomStatus);
-  app.put("/api/room-status/cleaned", markRoomCleaned);
-  app.get("/api/room-status/by-number", getRoomStatusByNumbers);
+  // Room Status routes - Require receptionist/admin authorization
+  app.get("/api/room-status", requireReceptionist, getAllRoomStatus);
+  app.put("/api/room-status", requireReceptionist, updateRoomStatus);
+  app.put("/api/room-status/cleaned", requireReceptionist, markRoomCleaned);
+  app.get("/api/room-status/by-number", requireReceptionist, getRoomStatusByNumbers);
   
-  // Check-in/Check-out routes
-  app.post("/api/checkin", checkInGuest);
-  app.post("/api/checkout", checkOutGuest);
-  app.get("/api/checkin/current", getCurrentlyCheckedIn);
+  // Check-in/Check-out routes - Require receptionist/admin authorization
+  app.post("/api/checkin", requireReceptionist, checkInGuest);
+  app.post("/api/checkout", requireReceptionist, checkOutGuest);
+  app.get("/api/checkin/current", requireReceptionist, getCurrentlyCheckedIn);
   
-  // Stay History routes
+  // Stay History routes - Require staff authorization for management, regular users can view their own
   app.get("/api/stay-history/user", getUserStayHistory);
-  app.get("/api/stay-history/all", getAllStayHistory);
-  app.get("/api/stay-history/statistics", getGuestStatistics);
-  app.put("/api/stay-history", updateStayHistory);
+  app.get("/api/stay-history/all", requireStaff, getAllStayHistory);
+  app.get("/api/stay-history/statistics", requireStaff, getGuestStatistics);
+  app.put("/api/stay-history", requireStaff, updateStayHistory);
   
   // Booking Issues routes
   app.post("/api/booking-issues", createBookingIssue);
-  app.get("/api/booking-issues", getAllBookingIssues);
+  app.get("/api/booking-issues", requireStaff, getAllBookingIssues);
   app.get("/api/booking-issues/user", getUserBookingIssues);
   app.get("/api/booking-issues/:id", getBookingIssueById);
-  app.put("/api/booking-issues/status", updateBookingIssueStatus);
-  app.put("/api/booking-issues/priority", updateBookingIssuePriority);
-  app.delete("/api/booking-issues/:id", deleteBookingIssue);
+  app.put("/api/booking-issues/status", requireStaff, updateBookingIssueStatus);
+  app.put("/api/booking-issues/priority", requireStaff, updateBookingIssuePriority);
+  app.delete("/api/booking-issues/:id", requireStaff, deleteBookingIssue);
   
   // Notification routes
   app.get("/api/notifications", getUserNotifications);
@@ -160,11 +166,51 @@ export function createServer() {
   // Announcement routes
   app.get("/api/announcements", getAnnouncements);
   app.get("/api/announcements/all", getAllAnnouncements);
-  app.post("/api/announcements", createAnnouncement);
-  app.put("/api/announcements/:announcementId", updateAnnouncement);
-  app.delete("/api/announcements/:announcementId", deleteAnnouncement);
+  app.post("/api/announcements", requireAdmin, createAnnouncement);
+  app.put("/api/announcements/:announcementId", requireAdmin, updateAnnouncement);
+  app.delete("/api/announcements/:announcementId", requireAdmin, deleteAnnouncement);
   app.post("/api/announcements/:announcementId/view", markAnnouncementViewed);
-  app.put("/api/announcements/:announcementId/toggle-status", toggleAnnouncementStatus);
+  app.put("/api/announcements/:announcementId/toggle-status", requireAdmin, toggleAnnouncementStatus);
+  
+  // Admin routes - All require admin authorization
+  app.get("/api/admin/dashboard/stats", requireAdmin, getDashboardStats);
+  app.get("/api/admin/users", requireAdmin, getAllUsers);
+  app.put("/api/admin/users/:userId/role", requireAdmin, updateUserRole);
+  app.get("/api/admin/guest-activity", requireAdmin, getGuestActivity);
+  app.get("/api/admin/room-occupancy", requireAdmin, getRoomOccupancy);
+  app.get("/api/admin/booking-issues", requireAdmin, getBookingIssues);
+  
+  // Reports routes - Require admin authorization
+  app.get("/api/reports/bookings", requireAdmin, generateBookingReport);
+  app.get("/api/reports/revenue", requireAdmin, generateRevenueReport);
+  app.get("/api/reports/occupancy", requireAdmin, generateOccupancyReport);
+  app.get("/api/reports/guests", requireAdmin, generateGuestReport);
+  
+  // Facilities routes
+  app.get("/api/facilities/rooms", getAllRooms);
+  app.get("/api/facilities/amenities", getAllAmenities);
+  app.get("/api/facilities/daypass-stats", getDayPassStats);
+  app.get("/api/facilities/room-calendar", getRoomAvailabilityCalendar);
+  
+  // Site Settings routes - Admin only
+  app.get("/api/site-settings", getAllSettings);
+  app.put("/api/site-settings/:settingKey", requireAdmin, updateSetting);
+  app.put("/api/site-settings", requireAdmin, updateMultipleSettings);
+  app.post("/api/site-settings/reset", requireAdmin, resetSettings);
+  
+  // FAQ routes
+  app.get("/api/faqs", getAllFAQs); // Public
+  app.get("/api/admin/faqs", requireAdmin, getAdminFAQs);
+  app.post("/api/admin/faqs", requireAdmin, createFAQ);
+  app.put("/api/admin/faqs/:faqId", requireAdmin, updateFAQ);
+  app.delete("/api/admin/faqs/:faqId", requireAdmin, deleteFAQ);
+  
+  // Inquiry routes
+  app.post("/api/inquiries", submitInquiry); // Public
+  app.get("/api/admin/inquiries", requireStaff, getAllInquiries);
+  app.get("/api/admin/inquiries/stats", requireStaff, getInquiryStats);
+  app.put("/api/admin/inquiries/:inquiryId/status", requireStaff, updateInquiryStatus);
+  app.post("/api/admin/inquiries/:inquiryId/respond", requireStaff, respondToInquiry);
   
   return app;
 }

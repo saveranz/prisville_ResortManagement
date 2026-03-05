@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { Announcement } from "@shared/api";
 
 interface AnnouncementBannerProps {
-  userId: number;
+  userId: number | null;
   userRole: string;
 }
 
@@ -23,8 +23,12 @@ export function AnnouncementBanner({ userId, userRole }: AnnouncementBannerProps
   // Fetch active announcements with useCallback
   const fetchAnnouncements = useCallback(async () => {
     try {
+      // Use 0 for userId and 'guest' for userRole if not provided
+      const effectiveUserId = userId || 0;
+      const effectiveUserRole = userRole || 'guest';
+      
       const response = await fetch(
-        `/api/announcements?userId=${userId}&userRole=${userRole}`
+        `/api/announcements?userId=${effectiveUserId}&userRole=${effectiveUserRole}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -40,6 +44,9 @@ export function AnnouncementBanner({ userId, userRole }: AnnouncementBannerProps
 
   // Mark announcement as viewed with useCallback
   const markAsViewed = useCallback(async (announcementId: number) => {
+    // Only mark as viewed if user is logged in
+    if (!userId || userId === 0) return;
+    
     try {
       await fetch(`/api/announcements/${announcementId}/view`, {
         method: "POST",
@@ -132,7 +139,7 @@ export function AnnouncementBanner({ userId, userRole }: AnnouncementBannerProps
 
   return (
     <div
-      className="relative text-white shadow-lg animate-in slide-in-from-top"
+      className="relative text-white shadow-lg animate-in slide-in-from-top mt-20"
       style={getBgColor()}
     >
       <div className="container mx-auto px-4 py-3">

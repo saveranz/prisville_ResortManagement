@@ -30,10 +30,14 @@ export default function ReceptionistLogin() {
         if (data.user.role === 'receptionist' || data.user.role === 'admin') {
           setSuccess(`Welcome back, ${data.user.name}! Redirecting to dashboard...`);
           setTimeout(() => {
-            window.location.href = '/receptionist/dashboard';
+            if (data.user.role === 'admin') {
+              window.location.href = '/admin/dashboard';
+            } else {
+              window.location.href = '/receptionist/dashboard';
+            }
           }, 1500);
         } else {
-          setError('Access denied. Receptionist access only.');
+          setError('Access denied. Staff access only.');
           setLoading(false);
         }
       } else {
@@ -53,8 +57,8 @@ export default function ReceptionistLogin() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full shadow-md flex items-center justify-center overflow-hidden bg-white">
             <img src="/PTR-logo.png" alt="Prisville Logo" className="w-full h-full object-cover scale-150" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-gray-900 mb-2 tracking-tight">Receptionist Portal</h1>
-          <p className="text-gray-600 font-medium">Login to manage bookings and inventory</p>
+          <h1 className="text-3xl font-display font-bold text-gray-900 mb-2 tracking-tight">Staff Portal</h1>
+          <p className="text-gray-600 font-medium">Admin & Receptionist Access</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">

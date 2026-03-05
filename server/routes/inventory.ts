@@ -15,7 +15,7 @@ export const getInventoryItems: RequestHandler = async (req, res) => {
     }
 
     const [items] = await db.query<RowDataPacket[]>(
-      `SELECT * FROM inventory_items ORDER BY category, item_name`
+      `SELECT * FROM inventory_items ORDER BY id DESC`
     );
 
     return res.json({
@@ -48,7 +48,7 @@ export const addInventoryItem: RequestHandler = async (req, res) => {
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO inventory_items (item_name, category, quantity, unit, unit_price) 
        VALUES (?, ?, ?, ?, ?)`,
-      [item_name, category, parseInt(quantity), unit, `₱${parseFloat(unit_price).toFixed(2)}`]
+      [item_name, category, parseInt(quantity), unit, `₱${parseFloat(unit_price)}`]
     );
 
     return res.json({
@@ -155,7 +155,7 @@ export const addTransaction: RequestHandler = async (req, res) => {
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO financial_transactions (type, category, description, amount, transaction_date) 
        VALUES (?, ?, ?, ?, ?)`,
-      [type, category, description, `₱${parseFloat(amount).toFixed(2)}`, transaction_date]
+      [type, category, description, `₱${parseFloat(amount)}`, transaction_date]
     );
 
     return res.json({
