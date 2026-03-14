@@ -1,5 +1,5 @@
-import { X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 
 interface AmenityBookingsModalProps {
   isOpen: boolean;
@@ -25,6 +25,8 @@ interface AmenityBooking {
 export default function AmenityBookingsModal({ isOpen, onClose, userEmail }: AmenityBookingsModalProps) {
   const [bookings, setBookings] = useState<AmenityBooking[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     if (isOpen) {
@@ -43,6 +45,7 @@ export default function AmenityBookingsModal({ isOpen, onClose, userEmail }: Ame
         const data = await response.json();
         if (data.success) {
           setBookings(data.bookings);
+          setCurrentPage(1); // Reset to first page on new data
         }
       }
     } catch (error) {
@@ -50,6 +53,23 @@ export default function AmenityBookingsModal({ isOpen, onClose, userEmail }: Ame
     } finally {
       setLoading(false);
     }
+  };
+
+  // Pagination logic
+  const paginatedBookings = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return bookings.slice(startIndex, endIndex);
+  }, [bookings, currentPage]);
+
+  const totalPages = Math.ceil(bookings.length / itemsPerPage);
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -138,7 +158,7 @@ export default function AmenityBookingsModal({ isOpen, onClose, userEmail }: Ame
               </div>
             ) : (
               <div className="space-y-4">
-                {bookings.map((booking) => (
+                {paginatedBookings.map((booking) => (
                   <div
                     key={booking.id}
                     className="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow"
@@ -195,6 +215,36 @@ export default function AmenityBookingsModal({ isOpen, onClose, userEmail }: Ame
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {!loading && bookings.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                <p className="text-sm text-gray-600">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, bookings.length)} of {bookings.length} bookings
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </button>
+                  <span className="px-4 py-1 text-sm font-medium text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             )}
           </div>

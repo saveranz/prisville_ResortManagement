@@ -14,6 +14,8 @@ import Debug from "./pages/Debug";
 import Announcements from "./pages/Announcements";
 import AdminAnnouncements from "./pages/AdminAnnouncements";
 import AdminDashboard from "./pages/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import { useSiteSettings } from "./hooks/use-site-settings";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const AppContent = () => {
         <Route path="/" element={<Index />} />
         <Route path="/debug" element={<Debug />} />
         <Route path="/announcements" element={<Announcements />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/announcements" element={<AdminAnnouncements />} />
         <Route path="/receptionist/dashboard" element={<ReceptionistDashboard />} />

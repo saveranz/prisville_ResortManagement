@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { HelpCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import BookingWidget from "@/components/BookingWidget";
 import RoomDetailModal from "@/components/RoomDetailModal";
@@ -10,6 +12,8 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FAQModal from "@/components/FAQModal";
 
 export default function Index() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
   const [searchData, setSearchData] = useState<any>(null);
   const [availabilityResults, setAvailabilityResults] = useState<any>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
@@ -59,6 +63,22 @@ export default function Index() {
     };
     checkAuth();
   }, []);
+
+  // Check for verification success and show toast
+  useEffect(() => {
+    const verification = searchParams.get('verification');
+    if (verification === 'success') {
+      // Show success toast
+      toast({
+        variant: "success",
+        title: "Registration Successful!",
+        description: "Your account has been verified and you're now logged in. Welcome to Prisville Resort!",
+      });
+      
+      // Remove the query parameter from URL
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams, toast]);
 
   // Scroll to top refresh functionality with throttle
   useEffect(() => {

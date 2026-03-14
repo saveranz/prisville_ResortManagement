@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu } from "lucide-react";
+import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -178,6 +178,12 @@ export default function ReceptionistDashboard() {
   const [dayPassSearchTerm, setDayPassSearchTerm] = useState('');
   const [dayPassStatusFilter, setDayPassStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   
+  // Pagination for bookings
+  const [roomBookingsPage, setRoomBookingsPage] = useState(1);
+  const [amenityBookingsPage, setAmenityBookingsPage] = useState(1);
+  const [dayPassBookingsPage, setDayPassBookingsPage] = useState(1);
+  const bookingsPerPage = 20;
+  
   // Pagination for inventory
   const [inventoryPage, setInventoryPage] = useState(1);
   const inventoryItemsPerPage = 20;
@@ -310,6 +316,15 @@ export default function ReceptionistDashboard() {
     });
   }, [roomBookings, roomStatusFilter, roomSearchTerm]);
 
+  // Paginated room bookings
+  const paginatedRoomBookings = useMemo(() => {
+    const startIndex = (roomBookingsPage - 1) * bookingsPerPage;
+    const endIndex = startIndex + bookingsPerPage;
+    return filteredRoomBookings.slice(startIndex, endIndex);
+  }, [filteredRoomBookings, roomBookingsPage]);
+
+  const totalRoomBookingsPages = Math.ceil(filteredRoomBookings.length / bookingsPerPage);
+
   // Filtered amenity bookings
   const filteredAmenityBookings = useMemo(() => {
     return amenityBookings.filter(booking => {
@@ -330,6 +345,15 @@ export default function ReceptionistDashboard() {
     });
   }, [amenityBookings, amenityStatusFilter, amenitySearchTerm]);
 
+  // Paginated amenity bookings
+  const paginatedAmenityBookings = useMemo(() => {
+    const startIndex = (amenityBookingsPage - 1) * bookingsPerPage;
+    const endIndex = startIndex + bookingsPerPage;
+    return filteredAmenityBookings.slice(startIndex, endIndex);
+  }, [filteredAmenityBookings, amenityBookingsPage]);
+
+  const totalAmenityBookingsPages = Math.ceil(filteredAmenityBookings.length / bookingsPerPage);
+
   // Filtered day pass bookings
   const filteredDayPassBookings = useMemo(() => {
     return dayPassBookings.filter(booking => {
@@ -349,6 +373,15 @@ export default function ReceptionistDashboard() {
       return true;
     });
   }, [dayPassBookings, dayPassStatusFilter, dayPassSearchTerm]);
+
+  // Paginated day pass bookings
+  const paginatedDayPassBookings = useMemo(() => {
+    const startIndex = (dayPassBookingsPage - 1) * bookingsPerPage;
+    const endIndex = startIndex + bookingsPerPage;
+    return filteredDayPassBookings.slice(startIndex, endIndex);
+  }, [filteredDayPassBookings, dayPassBookingsPage]);
+
+  const totalDayPassBookingsPages = Math.ceil(filteredDayPassBookings.length / bookingsPerPage);
 
   useEffect(() => {
     checkAuth();
@@ -1354,10 +1387,41 @@ export default function ReceptionistDashboard() {
                   )}
                 </div>
                 <div className="mt-3 text-sm text-gray-600">
-                  Showing <span className="font-semibold text-primary">{filteredRoomBookings.length}</span> of {roomBookings.length} bookings
+                  Showing <span className="font-semibold text-primary">{paginatedRoomBookings.length}</span> of {filteredRoomBookings.length} bookings
+                  {filteredRoomBookings.length !== roomBookings.length && ` (filtered from ${roomBookings.length} total)`}
                 </div>
               </div>
-              {renderBookingTable(filteredRoomBookings, 'room')}
+              {renderBookingTable(paginatedRoomBookings, 'room')}
+              
+              {/* Pagination Controls */}
+              {filteredRoomBookings.length > bookingsPerPage && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    Showing {((roomBookingsPage - 1) * bookingsPerPage) + 1} to {Math.min(roomBookingsPage * bookingsPerPage, filteredRoomBookings.length)} of {filteredRoomBookings.length}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setRoomBookingsPage(prev => Math.max(1, prev - 1))}
+                      disabled={roomBookingsPage === 1}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </button>
+                    <span className="px-4 py-1.5 text-sm font-medium text-gray-700">
+                      Page {roomBookingsPage} of {totalRoomBookingsPages}
+                    </span>
+                    <button
+                      onClick={() => setRoomBookingsPage(prev => Math.min(totalRoomBookingsPages, prev + 1))}
+                      disabled={roomBookingsPage === totalRoomBookingsPages}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
@@ -1411,10 +1475,41 @@ export default function ReceptionistDashboard() {
                   )}
                 </div>
                 <div className="mt-3 text-sm text-gray-600">
-                  Showing <span className="font-semibold text-primary">{filteredAmenityBookings.length}</span> of {amenityBookings.length} bookings
+                  Showing <span className="font-semibold text-primary">{paginatedAmenityBookings.length}</span> of {filteredAmenityBookings.length} bookings
+                  {filteredAmenityBookings.length !== amenityBookings.length && ` (filtered from ${amenityBookings.length} total)`}
                 </div>
               </div>
-              {renderBookingTable(filteredAmenityBookings, 'amenity')}
+              {renderBookingTable(paginatedAmenityBookings, 'amenity')}
+              
+              {/* Pagination Controls */}
+              {filteredAmenityBookings.length > bookingsPerPage && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    Showing {((amenityBookingsPage - 1) * bookingsPerPage) + 1} to {Math.min(amenityBookingsPage * bookingsPerPage, filteredAmenityBookings.length)} of {filteredAmenityBookings.length}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setAmenityBookingsPage(prev => Math.max(1, prev - 1))}
+                      disabled={amenityBookingsPage === 1}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </button>
+                    <span className="px-4 py-1.5 text-sm font-medium text-gray-700">
+                      Page {amenityBookingsPage} of {totalAmenityBookingsPages}
+                    </span>
+                    <button
+                      onClick={() => setAmenityBookingsPage(prev => Math.min(totalAmenityBookingsPages, prev + 1))}
+                      disabled={amenityBookingsPage === totalAmenityBookingsPages}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
@@ -1468,10 +1563,41 @@ export default function ReceptionistDashboard() {
                   )}
                 </div>
                 <div className="mt-3 text-sm text-gray-600">
-                  Showing <span className="font-semibold text-primary">{filteredDayPassBookings.length}</span> of {dayPassBookings.length} bookings
+                  Showing <span className="font-semibold text-primary">{paginatedDayPassBookings.length}</span> of {filteredDayPassBookings.length} bookings
+                  {filteredDayPassBookings.length !== dayPassBookings.length && ` (filtered from ${dayPassBookings.length} total)`}
                 </div>
               </div>
-              {renderBookingTable(filteredDayPassBookings, 'daypass')}
+              {renderBookingTable(paginatedDayPassBookings, 'daypass')}
+              
+              {/* Pagination Controls */}
+              {filteredDayPassBookings.length > bookingsPerPage && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    Showing {((dayPassBookingsPage - 1) * bookingsPerPage) + 1} to {Math.min(dayPassBookingsPage * bookingsPerPage, filteredDayPassBookings.length)} of {filteredDayPassBookings.length}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setDayPassBookingsPage(prev => Math.max(1, prev - 1))}
+                      disabled={dayPassBookingsPage === 1}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </button>
+                    <span className="px-4 py-1.5 text-sm font-medium text-gray-700">
+                      Page {dayPassBookingsPage} of {totalDayPassBookingsPages}
+                    </span>
+                    <button
+                      onClick={() => setDayPassBookingsPage(prev => Math.min(totalDayPassBookingsPages, prev + 1))}
+                      disabled={dayPassBookingsPage === totalDayPassBookingsPages}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           

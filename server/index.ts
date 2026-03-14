@@ -6,7 +6,7 @@ import MySQLStoreFactory from "express-mysql-session";
 import { handleDemo } from "./routes/demo";
 import pool, { testConnection } from "./db";
 import { testDatabase } from "./routes/database";
-import { register, login, getCurrentUser, logout } from "./routes/auth";
+import { register, login, getCurrentUser, logout, requestPasswordReset, verifyResetToken, resetPassword, verifyEmail, resendVerification } from "./routes/auth";
 import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates } from "./routes/bookings";
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
@@ -89,6 +89,11 @@ export function createServer() {
   app.post("/api/auth/login", login);
   app.get("/api/auth/me", getCurrentUser);
   app.post("/api/auth/logout", logout);
+  app.post("/api/auth/request-password-reset", requestPasswordReset);
+  app.post("/api/auth/verify-reset-token", verifyResetToken);
+  app.post("/api/auth/reset-password", resetPassword);
+  app.post("/api/auth/verify-email", verifyEmail);
+  app.post("/api/auth/resend-verification", resendVerification);
 
   // Booking routes
   app.get("/api/bookings/room/unavailable-dates", getUnavailableDates);

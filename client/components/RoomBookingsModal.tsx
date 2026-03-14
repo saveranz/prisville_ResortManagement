@@ -1,5 +1,5 @@
-import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
 
 interface Booking {
   id: number;
@@ -24,6 +24,8 @@ export default function RoomBookingsModal({ isOpen, onClose }: RoomBookingsModal
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     if (isOpen) {
@@ -42,6 +44,7 @@ export default function RoomBookingsModal({ isOpen, onClose }: RoomBookingsModal
 
       if (data.success) {
         setBookings(data.bookings);
+        setCurrentPage(1); // Reset to first page on new data
       } else {
         setError(data.message);
       }
@@ -50,6 +53,23 @@ export default function RoomBookingsModal({ isOpen, onClose }: RoomBookingsModal
     } finally {
       setLoading(false);
     }
+  };
+
+  // Pagination logic
+  const paginatedBookings = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return bookings.slice(startIndex, endIndex);
+  }, [bookings, currentPage]);
+
+  const totalPages = Math.ceil(bookings.length / itemsPerPage);
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
   };
 
   if (!isOpen) return null;
@@ -118,7 +138,7 @@ export default function RoomBookingsModal({ isOpen, onClose }: RoomBookingsModal
             ) : (
               /* Bookings Grid */
               <div className="space-y-4">
-                {bookings.map((booking) => (
+                {paginatedBookings.map((booking) => (
                   <div key={booking.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -172,6 +192,36 @@ export default function RoomBookingsModal({ isOpen, onClose }: RoomBookingsModal
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {!loading && !error && bookings.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                <p className="text-sm text-gray-600">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, bookings.length)} of {bookings.length} bookings
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </button>
+                  <span className="px-4 py-1 text-sm font-medium text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             )}
           </div>

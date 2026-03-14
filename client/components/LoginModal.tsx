@@ -1,6 +1,8 @@
 import { X, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import ForgotPasswordModal from "./ForgotPasswordModal";
+import ResendVerificationModal from "./ResendVerificationModal";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -11,6 +13,9 @@ interface LoginModalProps {
 export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps) {
   const { toast } = useToast();
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [isResendVerificationOpen, setIsResendVerificationOpen] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -45,16 +50,32 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
         // Show toast notification
         toast({
           variant: "success",
-          title: "Registration Successful",
-          description: "Your account has been created. Please sign in.",
+          title: data.requiresVerification 
+            ? "Verification Required" 
+            : "Registration Successful",
+          description: data.requiresVerification 
+            ? "Please check your email and verify your account to complete registration." 
+            : "Your account has been created.",
         });
+        
+        // Clear form
         setName("");
         setPassword("");
+        setEmail("");
         
-        // Switch to login form after 2 seconds
-        setTimeout(() => {
-          setIsRegistering(false);
-        }, 2000);
+        // If requires verification, show message
+        if (data.requiresVerification) {
+          setError("");
+          // Close modal after showing message
+          setTimeout(() => {
+            onClose();
+          }, 2000);
+        } else {
+          // Switch to login form after 2 seconds (fallback for non-verification flow)
+          setTimeout(() => {
+            setIsRegistering(false);
+          }, 2000);
+        }
       } else {
         setError(data.message || "Registration failed");
       }
@@ -115,7 +136,13 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
           setError("");
         }
       } else {
-        setError(data.message || "Invalid email or password");
+        // Check if error is due to unverified email
+        if (data.requiresVerification) {
+          setUnverifiedEmail(data.email || email);
+          setError(data.message || "Please verify your email before logging in.");
+        } else {
+          setError(data.message || "Invalid email or password");
+        }
       }
     } catch (err) {
       setError("Login failed. Please try again.");
@@ -157,11 +184,26 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
           <form className="space-y-6" onSubmit={isRegistering ? handleRegister : handleLogin}>
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <span>{error}</span>
+              <div className="space-y-3">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+                {/* Show resend verification button if needed */}
+                {unverifiedEmail && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsResendVerificationOpen(true);
+                      onClose();
+                    }}
+                    className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all duration-300"
+                  >
+                    Resend Verification Email
+                  </button>
+                )}
               </div>
             )}
 
@@ -233,9 +275,13 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
                   />
                   <span className="ml-2 text-sm text-gray-600">Remember me</span>
                 </label>
-                <a href="#" className="text-sm text-primary hover:text-primary/80 font-medium">
+                <button 
+                  type="button"
+                  onClick={() => setIsForgotPasswordOpen(true)}
+                  className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
             )}
 
@@ -281,6 +327,19 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
           </p>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal 
+        isOpen={isForgotPasswordOpen} 
+        onClose={() => setIsForgotPasswordOpen(false)} 
+      />
+
+      {/* Resend Verification Modal */}
+      <ResendVerificationModal 
+        isOpen={isResendVerificationOpen} 
+        onClose={() => setIsResendVerificationOpen(false)}
+        defaultEmail={unverifiedEmail}
+      />
     </div>
   );
 }
