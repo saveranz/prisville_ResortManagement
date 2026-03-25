@@ -266,3 +266,58 @@ export const migrateRoomType: RequestHandler = async (_req, res) => {
     });
   }
 };
+// Migration to add user status column for account management
+export const migrateUserStatus: RequestHandler = async (_req, res) => {
+  try {
+    console.log('🔄 Running migration to add user status column...');
+    
+    // Check if column exists
+    const [columns] = await db.query(
+      `SELECT COUNT(*) as count FROM information_schema.columns 
+       WHERE table_schema = DATABASE() 
+       AND table_name = 'users' 
+       AND column_name = 'status'`
+    );
+    
+    const columnExists = (columns as any)[0].count > 0;
+    
+    if (columnExists) {
+      console.log('✅ Column status already exists');
+      res.json({
+        success: true,
+        message: 'Column status already exists - no migration needed'
+      });
+      return;
+    }
+    
+    // Add column
+    await db.query(
+      `ALTER TABLE users ADD COLUMN status ENUM('active', 'locked', 'deleted') DEFAULT 'active' AFTER updated_at`
+    );
+    console.log('✅ Added status column');
+    
+    // Add index
+    await db.query(
+      `ALTER TABLE users ADD INDEX idx_status (status)`
+    );
+    console.log('✅ Added idx_status index');
+    
+    // Update existing records to be active
+    await db.query(
+      `UPDATE users SET status = 'active' WHERE status IS NULL`
+    );
+    console.log('✅ Set existing users to active status');
+
+    res.json({
+      success: true,
+      message: 'Migration completed successfully - status column added'      
+    });
+  } catch (error) {
+    console.error('❌ Migration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Migration failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};

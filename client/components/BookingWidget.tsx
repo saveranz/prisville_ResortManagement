@@ -1,5 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
+
+interface RoomAvailabilityTarget {
+  name: string;
+  roomNumbers: string;
+  capacity: number;
+}
+
+const FALLBACK_ROOMS: RoomAvailabilityTarget[] = [
+  { name: "Standard Room (Aircon)", roomNumbers: "101, 102, 103", capacity: 4 },
+  { name: "Large Family Room", roomNumbers: "104, 108", capacity: 10 },
+  { name: "Family Fan Room", roomNumbers: "105, 106, 107", capacity: 8 },
+  { name: "Non-Aircon Room", roomNumbers: "109, 110", capacity: 4 },
+];
 
 interface BookingWidgetProps {
   onSearch?: (data: { checkIn: string; checkOut: string; guests: number }) => void;
@@ -27,13 +40,30 @@ export default function BookingWidget({ onSearch, onAvailabilityCheck }: Booking
   const [guests, setGuests] = useState(4);
   const [showGuestMenu, setShowGuestMenu] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [roomsData, setRoomsData] = useState<RoomAvailabilityTarget[]>(FALLBACK_ROOMS);
 
-  const roomsData = [
-    { name: "Standard Room (Aircon)", roomNumbers: "101, 102, 103", capacity: 4 },
-    { name: "Large Family Room", roomNumbers: "104, 108", capacity: 10 },
-    { name: "Family Fan Room", roomNumbers: "105, 106, 107", capacity: 8 },
-    { name: "Non-Aircon Room", roomNumbers: "109, 110", capacity: 4 },
-  ];
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const response = await fetch('/api/facilities/rooms', { credentials: 'include' });
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.rooms) && data.rooms.length > 0) {
+          setRoomsData(
+            data.rooms.map((room: any) => ({
+              name: room.room_name,
+              roomNumbers: room.room_numbers,
+              capacity: Number(room.capacity) || 1
+            }))
+          );
+        }
+      } catch (error) {
+        console.error('Failed to fetch rooms for availability checks:', error);
+      }
+    };
+
+    fetchRooms();
+  }, []);
 
   const amenitiesData = [
     { name: "Function Hall", type: "function_hall", capacity: 100 },

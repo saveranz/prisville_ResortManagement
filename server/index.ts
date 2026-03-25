@@ -10,7 +10,7 @@ import { register, login, getCurrentUser, logout, requestPasswordReset, verifyRe
 import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates } from "./routes/bookings";
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
-import { setupDatabase, migrateRoomType } from "./routes/setup";
+import { setupDatabase, migrateRoomType, migrateUserStatus } from "./routes/setup";
 import { getInventoryItems, addInventoryItem, updateInventoryQuantity, getTransactions, addTransaction } from "./routes/inventory";
 import { getUserRecommendations, saveUserPreferences, getUserPreferences } from "./routes/recommendations";
 import { trackActivity, getUserActivity, getUserActivityStats } from "./routes/activityTracking";
@@ -20,11 +20,12 @@ import { getUserStayHistory, getAllStayHistory, getGuestStatistics, updateStayHi
 import { createBookingIssue, getAllBookingIssues, getUserBookingIssues, getBookingIssueById, updateBookingIssueStatus, updateBookingIssuePriority, deleteBookingIssue } from "./routes/bookingIssues";
 import { getUserNotifications, getUnreadCount, markAsRead, markAllAsRead, createNotification, deleteNotification } from "./routes/notifications";
 import { getAnnouncements, getAllAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, markAnnouncementViewed, toggleAnnouncementStatus } from "./routes/announcements";
-import { getDashboardStats, getAllUsers, updateUserRole, getGuestActivity, getRoomOccupancy, getBookingIssues } from "./routes/admin";
+import { getDashboardStats, getAllUsers, updateUserRole, getGuestActivity, getRoomOccupancy, getBookingIssues, getUserActivityAnalytics, lockUser, unlockUser, deleteUser } from "./routes/admin";
 import { generateBookingReport, generateRevenueReport, generateOccupancyReport, generateGuestReport } from "./routes/reports";
-import { getAllRooms, getAllAmenities, getDayPassStats, getRoomAvailabilityCalendar } from "./routes/facilities";
+import { getAllRooms, getAllAmenities, getDayPassStats, getRoomAvailabilityCalendar, createRoom, updateRoom, deleteRoom, getRoomExtraItems, addRoomExtraItem, updateRoomExtraItem, deleteRoomExtraItem } from "./routes/facilities";
 import { getAllSettings, updateSetting, updateMultipleSettings, resetSettings } from "./routes/siteSettings";
 import { getAllFAQs, getAdminFAQs, createFAQ, updateFAQ, deleteFAQ, submitInquiry, getAllInquiries, getInquiryStats, updateInquiryStatus, respondToInquiry } from "./routes/faq";
+import { migrateAuditLogs, getAuditLogs } from "./routes/auditLog";
 import { requireAuth, requireAdmin, requireStaff, requireReceptionist } from "./middleware/auth";
 
 const MySQLStore = MySQLStoreFactory(session);
@@ -83,6 +84,9 @@ export function createServer() {
   app.get("/api/test-db", testDatabase);
   app.get("/api/setup-db", setupDatabase);
   app.get("/api/migrate-room-type", migrateRoomType);
+  app.get("/api/migrate-user-status", migrateUserStatus);
+  app.get("/api/migrate-audit-logs", migrateAuditLogs);
+  app.get("/api/admin/audit-logs", requireAdmin, getAuditLogs);
   
   // Auth routes
   app.post("/api/auth/register", register);
@@ -118,11 +122,11 @@ export function createServer() {
   app.put("/api/bookings/day-pass/status", requireStaff, updateDayPassBookingStatus);
 
   // Inventory routes - Require receptionist/admin authorization
-  app.get("/api/inventory", requireReceptionist, getInventoryItems);
-  app.post("/api/inventory", requireReceptionist, addInventoryItem);
-  app.put("/api/inventory/update-quantity", requireReceptionist, updateInventoryQuantity);
-  app.get("/api/inventory/transactions", requireReceptionist, getTransactions);
-  app.post("/api/inventory/transactions", requireReceptionist, addTransaction);
+  app.get("/api/inventory", requireStaff, getInventoryItems);
+  app.post("/api/inventory", requireStaff, addInventoryItem);
+  app.put("/api/inventory/update-quantity", requireStaff, updateInventoryQuantity);
+  app.get("/api/inventory/transactions", requireStaff, getTransactions);
+  app.post("/api/inventory/transactions", requireStaff, addTransaction);
   
   // Recommendation routes
   app.get("/api/recommendations", getUserRecommendations);
@@ -181,9 +185,13 @@ export function createServer() {
   app.get("/api/admin/dashboard/stats", requireAdmin, getDashboardStats);
   app.get("/api/admin/users", requireAdmin, getAllUsers);
   app.put("/api/admin/users/:userId/role", requireAdmin, updateUserRole);
+  app.put("/api/admin/users/:userId/lock", requireAdmin, lockUser);
+  app.put("/api/admin/users/:userId/unlock", requireAdmin, unlockUser);
+  app.delete("/api/admin/users/:userId", requireAdmin, deleteUser);
   app.get("/api/admin/guest-activity", requireAdmin, getGuestActivity);
   app.get("/api/admin/room-occupancy", requireAdmin, getRoomOccupancy);
   app.get("/api/admin/booking-issues", requireAdmin, getBookingIssues);
+  app.get("/api/admin/activity-analytics", requireAdmin, getUserActivityAnalytics);
   
   // Reports routes - Require admin authorization
   app.get("/api/reports/bookings", requireAdmin, generateBookingReport);
@@ -193,9 +201,18 @@ export function createServer() {
   
   // Facilities routes
   app.get("/api/facilities/rooms", getAllRooms);
+  app.post("/api/facilities/rooms", requireAdmin, createRoom);
+  app.put("/api/facilities/rooms/:roomId", requireAdmin, updateRoom);
+  app.delete("/api/facilities/rooms/:roomId", requireAdmin, deleteRoom);
   app.get("/api/facilities/amenities", getAllAmenities);
   app.get("/api/facilities/daypass-stats", getDayPassStats);
   app.get("/api/facilities/room-calendar", getRoomAvailabilityCalendar);
+  
+    // Extra items routes
+    app.get("/api/facilities/rooms/:roomId/extra-items", getRoomExtraItems);
+    app.post("/api/facilities/rooms/:roomId/extra-items", requireAdmin, addRoomExtraItem);
+    app.put("/api/facilities/rooms/:roomId/extra-items/:itemId", requireAdmin, updateRoomExtraItem);
+    app.delete("/api/facilities/rooms/:roomId/extra-items/:itemId", requireAdmin, deleteRoomExtraItem);
   
   // Site Settings routes - Admin only
   app.get("/api/site-settings", getAllSettings);

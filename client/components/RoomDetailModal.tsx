@@ -64,7 +64,12 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
     contactNumber: "",
     specialRequests: "",
     paymentProof: null as File | null,
+    extraItems: [] as Array<{ item: string; quantity: number; price: number }>,
   });
+
+  const [extraItemsOptions, setExtraItemsOptions] = useState<Array<{ name: string; price: number; unit: string }>>([]);
+  const [selectedExtraItemName, setSelectedExtraItemName] = useState("");
+  const [extraItemsLoading, setExtraItemsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [error, setError] = useState("");
@@ -76,8 +81,56 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
   useEffect(() => {
     if (showBookingForm && room.roomNumbers) {
       fetchUnavailableDates();
+      fetchRoomExtraItems();
     }
   }, [showBookingForm, room.roomNumbers]);
+
+  const parsePriceNumber = (value: string) => {
+    const numeric = Number(String(value).replace(/[^\d.]/g, ''));
+    return Number.isFinite(numeric) ? numeric : 0;
+  };
+
+  const fetchRoomExtraItems = async () => {
+    try {
+      setExtraItemsLoading(true);
+
+      const roomsRes = await fetch('/api/facilities/rooms', { credentials: 'include' });
+      const roomsData = await roomsRes.json();
+      if (!roomsData.success || !Array.isArray(roomsData.rooms)) {
+        setExtraItemsOptions([]);
+        return;
+      }
+
+      const matchedRoom = roomsData.rooms.find((r: any) => r.room_name === room.name);
+      if (!matchedRoom?.id) {
+        setExtraItemsOptions([]);
+        return;
+      }
+
+      const itemsRes = await fetch(`/api/facilities/rooms/${matchedRoom.id}/extra-items`, { credentials: 'include' });
+      const itemsData = await itemsRes.json();
+
+      if (!itemsData.success || !Array.isArray(itemsData.items)) {
+        setExtraItemsOptions([]);
+        return;
+      }
+
+      const normalized = itemsData.items
+        .filter((item: any) => item?.item_name)
+        .map((item: any) => ({
+          name: String(item.item_name),
+          price: parsePriceNumber(String(item.price || '0')),
+          unit: String(item.unit || 'item')
+        }));
+
+      setExtraItemsOptions(normalized);
+    } catch (error) {
+      console.error('Failed to fetch room extra items:', error);
+      setExtraItemsOptions([]);
+    } finally {
+      setExtraItemsLoading(false);
+    }
+  };
 
   // Fetch unavailable dates for this room
   const fetchUnavailableDates = async () => {
@@ -152,7 +205,14 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
     return nights > 0 ? nights : 0;
   };
 
-  // Calculate total amount (nights * room price + entrance fee per person)
+  // Calculate extra items total
+  const calculateExtraItemsTotal = () => {
+    return formData.extraItems.reduce((total, item) => {
+      return total + (item.price * item.quantity);
+    }, 0);
+  };
+
+  // Calculate total amount (nights * room price + entrance fee per person + extra items)
   const calculateTotalAmount = () => {
     const nights = calculateNights();
     if (nights === 0) return 0;
@@ -160,8 +220,9 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
     const pricePerNight = parseInt(room.price.replace(/[₱,]/g, '')) || 0;
     const entranceFeePerPerson = parseInt(room.entranceFee.replace(/[₱,]/g, '')) || 0;
     const numberOfGuests = parseInt(formData.guests) || 0;
+    const extraItemsTotal = calculateExtraItemsTotal();
     
-    return (nights * pricePerNight) + (entranceFeePerPerson * numberOfGuests);
+    return (nights * pricePerNight) + (entranceFeePerPerson * numberOfGuests) + extraItemsTotal;
   };
 
   // Calculate reservation fee (50% of total)
@@ -298,6 +359,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
             guests: parseInt(formData.guests),
             contactNumber: formData.contactNumber,
             specialRequests: formData.specialRequests,
+            extraItems: formData.extraItems,
             totalAmount: `₱${calculateTotalAmount().toLocaleString()}`,
             paymentProof: base64Image,
           }),
@@ -319,6 +381,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
             contactNumber: "",
             specialRequests: "",
             paymentProof: null,
+            extraItems: [],
           });
           setPreviewUrl("");
           setSuccess("");
@@ -565,6 +628,22 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                           )}
                         </span>
                       </div>
+                      {/* Extra Items Breakdown */}
+                      {formData.extraItems.length > 0 && (
+                        <div className="border-t border-gray-200 pt-2 mt-2">
+                          <div className="text-sm font-medium text-gray-700 mb-1">Extra Items:</div>
+                          {formData.extraItems.map((item, index) => (
+                            <div key={index} className="flex justify-between text-sm pl-4">
+                              <span className="text-gray-600">{item.item} × {item.quantity}:</span>
+                              <span className="font-medium text-gray-900">₱{(item.price * item.quantity).toLocaleString()}</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between text-sm font-medium pl-4 mt-1">
+                            <span className="text-gray-700">Extra Items Total:</span>
+                            <span className="text-gray-900">₱{calculateExtraItemsTotal().toLocaleString()}</span>
+                          </div>
+                        </div>
+                      )}
                       <div className="border-t-2 border-yellow-400 pt-2 mt-2 flex justify-between">
                         <span className="font-bold text-gray-900">Total Amount:</span>
                         <span className="font-bold text-yellow-700 text-lg">₱{calculateTotalAmount().toLocaleString()}</span>
@@ -587,7 +666,24 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                   <input
                     type="number"
                     value={formData.guests}
-                    onChange={(e) => setFormData({ ...formData, guests: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const maxCapacity = parseInt(room.capacity.split(' ')[0]);
+                      
+                      // Only allow numbers within the valid range
+                      if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= maxCapacity)) {
+                        setFormData({ ...formData, guests: value });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      // Prevent typing if max capacity is reached
+                      const maxCapacity = parseInt(room.capacity.split(' ')[0]);
+                      const currentValue = parseInt(formData.guests || '0');
+                      
+                      if (e.key >= '0' && e.key <= '9' && currentValue >= maxCapacity) {
+                        e.preventDefault();
+                      }
+                    }}
                     min="1"
                     max={room.capacity.split(' ')[0]}
                     className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base"
@@ -611,15 +707,119 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Special Requests (Optional)
+                    Extra Items (Optional)
                   </label>
-                  <textarea
-                    value={formData.specialRequests}
-                    onChange={(e) => setFormData({ ...formData, specialRequests: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none text-gray-900 text-base"
-                    placeholder="Any special requirements or requests..."
-                  />
+                  <div className="space-y-3">
+                    {/* Add Extra Item Button */}
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedExtraItemName}
+                        onChange={(e) => setSelectedExtraItemName(e.target.value)}
+                        className="flex-1 px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base"
+                        disabled={extraItemsLoading || extraItemsOptions.length === 0}
+                      >
+                        <option value="">
+                          {extraItemsLoading ? 'Loading items...' : extraItemsOptions.length === 0 ? 'No extra items configured' : 'Select an item...'}
+                        </option>
+                        {extraItemsOptions.map((item) => (
+                          <option key={item.name} value={item.name}>
+                            {item.name} - ₱{item.price}/{item.unit}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const selectedName = selectedExtraItemName;
+                          if (!selectedName) return;
+                          
+                          const selectedItem = extraItemsOptions.find(item => item.name === selectedName);
+                          if (!selectedItem) return;
+                          
+                          // Check if item already exists
+                          const existingIndex = formData.extraItems.findIndex(item => item.item === selectedName);
+                          if (existingIndex >= 0) {
+                            // Increase quantity if already exists
+                            const updated = [...formData.extraItems];
+                            updated[existingIndex].quantity += 1;
+                            setFormData({ ...formData, extraItems: updated });
+                          } else {
+                            // Add new item
+                            setFormData({
+                              ...formData,
+                              extraItems: [...formData.extraItems, {
+                                item: selectedName,
+                                quantity: 1,
+                                price: selectedItem.price
+                              }]
+                            });
+                          }
+                          setSelectedExtraItemName('');
+                        }}
+                        disabled={extraItemsLoading || extraItemsOptions.length === 0 || !selectedExtraItemName}
+                        className="px-6 py-3 sm:py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition text-base whitespace-nowrap"
+                      >
+                        Add
+                      </button>
+                    </div>
+
+                    {/* Selected Extra Items */}
+                    {formData.extraItems.length > 0 && (
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        {formData.extraItems.map((item, index) => (
+                          <div key={index} className="flex items-center justify-between gap-3 bg-white p-3 rounded-lg">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">{item.item}</p>
+                              <p className="text-xs text-gray-500">₱{item.price} each</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...formData.extraItems];
+                                  if (updated[index].quantity > 1) {
+                                    updated[index].quantity -= 1;
+                                    setFormData({ ...formData, extraItems: updated });
+                                  } else {
+                                    updated.splice(index, 1);
+                                    setFormData({ ...formData, extraItems: updated });
+                                  }
+                                }}
+                                className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
+                              >
+                                -
+                              </button>
+                              <span className="w-8 text-center font-medium text-gray-900">{item.quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...formData.extraItems];
+                                  updated[index].quantity += 1;
+                                  setFormData({ ...formData, extraItems: updated });
+                                }}
+                                className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
+                              >
+                                +
+                              </button>
+                              <span className="ml-2 text-sm font-semibold text-gray-900 w-20 text-right">
+                                ₱{(item.price * item.quantity).toLocaleString()}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = formData.extraItems.filter((_, i) => i !== index);
+                                  setFormData({ ...formData, extraItems: updated });
+                                }}
+                                className="w-8 h-8 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

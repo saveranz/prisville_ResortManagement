@@ -37,7 +37,7 @@ export default function Recommendations({ isLoggedIn, onRoomClick, onAmenityClic
 
   // Room and amenity data
   const roomsData = [
-    { name: "Standard Room (Aircon)", price: "₱1,500 - ₱1,800/night", entranceFee: "₱100/person", capacity: "2-4 guests", roomNumbers: "101, 102, 103", features: "• Air conditioning\n• Private bathroom\n• WiFi\n• Comfortable beds", image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop" },
+    { name: "Standard Room (Aircon)", price: "₱1,800/night", entranceFee: "₱100/person", capacity: "4 guests", roomNumbers: "101, 102, 103", features: "• Air conditioning\n• Private bathroom\n• WiFi\n• Comfortable beds", image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop" },
     { name: "Large Family Room", price: "₱3,700/night", entranceFee: "₱100/person", capacity: "10 guests", roomNumbers: "104, 108", features: "• Air conditioning\n• Spacious layout\n• Multiple beds\n• Perfect for families", image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop" },
     { name: "Family Fan Room", price: "₱2,700/night", entranceFee: "₱100/person", capacity: "6-8 guests", roomNumbers: "105, 106, 107", features: "• Natural ventilation\n• Fan cooling\n• Multiple beds\n• Budget-friendly", image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop" },
     { name: "Non-Aircon Room", price: "₱1,000 - ₱1,200/night", entranceFee: "₱100/person", capacity: "2-4 guests", roomNumbers: "109, 110", features: "• Natural ventilation\n• Fan cooling\n• Private bathroom\n• Budget option", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=600&fit=crop" },

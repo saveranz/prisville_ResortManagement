@@ -12,12 +12,14 @@ export const generateBookingReport: RequestHandler = async (req, res) => {
     try {
       let query = '';
       let params: any[] = [];
+      let createdAtColumn = '';
 
       if (type === 'room' || !type) {
         query = `
           SELECT 
             'room' as booking_type,
             rb.id,
+            COALESCE(u.name, rb.user_email) as user_name,
             rb.user_email,
             rb.room_name,
             rb.room_type,
@@ -30,13 +32,16 @@ export const generateBookingReport: RequestHandler = async (req, res) => {
             rb.actual_check_in,
             rb.actual_check_out
           FROM room_bookings rb
+          LEFT JOIN users u ON u.id = rb.user_id
           WHERE 1=1
         `;
+        createdAtColumn = 'rb.created_at';
       } else if (type === 'amenity') {
         query = `
           SELECT 
             'amenity' as booking_type,
             ab.id,
+            COALESCE(u.name, ab.user_email) as user_name,
             ab.user_email,
             ab.amenity_name,
             ab.booking_date,
@@ -46,34 +51,39 @@ export const generateBookingReport: RequestHandler = async (req, res) => {
             ab.status,
             ab.created_at
           FROM amenity_bookings ab
+          LEFT JOIN users u ON u.id = ab.user_id
           WHERE 1=1
         `;
+        createdAtColumn = 'ab.created_at';
       } else if (type === 'daypass') {
         query = `
           SELECT 
             'daypass' as booking_type,
             dpb.id,
+            COALESCE(u.name, dpb.user_email) as user_name,
             dpb.user_email,
             dpb.booking_date,
             dpb.total_amount,
             dpb.status,
             dpb.created_at
           FROM day_pass_bookings dpb
+          LEFT JOIN users u ON u.id = dpb.user_id
           WHERE 1=1
         `;
+        createdAtColumn = 'dpb.created_at';
       }
 
       if (startDate) {
-        query += ` AND DATE(created_at) >= ?`;
+        query += ` AND DATE(${createdAtColumn}) >= ?`;
         params.push(startDate);
       }
 
       if (endDate) {
-        query += ` AND DATE(created_at) <= ?`;
+        query += ` AND DATE(${createdAtColumn}) <= ?`;
         params.push(endDate);
       }
 
-      query += ` ORDER BY created_at DESC`;
+      query += ` ORDER BY ${createdAtColumn} DESC`;
 
       const [bookings] = await connection.query<RowDataPacket[]>(query, params);
 

@@ -109,6 +109,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
             variant: "success",
             title: "Login Successful",
             description: `Welcome back, ${data.user.name}`,
+            duration: 3000,
           });
           setTimeout(() => {
             window.location.href = '/admin/dashboard';
@@ -119,6 +120,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
             variant: "success",
             title: "Login Successful",
             description: `Welcome back, ${data.user.name}`,
+            duration: 3000,
           });
           setTimeout(() => {
             window.location.href = '/receptionist/dashboard';
@@ -129,6 +131,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
             variant: "success",
             title: "Login Successful",
             description: `Welcome back, ${data.user.name}`,
+            duration: 3000,
           });
           onLogin(email, data.user.role);
           setEmail("");

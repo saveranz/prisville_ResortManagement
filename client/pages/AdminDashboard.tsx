@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { 
   Users, Calendar, TrendingUp, FileText, 
-  Building2, Settings, LogOut, BarChart3, DollarSign,
+  Settings, LogOut, BarChart3, DollarSign,
   CheckCircle, Clock, XCircle, UserCheck, BedDouble,
-  Percent, Activity, Download, Menu, X, UserCog, MessageSquare
+  Activity, Download, Menu, X, UserCog, MessageSquare,
+  Plus, Pencil, Trash2, Lock, Unlock, Package, ShieldCheck, RefreshCw
 } from "lucide-react";
 import AdminSiteSettings from "./AdminSiteSettings";
 import AdminInquiries from "./AdminInquiries";
@@ -31,6 +33,7 @@ interface User {
   name: string;
   phone: string;
   role: string;
+  status: 'active' | 'locked' | 'deleted';
   created_at: string;
   total_bookings: number;
 }
@@ -56,6 +59,7 @@ interface Room {
   price_per_night: string;
   amenities?: string;
   description?: string;
+  special_requests?: string;
   is_active: boolean;
   total_bookings: number;
   approved_bookings: number;
@@ -77,18 +81,92 @@ interface Amenity {
   approved_bookings: number;
 }
 
-interface RoomOccupancy {
-  room_name: string;
-  is_occupied: number;
-  current_guest: string | null;
-  check_in_date: string | null;
-  expected_checkout: string | null;
-  upcoming_bookings: number;
+interface ActivityTypeCount {
+  activity_type: string;
+  count: number;
+}
+
+interface BookingViewFrequency {
+  roomViews: number;
+  amenityViews: number;
+  dayPassViews: number;
+  totalBookingViews: number;
+  totalBookingViewTime: number;
+}
+
+interface BookingViewsByDay {
+  date: string;
+  roomViews: number;
+  amenityViews: number;
+  dayPassViews: number;
+  total: number;
+}
+
+interface TopViewedItem {
+  activity_type: string;
+  label: string;
+  count: number;
+  total_time: number;
+}
+
+interface MostEngagedUser {
+  user_id: number;
+  name: string;
+  email: string;
+  total_views: number;
+  total_time: number;
+}
+
+interface ActivityAnalytics {
+  totalActivities: number;
+  activitiesLast7Days: number;
+  uniqueTrackedUsers: number;
+  uniqueSessions: number;
+  topActivityTypes: ActivityTypeCount[];
+  activityByDay: Array<{ date: string; count: number }>;
+  activityTypesTrend: Array<{ activity_type: string; count: number }>;
+  bookingViewFrequency: BookingViewFrequency;
+  bookingViewsByDay: BookingViewsByDay[];
+  topViewedItems: TopViewedItem[];
+  mostEngagedUsers: MostEngagedUser[];
 }
 
 // Interfaces for analytics and monitoring features only
-// Operational interfaces (Booking, AmenityBooking, DayPassBooking, InventoryItem, InventoryTransaction, RoomStatus) 
+// Operational interfaces (Booking, AmenityBooking, DayPassBooking, RoomStatus) 
 // have been removed as those are handled in the Receptionist Dashboard
+
+interface InventoryItem {
+  id: number;
+  item_name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  unit_price: string;
+  last_updated: string;
+  created_at: string;
+}
+
+interface InventoryTransaction {
+  id: number;
+  type: 'income' | 'expense';
+  category: string;
+  description: string;
+  amount: string;
+  transaction_date: string;
+  created_at: string;
+}
+
+interface AuditLog {
+  id: number;
+  user_id: number;
+  user_name: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  details: string;
+  ip_address: string;
+  created_at: string;
+}
 
 interface StayHistory {
   id: number;
@@ -112,6 +190,53 @@ interface BookingIssue {
   resolved_by?: number;
 }
 
+interface RoomFormState {
+  room_name: string;
+  room_type: 'Standard Room (Aircon)' | 'Non-Aircon Room' | 'Family Fan Room' | 'Large Family Room';
+  room_numbers: string;
+  capacity: string;
+  price_per_night: string;
+  amenities: string;
+  description: string;
+  special_requests: string;
+  is_active: boolean;
+}
+
+interface ExtraItem {
+  id: number;
+  item_name: string;
+  price: string;
+  unit?: string;
+  description?: string;
+  is_active: boolean;
+}
+
+interface ExtraItemFormState {
+  item_name: string;
+  price: string;
+  unit: string;
+  description: string;
+}
+
+const DEFAULT_EXTRA_ITEM_FORM: ExtraItemFormState = {
+  item_name: '',
+  price: '',
+  unit: '',
+  description: ''
+};
+
+const DEFAULT_ROOM_FORM: RoomFormState = {
+  room_name: '',
+  room_type: 'Standard Room (Aircon)',
+  room_numbers: '',
+  capacity: '2',
+  price_per_night: '₱1600',
+  amenities: '',
+  description: '',
+  special_requests: '',
+  is_active: true
+};
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
@@ -122,13 +247,53 @@ export default function AdminDashboard() {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
-  const [roomOccupancy, setRoomOccupancy] = useState<RoomOccupancy[]>([]);
+  const [activityAnalytics, setActivityAnalytics] = useState<ActivityAnalytics | null>(null);
+  const [activityRange, setActivityRange] = useState<'week' | 'month' | 'year'>('week');
+  const [activityRefreshing, setActivityRefreshing] = useState(false);
+  const [roomSearchTerm, setRoomSearchTerm] = useState('');
+  const [showRoomForm, setShowRoomForm] = useState(false);
+  const [roomFormLoading, setRoomFormLoading] = useState(false);
+  const [editingRoomId, setEditingRoomId] = useState<number | null>(null);
+  const [roomForm, setRoomForm] = useState<RoomFormState>(DEFAULT_ROOM_FORM);
   
   // REMOVED - Operational data for receptionist only
   // const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
   // const [amenityBookings, setAmenityBookings] = useState<AmenityBooking[]>([]);
   // const [dayPassBookings, setDayPassBookings] = useState<DayPassBooking[]>([]);
+  const [roomExtraItems, setRoomExtraItems] = useState<ExtraItem[]>([]);
+  const [showExtraItemsModal, setShowExtraItemsModal] = useState(false);
+  const [extraItemForm, setExtraItemForm] = useState<ExtraItemFormState>(DEFAULT_EXTRA_ITEM_FORM);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [extraItemLoading, setExtraItemLoading] = useState(false);
+  
   const [viewingProof, setViewingProof] = useState<string | null>(null);
+  
+  // User management state
+  const [userActionLoading, setUserActionLoading] = useState<{[key: number]: boolean}>({});
+  const [userActionConfirm, setUserActionConfirm] = useState<{userId: number; action: 'lock' | 'unlock' | 'delete'} | null>(null);
+
+  // Inventory tab state
+  const [inventorySubTab, setInventorySubTab] = useState<'items' | 'transactions'>('items');
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [inventoryTransactions, setInventoryTransactions] = useState<InventoryTransaction[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [inventorySearch, setInventorySearch] = useState('');
+  const [transactionSearch, setTransactionSearch] = useState('');
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<'' | 'income' | 'expense'>('');
+  const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const [newTransaction, setNewTransaction] = useState({ type: 'income' as 'income' | 'expense', category: '', description: '', amount: '', transaction_date: new Date().toISOString().split('T')[0] });
+  const [transactionSaving, setTransactionSaving] = useState(false);
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const [transactionPage, setTransactionPage] = useState(1);
+
+  // Audit trail state
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditTotalPages, setAuditTotalPages] = useState(1);
+  const [auditActionFilter, setAuditActionFilter] = useState('');
+  const [auditStartDate, setAuditStartDate] = useState('');
+  const [auditEndDate, setAuditEndDate] = useState('');
   
   // REMOVED - Operational filters for receptionist
   // const [roomSearchTerm, setRoomSearchTerm] = useState('');
@@ -165,6 +330,23 @@ export default function AdminDashboard() {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'inventory') {
+      fetchInventory();
+      fetchInventoryTransactions();
+    } else if (activeTab === 'audit') {
+      fetchAuditLogs(1);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    setInventoryPage(1);
+  }, [inventorySearch, inventorySubTab]);
+
+  useEffect(() => {
+    setTransactionPage(1);
+  }, [transactionSearch, transactionTypeFilter, inventorySubTab]);
+
   const checkAuth = async () => {
     try {
       const response = await fetch('/api/auth/me', {
@@ -179,6 +361,7 @@ export default function AdminDashboard() {
       }
       
       fetchDashboardData();
+  
     } catch (error) {
       console.error('Auth check failed:', error);
       // Redirect if auth check fails
@@ -192,17 +375,17 @@ export default function AdminDashboard() {
       // Admin dashboard focuses on analytics and monitoring only
       // Operational data (inventory, room status, check-in) is for receptionist
       const [
-        statsRes, usersRes, guestsRes, roomsRes, amenitiesRes, occupancyRes,
-        stayHistoryRes, issuesRes
+        statsRes, usersRes, guestsRes, roomsRes, amenitiesRes,
+        stayHistoryRes, issuesRes, activityRes
       ] = await Promise.all([
         fetch('/api/admin/dashboard/stats', { credentials: 'include' }),
         fetch('/api/admin/users', { credentials: 'include' }),
         fetch('/api/admin/guest-activity', { credentials: 'include' }),
         fetch('/api/facilities/rooms', { credentials: 'include' }),
         fetch('/api/facilities/amenities', { credentials: 'include' }),
-        fetch('/api/admin/room-occupancy', { credentials: 'include' }),
         fetch('/api/stay-history/all', { credentials: 'include' }),
-        fetch('/api/booking-issues', { credentials: 'include' })
+        fetch('/api/booking-issues', { credentials: 'include' }),
+        fetch(`/api/admin/activity-analytics?range=${activityRange}`, { credentials: 'include' })
       ]);
 
       const statsData = await statsRes.json();
@@ -210,18 +393,18 @@ export default function AdminDashboard() {
       const guestsData = await guestsRes.json();
       const roomsData = await roomsRes.json();
       const amenitiesData = await amenitiesRes.json();
-      const occupancyData = await occupancyRes.json();
       const stayHistoryData = await stayHistoryRes.json();
       const issuesData = await issuesRes.json();
+      const activityData = await activityRes.json();
 
       if (statsData.success) setStats(statsData.stats);
       if (usersData.success) setUsers(usersData.users);
       if (guestsData.success) setGuests(guestsData.guests);
       if (roomsData.success) setRooms(roomsData.rooms);
       if (amenitiesData.success) setAmenities(amenitiesData.amenities);
-      if (occupancyData.success) setRoomOccupancy(occupancyData.rooms);
       if (stayHistoryData.success) setStayHistory(stayHistoryData.history || []);
       if (issuesData.success) setBookingIssues(issuesData.issues || []);
+      if (activityData.success) setActivityAnalytics(activityData.analytics);
 
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -249,12 +432,142 @@ export default function AdminDashboard() {
     });
   };
 
+  const formatActivityType = (activityType: string) => {
+    return activityType
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  };
+
+  const formatCompactDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatSeconds = (seconds: number) => {
+    if (!seconds) return '0m';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
+
+  const formatChartTick = (dateString: string) => {
+    if (!dateString) return '';
+    // YYYY-MM format (annual monthly buckets)
+    if (String(dateString).length === 7) {
+      const [year, month] = String(dateString).split('-').map(Number);
+      return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'short' });
+    }
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const formatChartTooltipLabel = (dateString: string) => {
+    if (!dateString) return '';
+    const s = String(dateString);
+    if (s.length === 7) {
+      const [year, month] = s.split('-').map(Number);
+      return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+    return new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const fetchActivityAnalytics = async (range: 'week' | 'month' | 'year') => {
+    setActivityRefreshing(true);
+    try {
+      const res = await fetch(`/api/admin/activity-analytics?range=${range}`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) setActivityAnalytics(data.analytics);
+    } catch (error) {
+      console.error('Failed to refresh activity analytics:', error);
+    } finally {
+      setActivityRefreshing(false);
+    }
+  };
+
+  const handleRangeChange = (range: 'week' | 'month' | 'year') => {
+    setActivityRange(range);
+    fetchActivityAnalytics(range);
+  };
+
+  const fetchInventory = async () => {
+    setInventoryLoading(true);
+    try {
+      const res = await fetch('/api/inventory', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) setInventory(data.items || []);
+    } catch (error) {
+      console.error('Failed to fetch inventory:', error);
+    } finally {
+      setInventoryLoading(false);
+    }
+  };
+
+  const fetchInventoryTransactions = async () => {
+    setInventoryLoading(true);
+    try {
+      const res = await fetch('/api/inventory/transactions', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) setInventoryTransactions(data.transactions || []);
+    } catch (error) {
+      console.error('Failed to fetch transactions:', error);
+    } finally {
+      setInventoryLoading(false);
+    }
+  };
+
+  const handleAddTransaction = async () => {
+    if (!newTransaction.category || !newTransaction.amount || !newTransaction.transaction_date) return;
+    setTransactionSaving(true);
+    try {
+      const res = await fetch('/api/inventory/transactions', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTransaction)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowAddTransaction(false);
+        setNewTransaction({ type: 'income', category: '', description: '', amount: '', transaction_date: new Date().toISOString().split('T')[0] });
+        fetchInventoryTransactions();
+      }
+    } catch (error) {
+      console.error('Failed to add transaction:', error);
+    } finally {
+      setTransactionSaving(false);
+    }
+  };
+
+  const fetchAuditLogs = async (page = 1) => {
+    setAuditLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: '20' });
+      if (auditActionFilter) params.append('action', auditActionFilter);
+      if (auditStartDate) params.append('startDate', auditStartDate);
+      if (auditEndDate) params.append('endDate', auditEndDate);
+      const res = await fetch(`/api/admin/audit-logs?${params}`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setAuditLogs(data.logs || []);
+        setAuditTotalPages(data.pagination?.totalPages || 1);
+        setAuditPage(page);
+      }
+    } catch (error) {
+      console.error('Failed to fetch audit logs:', error);
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
   // Filtered bookings using useMemo
   // REMOVED: Booking management functions - these are operational tasks for receptionist
   // Admin should only view analytics, not manage individual bookings
   
-  // REMOVED: updateUserRole function - Staff roles are managed separately, not via dropdown
-  // Admin views staff list for monitoring purposes only
+  // REMOVED: updateUserRole function - user roles are managed separately, not via dropdown
+  // Admin views user list for monitoring purposes only
 
   // Booking action handlers - Removed as these are receptionist-only functions
   // Admin should view data, not perform operational actions
@@ -303,49 +616,115 @@ export default function AdminDashboard() {
   const exportReportCSV = () => {
     if (!reportData) return;
 
+    const escapeCsvValue = (value: unknown) => {
+      const stringValue = String(value ?? '');
+      const escaped = stringValue.replace(/"/g, '""');
+      return `"${escaped}"`;
+    };
+
+    const toCsv = (rows: unknown[][]) => rows
+      .map((row) => row.map((cell) => escapeCsvValue(cell)).join(','))
+      .join('\r\n');
+
     let csvContent = '';
     let filename = '';
 
     switch (reportType) {
       case 'bookings':
         filename = `bookings_report_${new Date().toISOString().split('T')[0]}.csv`;
-        csvContent = 'ID,Type,Email,Details,Date,Amount,Status\\n';
-        reportData.bookings.forEach((b: any) => {
-          csvContent += `${b.id},${b.booking_type || 'room'},${b.user_email},"${b.room_name || b.amenity_name || ''}",${b.check_in || b.booking_date},${b.total_amount},${b.status}\\n`;
-        });
+        csvContent = toCsv([
+          ['Booking ID', 'Type', 'Guest', 'Item', 'Date', 'Status', 'Amount'],
+          ...(reportData.bookings || []).map((booking: any) => [
+            `#${booking.id}`,
+            booking.booking_type || '-',
+            booking.user_name || booking.user_email || '-',
+            booking.room_name || booking.amenity_name || 'Day Pass',
+            booking.created_at ? formatDate(booking.created_at) : '-',
+            booking.status || '-',
+            booking.total_amount || '₱0.00'
+          ])
+        ]);
         break;
         
       case 'revenue':
         filename = `revenue_report_${new Date().toISOString().split('T')[0]}.csv`;
-        csvContent = 'Period,Room Revenue,Amenity Revenue,Day Pass Revenue,Total Revenue\\n';
-        reportData.data.forEach((d: any) => {
-          csvContent += `${d.period},${d.roomRevenue},${d.amenityRevenue},${d.dayPassRevenue},${d.totalRevenue}\\n`;
-        });
+        csvContent = toCsv([
+          [
+            'Period',
+            'Room Bookings',
+            'Amenity Bookings',
+            'Day Pass Bookings',
+            'Total Bookings',
+            'Room Revenue',
+            'Amenity Revenue',
+            'Day Pass Revenue',
+            'Total Revenue'
+          ],
+          ...(reportData.data || []).map((row: any) => [
+            row.period,
+            row.roomBookings || 0,
+            row.amenityBookings || 0,
+            row.dayPassBookings || 0,
+            row.totalBookings || 0,
+            Number(row.roomRevenue || 0).toFixed(2),
+            Number(row.amenityRevenue || 0).toFixed(2),
+            Number(row.dayPassRevenue || 0).toFixed(2),
+            Number(row.totalRevenue || 0).toFixed(2)
+          ])
+        ]);
         break;
 
       case 'occupancy':
         filename = `occupancy_report_${new Date().toISOString().split('T')[0]}.csv`;
-        csvContent = 'Date,Occupied Rooms,Total Rooms,Occupancy Rate\\n';
-        reportData.dailyOccupancy.forEach((d: any) => {
-          csvContent += `${d.date},${d.occupied_rooms},${d.total_rooms},${d.occupancyRate}%\\n`;
-        });
+        csvContent = [
+          toCsv([
+            ['Daily Occupancy'],
+            ['Date', 'Occupied Rooms', 'Total Rooms', 'Occupancy Rate'],
+            ...(reportData.dailyOccupancy || []).map((row: any) => [
+              row.date ? formatDate(row.date) : '-',
+              row.occupied_rooms || 0,
+              row.total_rooms || 0,
+              `${row.occupancyRate || '0'}%`
+            ])
+          ]),
+          '',
+          toCsv([
+            ['Room Type Breakdown'],
+            ['Room Type', 'Total Bookings', 'Check-ins'],
+            ...(reportData.roomTypeBreakdown || []).map((row: any) => [
+              row.room_type || 'N/A',
+              row.total_bookings || 0,
+              row.check_ins || 0
+            ])
+          ])
+        ].join('\r\n');
         break;
 
       case 'guests':
         filename = `guests_report_${new Date().toISOString().split('T')[0]}.csv`;
-        csvContent = 'Email,Name,Total Bookings,Total Spent,Last Booking\\n';
-        reportData.guests.forEach((g: any) => {
-          csvContent += `${g.email},"${g.first_name} ${g.last_name}",${g.total_bookings},₱${g.total_spent},${g.last_booking_date}\\n`;
-        });
+        csvContent = toCsv([
+          ['Guest Name', 'Email', 'Phone', 'Total Bookings', 'Total Spent', 'First Booking', 'Last Booking'],
+          ...(reportData.guests || []).map((guest: any) => [
+            guest.name || '-',
+            guest.email || '-',
+            guest.phone || '-',
+            guest.total_bookings || 0,
+            Number(guest.total_spent || 0).toFixed(2),
+            guest.first_booking_date ? formatDate(guest.first_booking_date) : '-',
+            guest.last_booking_date ? formatDate(guest.last_booking_date) : '-'
+          ])
+        ]);
         break;
     }
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csvWithBom = `\uFEFF${csvContent}`;
+    const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
     link.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const handleLogout = async () => {
@@ -359,6 +738,236 @@ export default function AdminDashboard() {
       console.error('Logout failed:', error);
     }
   };
+
+  const openCreateRoomForm = () => {
+    setEditingRoomId(null);
+    setRoomForm(DEFAULT_ROOM_FORM);
+    setShowRoomForm(true);
+  };
+
+  const openEditRoomForm = (room: Room) => {
+    setEditingRoomId(room.id);
+    setRoomForm({
+      room_name: room.room_name,
+      room_type: room.room_type as RoomFormState['room_type'],
+      room_numbers: room.room_numbers,
+      capacity: String(room.capacity),
+      price_per_night: room.price_per_night,
+      amenities: room.amenities || '',
+      description: room.description || '',
+      special_requests: room.special_requests || '',
+      is_active: room.is_active
+    });
+    setShowRoomForm(true);
+  };
+
+  const saveRoom = async () => {
+    if (!roomForm.room_name.trim() || !roomForm.room_numbers.trim() || !roomForm.capacity.trim() || !roomForm.price_per_night.trim()) {
+      alert('Please complete all required room fields.');
+      return;
+    }
+
+    const capacityValue = parseInt(roomForm.capacity, 10);
+    if (Number.isNaN(capacityValue) || capacityValue <= 0) {
+      alert('Capacity must be a valid number greater than 0.');
+      return;
+    }
+
+    setRoomFormLoading(true);
+    try {
+      const endpoint = editingRoomId ? `/api/facilities/rooms/${editingRoomId}` : '/api/facilities/rooms';
+      const method = editingRoomId ? 'PUT' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...roomForm,
+          room_name: roomForm.room_name.trim(),
+          room_numbers: roomForm.room_numbers.trim(),
+          amenities: roomForm.amenities.trim(),
+          description: roomForm.description.trim(),
+          special_requests: roomForm.special_requests.trim(),
+          capacity: capacityValue
+        })
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        alert(data.message || 'Failed to save room');
+        return;
+      }
+
+      setShowRoomForm(false);
+      setEditingRoomId(null);
+      setRoomForm(DEFAULT_ROOM_FORM);
+      await fetchDashboardData();
+    } catch (error) {
+      console.error('Failed to save room:', error);
+      alert('Failed to save room');
+    } finally {
+      setRoomFormLoading(false);
+    }
+  };
+
+  const removeRoom = async (room: Room) => {
+    const confirmed = window.confirm(`Delete ${room.room_name}? This will hide it from guest/client booking options.`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/facilities/rooms/${room.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        alert(data.message || 'Failed to delete room');
+        return;
+      }
+
+      await fetchDashboardData();
+    } catch (error) {
+      console.error('Failed to delete room:', error);
+      alert('Failed to delete room');
+    }
+  };
+
+  // User management functions
+  const handleUserAction = async (userId: number, action: 'lock' | 'unlock' | 'delete') => {
+    const confirmMessages = {
+      lock: 'Lock this user account? They won\'t be able to login.',
+      unlock: 'Activate this user account?',
+      delete: 'Delete this user account permanently? This cannot be undone.'
+    };
+
+    if (!window.confirm(confirmMessages[action])) return;
+
+    setUserActionLoading({ ...userActionLoading, [userId]: true });
+    try {
+      const endpoint = action === 'delete' 
+        ? `/api/admin/users/${userId}`
+        : `/api/admin/users/${userId}/${action}`;
+      const method = action === 'delete' ? 'DELETE' : 'PUT';
+
+      const response = await fetch(endpoint, {
+        method,
+        credentials: 'include'
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        alert(data.message || `Failed to ${action} user`);
+        return;
+      }
+
+      await fetchDashboardData();
+      setUserActionConfirm(null);
+    } catch (error) {
+      console.error(`Failed to ${action} user:`, error);
+      alert(`Failed to ${action} user`);
+    } finally {
+      setUserActionLoading({ ...userActionLoading, [userId]: false });
+    }
+  };
+
+    const fetchRoomExtraItems = async (roomId: number) => {
+      try {
+        const response = await fetch(`/api/facilities/rooms/${roomId}/extra-items`, {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        if (data.success) {
+          setRoomExtraItems(data.items);
+        }
+      } catch (error) {
+        console.error('Failed to fetch extra items:', error);
+      }
+    };
+
+    const openExtraItemsModal = (roomId: number) => {
+      setShowRoomForm(false);
+      fetchRoomExtraItems(roomId);
+      setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+      setEditingItemId(null);
+      setShowExtraItemsModal(true);
+    };
+
+    const saveExtraItem = async (roomId: number) => {
+      if (!extraItemForm.item_name.trim() || !extraItemForm.price.trim()) {
+        alert('Item name and price are required');
+        return;
+      }
+
+      setExtraItemLoading(true);
+      try {
+        const endpoint = editingItemId 
+          ? `/api/facilities/rooms/${roomId}/extra-items/${editingItemId}`
+          : `/api/facilities/rooms/${roomId}/extra-items`;
+        const method = editingItemId ? 'PUT' : 'POST';
+
+        const response = await fetch(endpoint, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            item_name: extraItemForm.item_name.trim(),
+            price: extraItemForm.price.trim(),
+            unit: extraItemForm.unit.trim() || null,
+            description: extraItemForm.description.trim() || null
+          })
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+          alert(data.message || 'Failed to save item');
+          return;
+        }
+
+        setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+        setEditingItemId(null);
+        await fetchRoomExtraItems(roomId);
+      } catch (error) {
+        console.error('Failed to save extra item:', error);
+        alert('Failed to save item');
+      } finally {
+        setExtraItemLoading(false);
+      }
+    };
+
+    const deleteExtraItem = async (roomId: number, itemId: number) => {
+      const confirmed = window.confirm('Delete this extra item?');
+      if (!confirmed) return;
+
+      try {
+        const response = await fetch(`/api/facilities/rooms/${roomId}/extra-items/${itemId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        const data = await response.json();
+
+        if (!data.success) {
+          alert(data.message || 'Failed to delete item');
+          return;
+        }
+
+        await fetchRoomExtraItems(roomId);
+      } catch (error) {
+        console.error('Failed to delete extra item:', error);
+        alert('Failed to delete item');
+      }
+    };
+
+  const filteredRooms = rooms.filter((room) => {
+    if (!roomSearchTerm) return true;
+    const search = roomSearchTerm.toLowerCase();
+    return (
+      room.room_name.toLowerCase().includes(search) ||
+      room.room_type.toLowerCase().includes(search) ||
+      room.room_numbers.toLowerCase().includes(search)
+    );
+  });
 
   if (loading) {
     return (
@@ -430,18 +1039,6 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => { setActiveTab('occupancy'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-              activeTab === 'occupancy'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-            }`}
-          >
-            <BedDouble size={20} />
-            <span className="tracking-wide">Occupancy</span>
-          </button>
-
-          <button
             onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
               activeTab === 'reports'
@@ -461,8 +1058,8 @@ export default function AdminDashboard() {
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
-            <Building2 size={20} />
-            <span className="tracking-wide">Facilities</span>
+            <BedDouble size={20} />
+            <span className="tracking-wide">Room Bookings</span>
           </button>
 
           <button
@@ -474,7 +1071,7 @@ export default function AdminDashboard() {
             }`}
           >
             <UserCog size={20} />
-            <span className="tracking-wide">Staff</span>
+            <span className="tracking-wide">Users</span>
           </button>
 
           <button
@@ -499,6 +1096,30 @@ export default function AdminDashboard() {
           >
             <Settings size={20} />
             <span className="tracking-wide">Site Settings</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+              activeTab === 'inventory'
+                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            <Package size={20} />
+            <span className="tracking-wide">Inventory</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('audit'); setMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+              activeTab === 'audit'
+                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            <ShieldCheck size={20} />
+            <span className="tracking-wide">Audit Trail</span>
           </button>
         </nav>
 
@@ -547,21 +1168,23 @@ export default function AdminDashboard() {
                 {activeTab === 'overview' && 'Dashboard Overview'}
                 {activeTab === 'reservations' && 'All Reservations'}
                 {activeTab === 'guests' && 'Guest Activity'}
-                {activeTab === 'occupancy' && 'Room Occupancy Status'}
                 {activeTab === 'reports' && 'Generate Reports'}
-                {activeTab === 'facilities' && 'Facility Management'}
-                {activeTab === 'users' && 'Staff Management'}
+                {activeTab === 'facilities' && 'Room Bookings CMS'}
+                {activeTab === 'users' && 'User Management'}
                 {activeTab === 'inquiries' && 'Inquiries & FAQ Management'}
                 {activeTab === 'settings' && 'Site Settings'}
+                {activeTab === 'inventory' && 'Inventory & Transactions'}
+                {activeTab === 'audit' && 'Audit Trail'}
               </h2>
               <p className="text-gray-600 text-sm mt-1 font-medium hidden sm:block">
                 {activeTab === 'overview' && 'Monitor resort operations and key metrics'}
                 {activeTab === 'reservations' && 'View and manage all bookings'}
                 {activeTab === 'guests' && 'Track guest activity and bookings'}
-                {activeTab === 'occupancy' && 'Monitor room availability and status'}
                 {activeTab === 'reports' && 'Generate and export operational reports'}
-                {activeTab === 'facilities' && 'Manage rooms and amenities'}
+                {activeTab === 'facilities' && 'Add, edit, and delete rooms shown across booking flows'}
                 {activeTab === 'users' && 'Manage user accounts and roles'}
+                {activeTab === 'inventory' && 'View inventory items and manage financial transactions'}
+                {activeTab === 'audit' && 'Track all admin actions and system changes'}
               </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
@@ -620,19 +1243,6 @@ export default function AdminDashboard() {
                   </div>
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
                     <Clock className="text-white" size={24} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Occupancy Rate</p>
-                    <p className="text-3xl font-display font-bold text-primary mt-1">{stats.occupancyRate}%</p>
-                    <p className="text-xs text-gray-500 mt-1">Currently occupied</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                    <Percent className="text-white" size={24} />
                   </div>
                 </div>
               </div>
@@ -721,35 +1331,194 @@ export default function AdminDashboard() {
         {/* Reservations Tab */}
         {activeTab === 'reservations' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-display font-bold text-gray-900">All Reservations</h2>
-              <button
-                onClick={() => navigate('/receptionist/dashboard')}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Manage Bookings
-              </button>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="border rounded-lg p-4">
-                  <p className="text-sm text-gray-600">Room Bookings</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.roomBookings || 0}</p>
+            <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 space-y-6 border border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-sans font-semibold tracking-tight text-slate-900">Tracked User Activities</h3>
+                  <p className="text-sm font-sans text-slate-500">Booking funnel visibility across room, amenity, and day pass interests.</p>
                 </div>
-                <div className="border rounded-lg p-4">
-                  <p className="text-sm text-gray-600">Amenity Bookings</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.amenityBookings || 0}</p>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <p className="text-sm text-gray-600">Day Pass Bookings</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.dayPassBookings || 0}</p>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-0.5 p-1 bg-slate-100 rounded-xl">
+                    {(['week', 'month', 'year'] as const).map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => handleRangeChange(r)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                          activityRange === r
+                            ? 'bg-white text-slate-900 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        {r === 'week' ? 'Weekly' : r === 'month' ? 'Monthly' : 'Annual'}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => fetchActivityAnalytics(activityRange)}
+                    disabled={activityRefreshing}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors font-sans text-sm disabled:opacity-50"
+                  >
+                    {activityRefreshing ? 'Loading…' : 'Refresh'}
+                  </button>
                 </div>
               </div>
-              <div className="mt-6 text-center">
-                <p className="text-gray-600">
-                  Use the <strong>Receptionist Dashboard</strong> to manage individual bookings, approve requests, and handle check-ins/check-outs.
-                </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
+                <div className="rounded-2xl p-4 border border-slate-200 bg-gradient-to-br from-white to-slate-50">
+                  <p className="text-xs uppercase tracking-wide text-slate-500 font-medium">Total Tracked Events</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">{activityAnalytics?.totalActivities ?? 0}</p>
+                </div>
+                <div className="rounded-2xl p-4 border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
+                  <p className="text-xs uppercase tracking-wide text-emerald-700 font-medium">
+                    {activityRange === 'week' ? 'Events (7d)' : activityRange === 'month' ? 'Events (30d)' : 'Events (1yr)'}
+                  </p>
+                  <p className="text-2xl font-semibold text-emerald-700 mt-2">{activityAnalytics?.activitiesLast7Days ?? 0}</p>
+                </div>
+                <div className="rounded-2xl p-4 border border-sky-200 bg-gradient-to-br from-sky-50 to-white">
+                  <p className="text-xs uppercase tracking-wide text-sky-700 font-medium">
+                    Room Views ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
+                  </p>
+                  <p className="text-2xl font-semibold text-sky-700 mt-2">{activityAnalytics?.bookingViewFrequency?.roomViews ?? 0}</p>
+                </div>
+                <div className="rounded-2xl p-4 border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white">
+                  <p className="text-xs uppercase tracking-wide text-cyan-700 font-medium">
+                    Amenity Views ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
+                  </p>
+                  <p className="text-2xl font-semibold text-cyan-700 mt-2">{activityAnalytics?.bookingViewFrequency?.amenityViews ?? 0}</p>
+                </div>
+                <div className="rounded-2xl p-4 border border-amber-200 bg-gradient-to-br from-amber-50 to-white">
+                  <p className="text-xs uppercase tracking-wide text-amber-700 font-medium">
+                    Day Pass Views ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
+                  </p>
+                  <p className="text-2xl font-semibold text-amber-700 mt-2">{activityAnalytics?.bookingViewFrequency?.dayPassViews ?? 0}</p>
+                </div>
+                <div className="rounded-2xl p-4 border border-violet-200 bg-gradient-to-br from-violet-50 to-white">
+                  <p className="text-xs uppercase tracking-wide text-violet-700 font-medium">
+                    View Time ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
+                  </p>
+                  <p className="text-2xl font-semibold text-violet-700 mt-2">{formatSeconds(activityAnalytics?.bookingViewFrequency?.totalBookingViewTime ?? 0)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="border border-slate-200 rounded-2xl p-6 bg-gradient-to-b from-slate-50/70 to-white">
+                  <h4 className="text-sm font-semibold text-slate-900 mb-4 tracking-tight">
+                    Booking Views Trend ({activityRange === 'week' ? 'Last 7 Days' : activityRange === 'month' ? 'Last 30 Days' : 'Last 12 Months'})
+                  </h4>
+                  {(activityAnalytics?.bookingViewsByDay || []).length === 0 ? (
+                    <div className="flex items-center justify-center h-72 text-slate-500">
+                      <p>No booking activity data available.</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={activityAnalytics?.bookingViewsByDay || []} margin={{ top: 8, right: 12, left: -12, bottom: 4 }}>
+                        <defs>
+                          <linearGradient id="roomViewsGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.35} />
+                            <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.02} />
+                          </linearGradient>
+                          <linearGradient id="amenityViewsGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="#14b8a6" stopOpacity={0.02} />
+                          </linearGradient>
+                          <linearGradient id="dayPassViewsGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.28} />
+                            <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#dbe3ec" vertical={false} />
+                        <XAxis dataKey="date" tickFormatter={formatChartTick} stroke="#64748b" tick={{ fontSize: 12 }} />
+                        <YAxis stroke="#64748b" tick={{ fontSize: 12 }} allowDecimals={false} />
+                        <Tooltip
+                          labelFormatter={(value) => formatChartTooltipLabel(String(value))}
+                          contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)' }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                        <Area type="monotone" dataKey="roomViews" name="Room" stroke="#0284c7" fill="url(#roomViewsGradient)" strokeWidth={2.25} />
+                        <Area type="monotone" dataKey="amenityViews" name="Amenity" stroke="#0f766e" fill="url(#amenityViewsGradient)" strokeWidth={2.25} />
+                        <Area type="monotone" dataKey="dayPassViews" name="Day Pass" stroke="#d97706" fill="url(#dayPassViewsGradient)" strokeWidth={2.25} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+
+                <div className="border border-slate-200 rounded-2xl p-6 bg-gradient-to-b from-white to-slate-50/70">
+                  <h4 className="text-sm font-semibold text-slate-900 mb-4 tracking-tight">
+                    Top Viewed Booking Interests ({activityRange === 'week' ? 'Last 7 Days' : activityRange === 'month' ? 'Last 30 Days' : 'Last 12 Months'})
+                  </h4>
+                  {(activityAnalytics?.topViewedItems || []).length === 0 ? (
+                    <div className="flex items-center justify-center h-72 text-slate-500">
+                      <p>No top-viewed booking data available.</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={activityAnalytics?.topViewedItems || []} margin={{ top: 8, right: 12, left: -12, bottom: 50 }}>
+                        <defs>
+                          <linearGradient id="topItemsBarGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity={0.95} />
+                            <stop offset="100%" stopColor="#059669" stopOpacity={0.75} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#dbe3ec" vertical={false} />
+                        <XAxis
+                          dataKey="label"
+                          stroke="#64748b"
+                          angle={-30}
+                          textAnchor="end"
+                          height={76}
+                          tick={{ fontSize: 11 }}
+                          tickFormatter={(value) => String(value).length > 14 ? `${String(value).slice(0, 14)}...` : String(value)}
+                        />
+                        <YAxis stroke="#64748b" tick={{ fontSize: 12 }} allowDecimals={false} />
+                        <Tooltip
+                          formatter={(value, name) => {
+                            if (name === 'total_time') {
+                              return [formatSeconds(Number(value)), 'Total View Time'];
+                            }
+                            return [value, name === 'count' ? 'Views' : name];
+                          }}
+                          contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)' }}
+                        />
+                        <Bar dataKey="count" fill="url(#topItemsBarGradient)" radius={[10, 10, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded-2xl p-6 bg-white">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-semibold text-slate-900 tracking-tight">
+                    Most Engaged Users ({activityRange === 'week' ? 'Last 7 Days' : activityRange === 'month' ? 'Last 30 Days' : 'Last 12 Months'})
+                  </h4>
+                  <span className="text-xs text-slate-500">Based on booking-related views</span>
+                </div>
+                {(activityAnalytics?.mostEngagedUsers || []).length === 0 ? (
+                  <p className="text-sm text-slate-500">No user-level booking engagement data yet.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[640px]">
+                      <thead>
+                        <tr className="text-left border-b border-slate-200">
+                          <th className="py-2 pr-4 text-xs uppercase tracking-wide text-slate-500 font-semibold">User</th>
+                          <th className="py-2 px-4 text-xs uppercase tracking-wide text-slate-500 font-semibold">Email</th>
+                          <th className="py-2 px-4 text-xs uppercase tracking-wide text-slate-500 font-semibold">Total Views</th>
+                          <th className="py-2 pl-4 text-xs uppercase tracking-wide text-slate-500 font-semibold">Total View Time</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(activityAnalytics?.mostEngagedUsers || []).map((user) => (
+                          <tr key={user.user_id} className="border-b border-slate-100 last:border-b-0">
+                            <td className="py-3 pr-4 text-sm text-slate-900 font-medium">{user.name || `User #${user.user_id}`}</td>
+                            <td className="py-3 px-4 text-sm text-slate-600">{user.email}</td>
+                            <td className="py-3 px-4 text-sm text-slate-900">{user.total_views}</td>
+                            <td className="py-3 pl-4 text-sm text-slate-900">{formatSeconds(user.total_time)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -809,79 +1578,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Occupancy Tab */}
-        {activeTab === 'occupancy' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-display font-bold text-gray-900">Room Occupancy Status</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
-                <p className="text-sm text-gray-600 font-medium">Total Rooms</p>
-                <p className="text-3xl font-display font-bold text-blue-600 mt-2">{roomOccupancy.length}</p>
-              </div>
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
-                <p className="text-sm text-gray-600 font-medium">Occupied</p>
-                <p className="text-3xl font-display font-bold text-green-600 mt-2">
-                  {roomOccupancy.filter(r => r.is_occupied === 1).length}
-                </p>
-              </div>
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-gray-500">
-                <p className="text-sm text-gray-600 font-medium">Available</p>
-                <p className="text-3xl font-display font-bold text-gray-600 mt-2">
-                  {roomOccupancy.filter(r => r.is_occupied === 0).length}
-                </p>
-              </div>
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary">
-                <p className="text-sm text-gray-600 font-medium">Occupancy Rate</p>
-                <p className="text-3xl font-display font-bold text-primary mt-2">{stats?.occupancyRate}%</p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-primary to-accent">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Room</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Current Guest</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Check-In</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Expected Checkout</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Upcoming</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {roomOccupancy.map((room) => (
-                      <tr key={room.room_name} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{room.room_name}</td>
-                        <td className="px-4 py-3">
-                          {room.is_occupied === 1 ? (
-                            <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
-                              Occupied
-                            </span>
-                          ) : (
-                            <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
-                              Available
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{room.current_guest || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {room.check_in_date ? new Date(room.check_in_date).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {room.expected_checkout ? new Date(room.expected_checkout).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{room.upcoming_bookings} bookings</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Reports Tab */}
         {activeTab === 'reports' && (
           <div className="space-y-6">
@@ -924,10 +1620,10 @@ export default function AdminDashboard() {
                   <button
                     onClick={generateReport}
                     disabled={generatingReport}
-                    className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 border border-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-semibold"
                   >
                     <TrendingUp size={18} />
-                    Generate
+                    Generate Report
                   </button>
                   {reportData && (
                     <button
@@ -1013,84 +1709,572 @@ export default function AdminDashboard() {
                   <div className="text-sm text-gray-600 mb-2">
                     Period: {reportData.period.startDate} to {reportData.period.endDate}
                   </div>
+
+                  {reportType === 'bookings' && (
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[900px]">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Booking ID</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Type</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guest</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Item</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {reportData.bookings?.length ? reportData.bookings.map((booking: any) => (
+                              <tr key={`${booking.booking_type}-${booking.id}`} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm text-gray-900">#{booking.id}</td>
+                                <td className="px-4 py-3 text-sm capitalize text-gray-700">{booking.booking_type || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.user_name || booking.user_email || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.room_name || booking.amenity_name || 'Day Pass'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{formatDate(booking.created_at)}</td>
+                                <td className="px-4 py-3 text-sm capitalize text-gray-700">{booking.status || '-'}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{booking.total_amount || '₱0.00'}</td>
+                              </tr>
+                            )) : (
+                              <tr>
+                                <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">No booking records found for the selected period.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {reportType === 'revenue' && (
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[980px]">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Period</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Room Bookings</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amenity Bookings</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Day Pass Bookings</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total Bookings</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Room Revenue</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amenity Revenue</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Day Pass Revenue</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total Revenue</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {reportData.data?.length ? reportData.data.map((row: any) => (
+                              <tr key={row.period} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm text-gray-900">{row.period}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{row.roomBookings || 0}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{row.amenityBookings || 0}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{row.dayPassBookings || 0}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{row.totalBookings || 0}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">₱{Number(row.roomRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">₱{Number(row.amenityRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">₱{Number(row.dayPassRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-green-700">₱{Number(row.totalRevenue || 0).toLocaleString()}</td>
+                              </tr>
+                            )) : (
+                              <tr>
+                                <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">No revenue records found for the selected period.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {reportType === 'occupancy' && (
+                    <div className="space-y-4 mt-4">
+                      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                          <h4 className="text-sm font-semibold text-gray-800">Daily Occupancy</h4>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[720px]">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Occupied Rooms</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total Rooms</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Occupancy Rate</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {reportData.dailyOccupancy?.length ? reportData.dailyOccupancy.map((row: any) => (
+                                <tr key={row.date} className="hover:bg-gray-50">
+                                  <td className="px-4 py-3 text-sm text-gray-900">{formatDate(row.date)}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.occupied_rooms || 0}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.total_rooms || 0}</td>
+                                  <td className="px-4 py-3 text-sm font-semibold text-primary">{row.occupancyRate || '0'}%</td>
+                                </tr>
+                              )) : (
+                                <tr>
+                                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-500">No occupancy records found for the selected period.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                          <h4 className="text-sm font-semibold text-gray-800">Room Type Breakdown</h4>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[620px]">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Room Type</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total Bookings</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Check-ins</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {reportData.roomTypeBreakdown?.length ? reportData.roomTypeBreakdown.map((row: any, index: number) => (
+                                <tr key={`${row.room_type || 'unknown'}-${index}`} className="hover:bg-gray-50">
+                                  <td className="px-4 py-3 text-sm text-gray-900">{row.room_type || 'N/A'}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.total_bookings || 0}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.check_ins || 0}</td>
+                                </tr>
+                              )) : (
+                                <tr>
+                                  <td colSpan={3} className="px-4 py-8 text-center text-sm text-gray-500">No room type data found for the selected period.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {reportType === 'guests' && (
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[920px]">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guest Name</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Email</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Phone</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total Bookings</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total Spent</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">First Booking</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Last Booking</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {reportData.guests?.length ? reportData.guests.map((guest: any) => (
+                              <tr key={guest.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{guest.name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{guest.email || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{guest.phone || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{guest.total_bookings || 0}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-green-700">₱{Number(guest.total_spent || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{guest.first_booking_date ? formatDate(guest.first_booking_date) : '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{guest.last_booking_date ? formatDate(guest.last_booking_date) : '-'}</td>
+                              </tr>
+                            )) : (
+                              <tr>
+                                <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">No guest records found for the selected period.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Facilities Tab */}
+        {/* Room Bookings CMS Tab */}
         {activeTab === 'facilities' && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-display font-bold text-gray-900">Facility Management</h2>
+            <h2 className="text-2xl font-display font-bold text-gray-900">Room Bookings CMS</h2>
 
-            {/* Rooms Section */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-display font-bold text-gray-900 mb-4">Rooms</h3>
-              {rooms.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No rooms configured yet</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {rooms.map((room) => (
-                    <div key={room.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between mb-2">
+            <div className="bg-white rounded-xl shadow-md border border-gray-200">
+              <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-2">Manage room catalog used by booking and availability flows.</p>
+                  <input
+                    type="text"
+                    value={roomSearchTerm}
+                    onChange={(e) => setRoomSearchTerm(e.target.value)}
+                    placeholder="Search room name, type, or room numbers"
+                    className="w-full md:max-w-md px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+                <button
+                  onClick={openCreateRoomForm}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-sm border border-blue-700"
+                >
+                  <Plus size={18} />
+                  Add Room
+                </button>
+              </div>
+
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <h3 className="text-base sm:text-lg font-display font-bold text-gray-900">Room Bookings Data Table</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">All active room types and editable catalog details.</p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-100 border-y border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">Room Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">Room Numbers</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">Capacity</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">Price</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">Status</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-gray-800 uppercase tracking-wide">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredRooms.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-8 text-center text-gray-500">No rooms found</td>
+                      </tr>
+                    )}
+                    {filteredRooms.map((room) => (
+                      <tr key={room.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{room.room_name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{room.room_type}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{room.room_numbers}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{room.capacity}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{room.price_per_night}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            room.is_occupied === 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                          }`}>
+                            {room.is_occupied === 1 ? 'Occupied' : 'Available'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="inline-flex items-center gap-2">
+                            <button
+                              onClick={() => openEditRoomForm(room)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                              title="Edit room"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button
+                              onClick={() => removeRoom(room)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                              title="Delete room"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {showRoomForm && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => {
+                setShowRoomForm(false);
+                setEditingRoomId(null);
+                setRoomForm(DEFAULT_ROOM_FORM);
+              }}>
+                <div className="w-full max-w-3xl bg-white rounded-xl shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
+                  <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 className="text-lg font-display font-bold text-gray-900">
+                      {editingRoomId ? 'Edit Room' : 'Add New Room'}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setShowRoomForm(false);
+                        setEditingRoomId(null);
+                        setRoomForm(DEFAULT_ROOM_FORM);
+                      }}
+                      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div className="p-6 max-h-[75vh] overflow-y-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
+                        <input
+                          type="text"
+                          value={roomForm.room_name}
+                          onChange={(e) => setRoomForm({ ...roomForm, room_name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Type</label>
+                        <select
+                          value={roomForm.room_type}
+                          onChange={(e) => setRoomForm({ ...roomForm, room_type: e.target.value as RoomFormState['room_type'] })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        >
+                          <option value="Standard Room (Aircon)">Standard Room (Aircon)</option>
+                          <option value="Non-Aircon Room">Non-Aircon Room</option>
+                          <option value="Family Fan Room">Family Fan Room</option>
+                          <option value="Large Family Room">Large Family Room</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Numbers</label>
+                        <input
+                          type="text"
+                          value={roomForm.room_numbers}
+                          onChange={(e) => setRoomForm({ ...roomForm, room_numbers: e.target.value })}
+                          placeholder="e.g. 101, 102, 103"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={roomForm.capacity}
+                          onChange={(e) => setRoomForm({ ...roomForm, capacity: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Price Per Night</label>
+                        <input
+                          type="text"
+                          value={roomForm.price_per_night}
+                          onChange={(e) => setRoomForm({ ...roomForm, price_per_night: e.target.value })}
+                          placeholder="e.g. ₱1600"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 pt-7">
+                        <input
+                          id="room-active"
+                          type="checkbox"
+                          checked={roomForm.is_active}
+                          onChange={(e) => setRoomForm({ ...roomForm, is_active: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                        <label htmlFor="room-active" className="text-sm text-gray-700">Active</label>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Amenities</label>
+                        <input
+                          type="text"
+                          value={roomForm.amenities}
+                          onChange={(e) => setRoomForm({ ...roomForm, amenities: e.target.value })}
+                          placeholder="e.g. Air conditioning, TV, Private bathroom"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea
+                          rows={3}
+                          value={roomForm.description}
+                          onChange={(e) => setRoomForm({ ...roomForm, description: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Special Requests</label>
+                        <textarea
+                          rows={3}
+                          value={roomForm.special_requests}
+                          onChange={(e) => setRoomForm({ ...roomForm, special_requests: e.target.value })}
+                          placeholder="e.g. No smoking, No pets, Quiet hours after 10 PM"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-6 py-4 border-t border-gray-200 flex gap-2 justify-end">
+                    <button
+                      onClick={() => {
+                        setShowRoomForm(false);
+                        setEditingRoomId(null);
+                        setRoomForm(DEFAULT_ROOM_FORM);
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+                      disabled={roomFormLoading}
+                    >
+                      Cancel
+                    </button>
+                      {editingRoomId && (
+                        <button
+                          onClick={() => openExtraItemsModal(editingRoomId)}
+                          className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 font-semibold"
+                          disabled={roomFormLoading}
+                        >
+                          Manage Extra Items
+                        </button>
+                      )}
+                    <button
+                      onClick={saveRoom}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 border border-emerald-700 shadow-sm font-semibold"
+                      disabled={roomFormLoading}
+                    >
+                      {roomFormLoading ? 'Saving...' : editingRoomId ? 'Update Room' : 'Create Room'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showExtraItemsModal && editingRoomId && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => {
+                setShowExtraItemsModal(false);
+                setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+                setEditingItemId(null);
+              }}>
+                <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
+                  <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 className="text-lg font-display font-bold text-gray-900">Manage Extra Items</h3>
+                    <button
+                      onClick={() => {
+                        setShowExtraItemsModal(false);
+                        setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+                        setEditingItemId(null);
+                      }}
+                      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div className="p-6 max-h-[75vh] overflow-y-auto">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                        {editingItemId ? 'Edit Item' : 'Add New Item'}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <h4 className="font-semibold text-gray-900">{room.room_name}</h4>
-                          <p className="text-sm text-gray-600">{room.room_type}</p>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Item Name *</label>
+                          <input
+                            type="text"
+                            value={extraItemForm.item_name}
+                            onChange={(e) => setExtraItemForm({ ...extraItemForm, item_name: e.target.value })}
+                            placeholder="e.g. Extra Bed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
                         </div>
-                        {room.is_occupied === 1 ? (
-                          <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
-                            Occupied
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
-                            Available
-                          </span>
-                        )}
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <p className="text-gray-600">Capacity: <span className="font-semibold text-gray-900">{room.capacity} guests</span></p>
-                        <p className="text-gray-600">Price: <span className="font-semibold text-gray-900">{room.price_per_night}/night</span></p>
-                        <p className="text-gray-600">Room Numbers: <span className="font-semibold text-gray-900">{room.room_numbers}</span></p>
-                        <p className="text-gray-600">Total Bookings: <span className="font-semibold text-gray-900">{room.total_bookings}</span></p>
-                        <p className="text-gray-600">Approved: <span className="font-semibold text-gray-900">{room.approved_bookings}</span></p>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Price *</label>
+                          <input
+                            type="text"
+                            value={extraItemForm.price}
+                            onChange={(e) => setExtraItemForm({ ...extraItemForm, price: e.target.value })}
+                            placeholder="e.g. ₱150"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
+                          <input
+                            type="text"
+                            value={extraItemForm.unit}
+                            onChange={(e) => setExtraItemForm({ ...extraItemForm, unit: e.target.value })}
+                            placeholder="e.g. bed, fan, set"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div className="flex items-end gap-2">
+                          <button
+                            onClick={() => saveExtraItem(editingRoomId)}
+                            disabled={extraItemLoading}
+                            className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-semibold"
+                          >
+                            {extraItemLoading ? 'Saving...' : editingItemId ? 'Update' : 'Add Item'}
+                          </button>
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                          <textarea
+                            rows={2}
+                            value={extraItemForm.description}
+                            onChange={(e) => setExtraItemForm({ ...extraItemForm, description: e.target.value })}
+                            placeholder="Optional description"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Amenities Section */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-display font-bold text-gray-900 mb-4">Amenities</h3>
-              {amenities.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No amenities configured yet</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {amenities.map((amenity) => (
-                    <div key={amenity.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <h4 className="font-semibold text-gray-900 mb-2">{amenity.amenity_name}</h4>
-                      <div className="space-y-1 text-sm">
-                        <p className="text-gray-600">Type: <span className="font-semibold text-gray-900 capitalize">{amenity.amenity_type.replace('-', ' ')}</span></p>
-                        <p className="text-gray-600">Capacity: <span className="font-semibold text-gray-900">{amenity.capacity} guests</span></p>
-                        {amenity.price_per_pax && (
-                          <p className="text-gray-600">Price per Pax: <span className="font-semibold text-gray-900">{amenity.price_per_pax}</span></p>
-                        )}
-                        {amenity.base_price && (
-                          <p className="text-gray-600">Base Price: <span className="font-semibold text-gray-900">{amenity.base_price}</span></p>
-                        )}
-                        {amenity.operating_hours && (
-                          <p className="text-gray-600 text-xs mt-1">{amenity.operating_hours}</p>
-                        )}
-                        <p className="text-gray-600">Total Bookings: <span className="font-semibold text-gray-900">{amenity.total_bookings}</span></p>
-                        <p className="text-gray-600">Approved: <span className="font-semibold text-gray-900">{amenity.approved_bookings}</span></p>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Available Items ({roomExtraItems.length})</h4>
+                    {roomExtraItems.length === 0 ? (
+                      <p className="text-sm text-gray-600 text-center py-4">No extra items added yet</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {roomExtraItems.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900">{item.item_name}</p>
+                              <p className="text-sm text-gray-600">
+                                {item.price} {item.unit && `/ ${item.unit}`}
+                              </p>
+                              {item.description && (
+                                <p className="text-xs text-gray-500 mt-1">{item.description}</p>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingItemId(item.id);
+                                  setExtraItemForm({
+                                    item_name: item.item_name,
+                                    price: item.price,
+                                    unit: item.unit || '',
+                                    description: item.description || ''
+                                  });
+                                }}
+                                className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg"
+                              >
+                                <Pencil size={16} />
+                              </button>
+                              <button
+                                onClick={() => deleteExtraItem(editingRoomId, item.id)}
+                                className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  </div>
+
+                  <div className="px-6 py-4 border-t border-gray-200 flex gap-2 justify-end">
+                    <button
+                      onClick={() => {
+                        setShowExtraItemsModal(false);
+                        setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+                        setEditingItemId(null);
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-semibold"
+                    >
+                      Done
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1109,7 +2293,8 @@ export default function AdminDashboard() {
         {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-display font-bold text-gray-900">Staff Management</h2>
+            <h2 className="text-2xl font-display font-bold text-gray-900">User Management</h2>
+            <p className="text-gray-600">Manage receptionist and admin accounts, control access, and lock accounts as needed.</p>
 
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="overflow-x-auto">
@@ -1119,10 +2304,10 @@ export default function AdminDashboard() {
                       <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">ID</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Name</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Email</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Phone</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Role</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Account Status</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Joined Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -1133,7 +2318,6 @@ export default function AdminDashboard() {
                           {user.name}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">{user.email}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{user.phone || '-'}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                             user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
@@ -1143,13 +2327,56 @@ export default function AdminDashboard() {
                             {user.role}
                           </span>
                         </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.status === 'active' ? 'bg-green-100 text-green-700' :
+                            user.status === 'locked' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {user.status === 'active' ? 'Active' : 
+                             user.status === 'locked' ? 'Locked' : 
+                             'Deleted'}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {formatDate(user.created_at)}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                            Active
-                          </span>
+                          <div className="flex gap-2">
+                            {user.status === 'active' && (
+                              <>
+                                <button
+                                  onClick={() => handleUserAction(user.id, 'lock')}
+                                  disabled={userActionLoading[user.id] || user.role === 'admin'}
+                                  className="px-3 py-1 text-xs font-semibold rounded-lg bg-yellow-100 text-yellow-700 hover:bg-yellow-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                >
+                                  <Lock size={14} />
+                                  Lock
+                                </button>
+                                <button
+                                  onClick={() => handleUserAction(user.id, 'delete')}
+                                  disabled={userActionLoading[user.id] || user.role === 'admin'}
+                                  className="px-3 py-1 text-xs font-semibold rounded-lg bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                >
+                                  <Trash2 size={14} />
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                            {user.status === 'locked' && (
+                              <button
+                                onClick={() => handleUserAction(user.id, 'unlock')}
+                                disabled={userActionLoading[user.id] || user.role === 'admin'}
+                                className="px-3 py-1 text-xs font-semibold rounded-lg bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                              >
+                                <Unlock size={14} />
+                                Activate
+                              </button>
+                            )}
+                            {user.role === 'admin' && (
+                              <span className="px-3 py-1 text-xs text-gray-500">No actions</span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1168,6 +2395,412 @@ export default function AdminDashboard() {
         {/* Inquiries & FAQ Tab */}
         {activeTab === 'inquiries' && (
           <AdminInquiries />
+        )}
+
+        {/* Inventory Tab */}
+        {activeTab === 'inventory' && (
+          <div className="space-y-6">
+            {/* Sub-tab switcher */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setInventorySubTab('items')}
+                className={`px-5 py-2 rounded-xl font-semibold text-sm transition-all ${inventorySubTab === 'items' ? 'bg-primary text-white shadow' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+              >
+                Inventory Items
+              </button>
+              <button
+                onClick={() => setInventorySubTab('transactions')}
+                className={`px-5 py-2 rounded-xl font-semibold text-sm transition-all ${inventorySubTab === 'transactions' ? 'bg-primary text-white shadow' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+              >
+                Financial Transactions
+              </button>
+            </div>
+
+            {inventorySubTab === 'items' && (() => {
+              const filteredInventory = inventory.filter(item =>
+                inventorySearch === '' ||
+                item.item_name.toLowerCase().includes(inventorySearch.toLowerCase()) ||
+                item.category.toLowerCase().includes(inventorySearch.toLowerCase()) ||
+                item.unit.toLowerCase().includes(inventorySearch.toLowerCase())
+              );
+              const itemsPerPage = 10;
+              const inventoryTotalPages = Math.max(1, Math.ceil(filteredInventory.length / itemsPerPage));
+              const safeInventoryPage = Math.min(inventoryPage, inventoryTotalPages);
+              const pagedInventory = filteredInventory.slice(
+                (safeInventoryPage - 1) * itemsPerPage,
+                safeInventoryPage * itemsPerPage
+              );
+              return (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-6 py-4 border-b border-gray-100">
+                    <h3 className="font-semibold text-gray-900 shrink-0">Inventory Items</h3>
+                    <div className="flex-1 relative">
+                      <input
+                        value={inventorySearch}
+                        onChange={e => setInventorySearch(e.target.value)}
+                        placeholder="Search by name, category, unit..."
+                        className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                      <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                    <button onClick={fetchInventory} className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors shrink-0">
+                      <RefreshCw size={14} className={inventoryLoading ? 'animate-spin' : ''} />
+                      Refresh
+                    </button>
+                  </div>
+                  {inventoryLoading ? (
+                    <div className="p-8 text-center text-gray-400">Loading...</div>
+                  ) : filteredInventory.length === 0 ? (
+                    <div className="p-8 text-center text-gray-400">{inventorySearch ? 'No items match your search.' : 'No inventory items found.'}</div>
+                  ) : (
+                    <>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                              <th className="text-left px-4 py-3 font-semibold text-gray-700">Item Name</th>
+                              <th className="text-left px-4 py-3 font-semibold text-gray-700">Category</th>
+                              <th className="text-right px-4 py-3 font-semibold text-gray-700">Quantity</th>
+                              <th className="text-left px-4 py-3 font-semibold text-gray-700">Unit</th>
+                              <th className="text-right px-4 py-3 font-semibold text-gray-700">Unit Price</th>
+                              <th className="text-left px-4 py-3 font-semibold text-gray-700">Last Updated</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {pagedInventory.map(item => (
+                              <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-3 font-medium text-gray-900">{item.item_name}</td>
+                                <td className="px-4 py-3 text-gray-600">{item.category}</td>
+                                <td className={`px-4 py-3 text-right font-semibold ${item.quantity <= 5 ? 'text-red-600' : 'text-gray-900'}`}>{item.quantity}</td>
+                                <td className="px-4 py-3 text-gray-600">{item.unit}</td>
+                                <td className="px-4 py-3 text-right text-gray-900">{item.unit_price}</td>
+                                <td className="px-4 py-3 text-gray-500">{item.last_updated ? new Date(item.last_updated).toLocaleDateString() : '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+                        <p className="text-xs text-gray-600">
+                          Showing {(safeInventoryPage - 1) * itemsPerPage + 1} to {Math.min(safeInventoryPage * itemsPerPage, filteredInventory.length)} of {filteredInventory.length} items
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setInventoryPage(prev => Math.max(1, prev - 1))}
+                            disabled={safeInventoryPage === 1}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                          >
+                            Previous
+                          </button>
+                          <span className="text-xs text-gray-600 font-medium">Page {safeInventoryPage} of {inventoryTotalPages}</span>
+                          <button
+                            onClick={() => setInventoryPage(prev => Math.min(inventoryTotalPages, prev + 1))}
+                            disabled={safeInventoryPage === inventoryTotalPages}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
+            {inventorySubTab === 'transactions' && (() => {
+              const parseAmount = (amt: string) => parseFloat(amt.replace(/[₱,\s]/g, '')) || 0;
+              const filteredTx = inventoryTransactions.filter(tx => {
+                const matchesSearch = transactionSearch === '' ||
+                  tx.category.toLowerCase().includes(transactionSearch.toLowerCase()) ||
+                  (tx.description || '').toLowerCase().includes(transactionSearch.toLowerCase()) ||
+                  tx.amount.toLowerCase().includes(transactionSearch.toLowerCase());
+                const matchesType = transactionTypeFilter === '' || tx.type === transactionTypeFilter;
+                return matchesSearch && matchesType;
+              });
+              const txPerPage = 10;
+              const transactionTotalPages = Math.max(1, Math.ceil(filteredTx.length / txPerPage));
+              const safeTransactionPage = Math.min(transactionPage, transactionTotalPages);
+              const pagedTx = filteredTx.slice(
+                (safeTransactionPage - 1) * txPerPage,
+                safeTransactionPage * txPerPage
+              );
+              const totalIncome = filteredTx.filter(t => t.type === 'income').reduce((s, t) => s + parseAmount(t.amount), 0);
+              const totalExpense = filteredTx.filter(t => t.type === 'expense').reduce((s, t) => s + parseAmount(t.amount), 0);
+              const netBalance = totalIncome - totalExpense;
+              return (
+                <div className="space-y-4">
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-xl border border-green-100 shadow-sm p-4 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                        <TrendingUp size={18} className="text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Total Income</p>
+                        <p className="text-lg font-bold text-green-700">₱{totalIncome.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-red-100 shadow-sm p-4 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                        <DollarSign size={18} className="text-red-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Total Expenses</p>
+                        <p className="text-lg font-bold text-red-700">₱{totalExpense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                      </div>
+                    </div>
+                    <div className={`bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 ${netBalance >= 0 ? 'border border-blue-100' : 'border border-orange-100'}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${netBalance >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}>
+                        <BarChart3 size={18} className={netBalance >= 0 ? 'text-blue-600' : 'text-orange-600'} />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Net Balance</p>
+                        <p className={`text-lg font-bold ${netBalance >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                          {netBalance >= 0 ? '+' : '-'}₱{Math.abs(netBalance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Toolbar: search + filter + actions */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex-1 relative">
+                      <input
+                        value={transactionSearch}
+                        onChange={e => setTransactionSearch(e.target.value)}
+                        placeholder="Search by category, description..."
+                        className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                      <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                    <select
+                      value={transactionTypeFilter}
+                      onChange={e => setTransactionTypeFilter(e.target.value as '' | 'income' | 'expense')}
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    >
+                      <option value="">All Types</option>
+                      <option value="income">Income Only</option>
+                      <option value="expense">Expense Only</option>
+                    </select>
+                    <button onClick={fetchInventoryTransactions} className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors shrink-0">
+                      <RefreshCw size={14} className={inventoryLoading ? 'animate-spin' : ''} />
+                      Refresh
+                    </button>
+                    <button
+                      onClick={() => setShowAddTransaction(!showAddTransaction)}
+                      className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm shrink-0"
+                    >
+                      <Plus size={16} />
+                      Add Transaction
+                    </button>
+                  </div>
+
+                  {showAddTransaction && (
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                      <h4 className="font-semibold text-gray-900 mb-4">New Transaction</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                          <select value={newTransaction.type} onChange={e => setNewTransaction({...newTransaction, type: e.target.value as 'income' | 'expense'})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                          <input value={newTransaction.category} onChange={e => setNewTransaction({...newTransaction, category: e.target.value})} placeholder="e.g. Food, Utilities" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
+                          <input type="number" value={newTransaction.amount} onChange={e => setNewTransaction({...newTransaction, amount: e.target.value})} placeholder="0.00" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                          <input type="date" value={newTransaction.transaction_date} onChange={e => setNewTransaction({...newTransaction, transaction_date: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                          <input value={newTransaction.description} onChange={e => setNewTransaction({...newTransaction, description: e.target.value})} placeholder="Optional description" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                        </div>
+                      </div>
+                      <div className="flex gap-3 mt-4">
+                        <button onClick={handleAddTransaction} disabled={transactionSaving} className="bg-primary text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                          {transactionSaving ? 'Saving...' : 'Save Transaction'}
+                        </button>
+                        <button onClick={() => setShowAddTransaction(false)} className="bg-gray-100 text-gray-700 px-5 py-2 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                    {inventoryLoading ? (
+                      <div className="p-8 text-center text-gray-400">Loading...</div>
+                    ) : filteredTx.length === 0 ? (
+                      <div className="p-8 text-center text-gray-400">{transactionSearch || transactionTypeFilter ? 'No transactions match your search.' : 'No transactions found.'}</div>
+                    ) : (
+                      <>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Date</th>
+                                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Type</th>
+                                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Category</th>
+                                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Description</th>
+                                  <th className="text-right px-4 py-3 font-semibold text-gray-700">Amount</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-50">
+                                {pagedTx.map(tx => (
+                                  <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-4 py-3 text-gray-600">{new Date(tx.transaction_date).toLocaleDateString()}</td>
+                                    <td className="px-4 py-3">
+                                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${tx.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {tx.type === 'income' ? '+ Income' : '- Expense'}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-700">{tx.category}</td>
+                                    <td className="px-4 py-3 text-gray-600">{tx.description || '—'}</td>
+                                    <td className={`px-4 py-3 text-right font-semibold ${tx.type === 'income' ? 'text-green-700' : 'text-red-700'}`}>{tx.amount}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                              <tfoot className="border-t-2 border-gray-200 bg-gray-50">
+                                <tr>
+                                  <td colSpan={4} className="px-4 py-3 font-semibold text-gray-700 text-right">Totals (filtered):</td>
+                                  <td className="px-4 py-3 text-right">
+                                    <div className="text-green-700 font-bold text-xs">+₱{totalIncome.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+                                    <div className="text-red-700 font-bold text-xs">-₱{totalExpense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+                                    <div className={`font-bold text-sm border-t border-gray-300 mt-1 pt-1 ${netBalance >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                                      {netBalance >= 0 ? '+' : '-'}₱{Math.abs(netBalance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                                    </div>
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </div>
+                          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+                            <p className="text-xs text-gray-600">
+                              Showing {(safeTransactionPage - 1) * txPerPage + 1} to {Math.min(safeTransactionPage * txPerPage, filteredTx.length)} of {filteredTx.length} transactions
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setTransactionPage(prev => Math.max(1, prev - 1))}
+                                disabled={safeTransactionPage === 1}
+                                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                              >
+                                Previous
+                              </button>
+                              <span className="text-xs text-gray-600 font-medium">Page {safeTransactionPage} of {transactionTotalPages}</span>
+                              <button
+                                onClick={() => setTransactionPage(prev => Math.min(transactionTotalPages, prev + 1))}
+                                disabled={safeTransactionPage === transactionTotalPages}
+                                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                              >
+                                Next
+                              </button>
+                            </div>
+                          </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Audit Trail Tab */}
+        {activeTab === 'audit' && (
+          <div className="space-y-6">
+            {/* Filters */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="flex flex-wrap gap-3 items-end">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Action</label>
+                  <select value={auditActionFilter} onChange={e => setAuditActionFilter(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                    <option value="">All Actions</option>
+                    <option value="LOCK_USER">Lock User</option>
+                    <option value="UNLOCK_USER">Unlock User</option>
+                    <option value="DELETE_USER">Delete User</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
+                  <input type="date" value={auditStartDate} onChange={e => setAuditStartDate(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">End Date</label>
+                  <input type="date" value={auditEndDate} onChange={e => setAuditEndDate(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+                <button onClick={() => fetchAuditLogs(1)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+                  <RefreshCw size={14} className={auditLoading ? 'animate-spin' : ''} />
+                  Filter
+                </button>
+              </div>
+            </div>
+
+            {/* Logs table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              {auditLoading ? (
+                <div className="p-8 text-center text-gray-400">Loading audit logs...</div>
+              ) : auditLogs.length === 0 ? (
+                <div className="p-8 text-center text-gray-400">No audit logs found.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Date & Time</th>
+                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Admin</th>
+                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Action</th>
+                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Target</th>
+                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Details</th>
+                        <th className="text-left px-4 py-3 font-semibold text-gray-700">IP Address</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {auditLogs.map(log => (
+                        <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                          <td className="px-4 py-3 font-medium text-gray-900">{log.user_name}</td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                              log.action === 'LOCK_USER' ? 'bg-yellow-100 text-yellow-800' :
+                              log.action === 'UNLOCK_USER' ? 'bg-green-100 text-green-700' :
+                              log.action === 'DELETE_USER' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {log.action.replace(/_/g, ' ')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-700">{log.entity_type} #{log.entity_id}</td>
+                          <td className="px-4 py-3 text-gray-600">{log.details}</td>
+                          <td className="px-4 py-3 text-gray-500 font-mono text-xs">{log.ip_address || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {auditTotalPages > 1 && (
+              <div className="flex items-center justify-center gap-2">
+                <button onClick={() => fetchAuditLogs(auditPage - 1)} disabled={auditPage <= 1 || auditLoading} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-40 hover:bg-gray-50 transition-colors">
+                  Previous
+                </button>
+                <span className="text-sm text-gray-600">Page {auditPage} of {auditTotalPages}</span>
+                <button onClick={() => fetchAuditLogs(auditPage + 1)} disabled={auditPage >= auditTotalPages || auditLoading} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-40 hover:bg-gray-50 transition-colors">
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         </div>

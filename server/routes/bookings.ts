@@ -147,6 +147,7 @@ export const createRoomBooking: RequestHandler = async (req, res) => {
       guests,
       contactNumber,
       specialRequests,
+      extraItems,
       totalAmount,
       paymentProof,
     } = req.body;
@@ -159,6 +160,7 @@ export const createRoomBooking: RequestHandler = async (req, res) => {
       checkOut,
       guests,
       contactNumber,
+      extraItems: extraItems?.length || 0,
       totalAmount,
       paymentProofLength: paymentProof?.length || 0
     });
@@ -213,8 +215,8 @@ export const createRoomBooking: RequestHandler = async (req, res) => {
     // Insert booking
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO room_bookings 
-      (user_id, user_email, room_name, room_type, room_numbers, check_in, check_out, guests, contact_number, special_requests, total_amount, payment_proof, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      (user_id, user_email, room_name, room_type, room_numbers, check_in, check_out, guests, contact_number, special_requests, extra_items, total_amount, payment_proof, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         req.session.userId,
         req.session.userEmail,
@@ -226,6 +228,7 @@ export const createRoomBooking: RequestHandler = async (req, res) => {
         guests,
         contactNumber,
         specialRequests || null,
+        extraItems && extraItems.length > 0 ? JSON.stringify(extraItems) : null,
         totalAmount,
         paymentProof,
       ]

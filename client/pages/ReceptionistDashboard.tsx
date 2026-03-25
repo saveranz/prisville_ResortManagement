@@ -118,6 +118,9 @@ export default function ReceptionistDashboard() {
   
   // Inventory management states
   const [inventoryTab, setInventoryTab] = useState<'inventory' | 'transactions'>('inventory');
+  
+  // Check-in/Check-out sub-tab state
+  const [checkInTab, setCheckInTab] = useState<'checkin' | 'checkout'>('checkin');
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showAddItem, setShowAddItem] = useState(false);
@@ -177,6 +180,8 @@ export default function ReceptionistDashboard() {
   const [amenityStatusFilter, setAmenityStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [dayPassSearchTerm, setDayPassSearchTerm] = useState('');
   const [dayPassStatusFilter, setDayPassStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [checkInSearchTerm, setCheckInSearchTerm] = useState('');
+  const [checkOutSearchTerm, setCheckOutSearchTerm] = useState('');
   
   // Pagination for bookings
   const [roomBookingsPage, setRoomBookingsPage] = useState(1);
@@ -382,6 +387,34 @@ export default function ReceptionistDashboard() {
   }, [filteredDayPassBookings, dayPassBookingsPage]);
 
   const totalDayPassBookingsPages = Math.ceil(filteredDayPassBookings.length / bookingsPerPage);
+
+  // Filtered check-in bookings
+  const filteredCheckInBookings = useMemo(() => {
+    const checkInReady = roomBookings.filter(b => b.status === 'approved' && !b.actual_check_in);
+    
+    if (!checkInSearchTerm) return checkInReady;
+    
+    const searchLower = checkInSearchTerm.toLowerCase();
+    return checkInReady.filter(booking => 
+      booking.user_email?.toLowerCase().includes(searchLower) ||
+      booking.room_name?.toLowerCase().includes(searchLower) ||
+      booking.room_numbers?.toLowerCase().includes(searchLower) ||
+      booking.id.toString().includes(searchLower)
+    );
+  }, [roomBookings, checkInSearchTerm]);
+
+  // Filtered check-out guests
+  const filteredCheckOutGuests = useMemo(() => {
+    if (!checkOutSearchTerm) return checkedInGuests;
+    
+    const searchLower = checkOutSearchTerm.toLowerCase();
+    return checkedInGuests.filter((guest: any) => 
+      guest.user_email?.toLowerCase().includes(searchLower) ||
+      guest.room_name?.toLowerCase().includes(searchLower) ||
+      guest.amenity_name?.toLowerCase().includes(searchLower) ||
+      guest.booking_id?.toString().includes(searchLower)
+    );
+  }, [checkedInGuests, checkOutSearchTerm]);
 
   useEffect(() => {
     checkAuth();
@@ -1082,7 +1115,7 @@ export default function ReceptionistDashboard() {
             }`}
           >
             <LogIn size={20} />
-            <span className="tracking-wide">Check-In/Out</span>
+            <span className="tracking-wide">Check-In / Check-Out</span>
           </button>
 
           <button
@@ -2043,85 +2076,255 @@ export default function ReceptionistDashboard() {
           {/* Check-In/Check-Out Tab */}
           {activeTab === 'checkin' && (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-                {/* Approved Bookings Ready for Check-In */}
+              {/* Sub-tabs Navigation */}
+              <div className="border-b border-gray-200 mb-6">
+                <nav className="flex gap-2">
+                  <button
+                    onClick={() => setCheckInTab('checkin')}
+                    className={`px-6 py-3 font-semibold text-sm rounded-t-xl transition-all ${
+                      checkInTab === 'checkin'
+                        ? 'bg-white text-primary border-t-2 border-x-2 border-primary border-b-0'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    <LogIn size={20} className="inline mr-2" />
+                    Check-In
+                  </button>
+                  <button
+                    onClick={() => setCheckInTab('checkout')}
+                    className={`px-6 py-3 font-semibold text-sm rounded-t-xl transition-all ${
+                      checkInTab === 'checkout'
+                        ? 'bg-white text-primary border-t-2 border-x-2 border-primary border-b-0'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    <LogOutIcon size={20} className="inline mr-2" />
+                    Check-Out
+                  </button>
+                </nav>
+              </div>
+
+              {/* Check-In Content */}
+              {checkInTab === 'checkin' && (
                 <div className="bg-white rounded-xl shadow-md border border-gray-200">
-                  <div className="p-4 sm:p-6 border-b border-gray-200">
-                    <h3 className="text-base sm:text-lg font-display font-bold text-gray-900">Ready for Check-In</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">Approved bookings scheduled for today</p>
+                  <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+                    <h3 className="text-lg font-display font-bold text-gray-900">Ready for Check-In</h3>
+                    <p className="text-sm text-gray-600 mt-1">Approved bookings ready to be checked in</p>
                   </div>
-                  <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 max-h-96 overflow-y-auto">
-                    {roomBookings
-                      .filter(b => b.status === 'approved' && !b.actual_check_in)
-                      .map(booking => (
-                        <div key={booking.id} className="bg-primary/5 border border-primary/20 rounded-xl p-3 sm:p-4 hover:shadow-md hover:border-primary/40 transition-all">
-                          <div className="flex justify-between items-start mb-2 sm:mb-3 gap-2">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-bold text-gray-900 truncate text-sm sm:text-base">{booking.room_name}</p>
-                              <p className="text-xs sm:text-sm text-gray-600 truncate">{booking.user_email}</p>
-                            </div>
-                            <span className="px-2 sm:px-3 py-1 bg-accent/20 text-accent border border-accent/30 text-xs font-bold rounded-full whitespace-nowrap flex-shrink-0">
-                              {booking.booking_type}
-                            </span>
-                          </div>
-                          <div className="text-xs text-gray-600 mb-2 sm:mb-3">
-                            {new Date(booking.check_in).toLocaleDateString()} - {new Date(booking.check_out).toLocaleDateString()}
-                          </div>
+                  
+                  {/* Search Filter */}
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                      <div className="flex-1 w-full">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input
+                          type="text"
+                          placeholder="Search by email, room name, room number, or booking ID..."
+                          value={checkInSearchTerm}
+                          onChange={(e) => setCheckInSearchTerm(e.target.value)}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                      </div>
+                      {checkInSearchTerm && (
+                        <div className="flex items-end">
                           <button
-                            onClick={() => handleCheckIn(booking, 'room')}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 sm:py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-lg text-sm"
+                            onClick={() => setCheckInSearchTerm('')}
+                            className="px-4 py-2.5 text-sm text-primary hover:text-primary/80 flex items-center gap-2 font-semibold border-2 border-primary/30 rounded-lg hover:bg-primary/5 transition-colors"
                           >
-                            <LogIn size={16} />
-                            Check In
+                            <X size={16} />
+                            Clear
                           </button>
                         </div>
-                      ))}
-                    {roomBookings.filter(b => b.status === 'approved' && !b.actual_check_in).length === 0 && (
-                      <div className="text-center py-6 sm:py-8 text-gray-500 text-sm">
-                        <p>No pending check-ins</p>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                    <div className="mt-3 text-sm text-gray-600">
+                      Showing <span className="font-semibold text-primary">{filteredCheckInBookings.length}</span> booking(s) ready for check-in
+                      {filteredCheckInBookings.length !== roomBookings.filter(b => b.status === 'approved' && !b.actual_check_in).length && ` (filtered from ${roomBookings.filter(b => b.status === 'approved' && !b.actual_check_in).length} total)`}
+                    </div>
                   </div>
+                  
+                <div className="overflow-x-auto">
+                  {loading ? (
+                    <div className="text-center py-16">
+                      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                      <p className="mt-4 text-gray-600">Loading bookings...</p>
+                    </div>
+                  ) : filteredCheckInBookings.length === 0 ? (
+                    <div className="text-center py-20">
+                      <LogIn size={64} className="mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg text-gray-500">{checkInSearchTerm ? 'No bookings found matching your search' : 'No pending check-ins'}</p>
+                    </div>
+                  ) : (
+                    <table className="w-full table-auto">
+                      <thead>
+                        <tr className="bg-gray-800">
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Booking ID</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Email</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Type</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Numbers</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In Date</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-Out Date</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guests</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Total Amount</th>
+                          <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-100">
+                        {filteredCheckInBookings.map(booking => (
+                            <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-3 py-3 whitespace-nowrap">
+                                <span className="text-xs font-bold text-primary">#{booking.id}</span>
+                              </td>
+                              <td className="px-3 py-3 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-primary font-bold text-xs">
+                                      {booking.user_email?.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs font-medium text-gray-700 truncate max-w-[200px]">{booking.user_email}</span>
+                                </div>
+                              </td>
+                              <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-gray-900">{booking.room_name}</td>
+                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{booking.room_numbers || 'N/A'}</td>
+                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{formatDate(booking.check_in)}</td>
+                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{formatDate(booking.check_out)}</td>
+                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700 text-center">{booking.guests || 0}</td>
+                              <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">{booking.total_amount}</td>
+                              <td className="px-3 py-3 whitespace-nowrap text-center">
+                                <button
+                                  onClick={() => handleCheckIn(booking, 'room')}
+                                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-md text-xs"
+                                >
+                                  <LogIn size={14} />
+                                  Check In
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
+                </div>
+              )}
 
-                {/* Currently Checked-In Guests */}
+              {/* Check-Out Content */}
+              {checkInTab === 'checkout' && (
                 <div className="bg-white rounded-xl shadow-md border border-gray-200">
-                  <div className="p-4 sm:p-6 border-b border-gray-200">
-                    <h3 className="text-base sm:text-lg font-display font-bold text-gray-900">Currently Checked-In</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">Active guests at the resort</p>
+                  <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+                    <h3 className="text-lg font-display font-bold text-gray-900">Currently Checked-In Guests</h3>
+                    <p className="text-sm text-gray-600 mt-1">Active guests ready for check-out</p>
                   </div>
-                  <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 max-h-96 overflow-y-auto">
-                    {checkedInGuests.map((guest: any) => (
-                      <div key={`${guest.booking_type}-${guest.booking_id}`} className="border border-accent/30 bg-accent/5 rounded-xl p-3 sm:p-4 hover:border-accent/50 transition-all">
-                        <div className="flex justify-between items-start mb-2 sm:mb-3 gap-2">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-bold text-gray-900 truncate text-sm sm:text-base">{guest.room_name || guest.amenity_name || 'Day Pass'}</p>
-                            <p className="text-xs sm:text-sm text-gray-600 truncate">{guest.user_email}</p>
-                          </div>
-                          <span className="px-2 sm:px-3 py-1 bg-accent text-accent-foreground text-xs font-bold rounded-full shadow-lg whitespace-nowrap flex-shrink-0">
-                            Active
-                          </span>
-                        </div>
-                        <div className="text-xs text-gray-400 mb-2 sm:mb-3">
-                          Checked in: {new Date(guest.actual_check_in).toLocaleString()}
-                        </div>
-                        <button
-                          onClick={() => handleCheckOut({ ...guest, id: guest.booking_id }, guest.booking_type)}
-                          className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground py-2 sm:py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-lg text-sm"
-                        >
-                          <LogOutIcon size={16} />
-                          Check Out
-                        </button>
+                  
+                  {/* Search Filter */}
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                      <div className="flex-1 w-full">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input
+                          type="text"
+                          placeholder="Search by email, room/amenity name, or booking ID..."
+                          value={checkOutSearchTerm}
+                          onChange={(e) => setCheckOutSearchTerm(e.target.value)}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
                       </div>
-                    ))}
-                    {checkedInGuests.length === 0 && (
-                      <div className="text-center py-6 sm:py-8 text-gray-500 text-sm">
-                        <p>No guests currently checked in</p>
-                      </div>
-                    )}
+                      {checkOutSearchTerm && (
+                        <div className="flex items-end">
+                          <button
+                            onClick={() => setCheckOutSearchTerm('')}
+                            className="px-4 py-2.5 text-sm text-primary hover:text-primary/80 flex items-center gap-2 font-semibold border-2 border-primary/30 rounded-lg hover:bg-primary/5 transition-colors"
+                          >
+                            <X size={16} />
+                            Clear
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 text-sm text-gray-600">
+                      Showing <span className="font-semibold text-primary">{filteredCheckOutGuests.length}</span> guest(s) currently checked in
+                      {filteredCheckOutGuests.length !== checkedInGuests.length && ` (filtered from ${checkedInGuests.length} total)`}
+                    </div>
                   </div>
+                  
+                <div className="overflow-x-auto">
+                  {loading ? (
+                    <div className="text-center py-16">
+                      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                      <p className="mt-4 text-gray-600">Loading guests...</p>
+                    </div>
+                  ) : filteredCheckOutGuests.length === 0 ? (
+                    <div className="text-center py-20">
+                      <Users size={64} className="mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg text-gray-500">{checkOutSearchTerm ? 'No guests found matching your search' : 'No guests currently checked in'}</p>
+                    </div>
+                  ) : (
+                    <table className="w-full table-auto">
+                      <thead>
+                        <tr className="bg-gray-800">
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Booking ID</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Email</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Type</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room/Amenity</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In Time</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Expected Check-Out</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
+                          <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-100">
+                        {filteredCheckOutGuests.map((guest: any) => (
+                          <tr key={`${guest.booking_type}-${guest.booking_id}`} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-3 py-3 whitespace-nowrap">
+                              <span className="text-xs font-bold text-primary">#{guest.booking_id}</span>
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-accent font-bold text-xs">
+                                    {guest.user_email?.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <span className="text-xs font-medium text-gray-700 truncate max-w-[200px]">{guest.user_email}</span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap">
+                              <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">
+                                {guest.booking_type}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-gray-900">
+                              {guest.room_name || guest.amenity_name || 'Day Pass'}
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
+                              {formatDateTime(guest.actual_check_in)}
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
+                              {formatDate(guest.check_out || guest.check_out_date)}
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap">
+                              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                                Active
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap text-center">
+                              <button
+                                onClick={() => handleCheckOut({ ...guest, id: guest.booking_id }, guest.booking_type)}
+                                className="inline-flex items-center gap-2 bg-secondary hover:bg-secondary/90 text-secondary-foreground px-4 py-2 rounded-lg font-semibold transition-all shadow-md text-xs"
+                              >
+                                <LogOutIcon size={14} />
+                                Check Out
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
-              </div>
+                </div>
+              )}
             </>
           )}
 

@@ -11,6 +11,17 @@ import Recommendations from "@/components/Recommendations";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FAQModal from "@/components/FAQModal";
 
+interface RoomCatalogItem {
+  id: number;
+  room_name: string;
+  room_type: string;
+  room_numbers: string;
+  capacity: number;
+  price_per_night: string;
+  amenities?: string;
+  description?: string;
+}
+
 export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
@@ -28,6 +39,7 @@ export default function Index() {
   const [userRole, setUserRole] = useState<string>("");
   const [openRoomBookingsTrigger, setOpenRoomBookingsTrigger] = useState(0);
   const [isFAQModalOpen, setIsFAQModalOpen] = useState(false);
+  const [roomsCatalog, setRoomsCatalog] = useState<RoomCatalogItem[]>([]);
   const isCheckingAuth = useRef(false);
   const lastScrollY = useRef(0);
   const hasScrolledDown = useRef(false);
@@ -46,6 +58,10 @@ export default function Index() {
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.user) {
+            if (data.user.role === 'admin') {
+              window.location.replace('/admin/dashboard');
+              return;
+            }
             setIsLoggedIn(true);
             setUserId(data.user.id);
             setUserRole(data.user.role);
@@ -64,6 +80,22 @@ export default function Index() {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    const fetchRoomsCatalog = async () => {
+      try {
+        const response = await fetch('/api/facilities/rooms', { credentials: 'include' });
+        const data = await response.json();
+        if (data.success && Array.isArray(data.rooms)) {
+          setRoomsCatalog(data.rooms);
+        }
+      } catch (error) {
+        console.error('Failed to fetch rooms catalog:', error);
+      }
+    };
+
+    fetchRoomsCatalog();
+  }, []);
+
   // Check for verification success and show toast
   useEffect(() => {
     const verification = searchParams.get('verification');
@@ -73,6 +105,7 @@ export default function Index() {
         variant: "success",
         title: "Registration Successful!",
         description: "Your account has been verified and you're now logged in. Welcome to Prisville Resort!",
+        duration: 3000,
       });
       
       // Remove the query parameter from URL
@@ -154,6 +187,22 @@ export default function Index() {
 
   const handleLoginClick = useCallback(() => {
     setIsLoginModalOpen(true);
+  }, []);
+
+  const getRoomImage = useCallback((roomType: string) => {
+    if (roomType.includes('Standard')) {
+      return "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=400&fit=crop";
+    }
+    if (roomType.includes('Large Family')) {
+      return "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop";
+    }
+    if (roomType.includes('Family Fan')) {
+      return "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&h=400&fit=crop";
+    }
+    if (roomType.includes('Non-Aircon')) {
+      return "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&h=400&fit=crop";
+    }
+    return "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600&h=400&fit=crop";
   }, []);
 
   return (
@@ -445,7 +494,7 @@ export default function Index() {
           {/* Section Header with fade-in animation */}
           <div className="text-center mb-12 md:mb-16 animate-fadeInUp">
             <p className="text-yellow-600/80 text-xs md:text-sm font-medium tracking-[0.3em] uppercase mb-3 md:mb-4">
-              10 Comfortable Rooms Available
+              {roomsCatalog.length > 0 ? `${roomsCatalog.length} Comfortable Room Types Available` : 'Comfortable Rooms Available'}
             </p>
             <h2 className="font-serif text-3xl sm:text-4xl md:text-6xl text-white mb-4">
               Rooms & Cottages
@@ -454,181 +503,65 @@ export default function Index() {
 
           {/* Room Cards Grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {/* Standard Room (Aircon) */}
-            <div 
-              onClick={() => handleRoomClick({
-                name: "Standard Room (Aircon)",
-                price: "₱1,500 - ₱1,800",
-                entranceFee: "₱100 entrance fee per person",
-                capacity: "2-4 PEOPLE",
-                roomNumbers: "ROOMS 101, 102, 103",
-                features: "AIRCON",
-                image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=400&fit=crop"
-              })}
-              className="group bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-fadeInUp cursor-pointer" 
-              style={{ animationDelay: '0.1s' }}
-            >
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=400&fit=crop"
-                  alt="Standard Room (Aircon)"
-                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {roomsCatalog.length === 0 && (
+              <div className="sm:col-span-2 lg:col-span-4 text-center text-gray-300 py-10">
+                Room catalog is currently unavailable.
               </div>
-              <div className="p-6">
-                <h3 className="font-serif text-2xl text-gray-900 mb-4">Standard Room<br />(Aircon)</h3>
-                <p className="text-yellow-700 text-2xl font-bold mb-4">₱1,500 - ₱1,800 <span className="text-sm font-normal text-gray-500">/ NIGHT</span></p>
-                <p className="text-xs text-gray-600 mb-4">💰 ₱100 entrance fee per person</p>
-                <div className="flex flex-wrap gap-3 text-xs text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <span>❄️</span>
-                    <span>AIRCON</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>👥</span>
-                    <span>2-4 PEOPLE</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>🛏️</span>
-                    <span>ROOMS 101, 102, 103</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
 
-            {/* Large Family Room */}
-            <div 
-              onClick={() => handleRoomClick({
-                name: "Large Family Room",
-                price: "₱3,700",
-                entranceFee: "₱100 entrance fee per person",
-                capacity: "10 PEOPLE",
-                roomNumbers: "ROOMS 104, 108",
-                features: "AIRCON",
-                image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop"
-              })}
-              className="group bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-fadeInUp cursor-pointer" 
-              style={{ animationDelay: '0.2s' }}
-            >
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop"
-                  alt="Large Family Room"
-                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-              <div className="p-6">
-                <h3 className="font-serif text-2xl text-gray-900 mb-4">Large Family<br />Room</h3>
-                <p className="text-yellow-700 text-2xl font-bold mb-4">₱3,700 <span className="text-sm font-normal text-gray-500">/ NIGHT</span></p>
-                <p className="text-xs text-gray-600 mb-4">💰 ₱100 entrance fee per person</p>
-                <div className="flex flex-wrap gap-3 text-xs text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <span>👥</span>
-                    <span>10 PEOPLE</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>🛏️</span>
-                    <span>ROOMS 104, 108</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>❄️</span>
-                    <span>AIRCON</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {roomsCatalog.map((room, index) => {
+              const roomImage = getRoomImage(room.room_type);
+              const featureList = (room.amenities || '').split(',').map((item) => item.trim()).filter(Boolean).slice(0, 3);
 
-            {/* Family Fan Room */}
-            <div 
-              onClick={() => handleRoomClick({
-                name: "Family Fan Room",
-                price: "₱2,700",
-                entranceFee: "₱100 entrance fee per person",
-                capacity: "6-8 PEOPLE",
-                roomNumbers: "ROOMS 105, 106, 107",
-                features: "FAN ROOM",
-                image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&h=400&fit=crop"
-              })}
-              className="group bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-fadeInUp cursor-pointer" 
-              style={{ animationDelay: '0.3s' }}
-            >
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&h=400&fit=crop"
-                  alt="Family Fan Room"
-                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-              <div className="p-6">
-                <h3 className="font-serif text-2xl text-gray-900 mb-4">Family Fan<br />Room</h3>
-                <p className="text-yellow-700 text-2xl font-bold mb-4">₱2,700 <span className="text-sm font-normal text-gray-500">/ NIGHT</span></p>
-                <p className="text-xs text-gray-600 mb-4">💰 ₱100 entrance fee per person</p>
-                <div className="flex flex-wrap gap-3 text-xs text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <span>6-8</span>
-                    <span>PEOPLE</span>
+              return (
+                <div
+                  key={room.id}
+                  onClick={() => handleRoomClick({
+                    name: room.room_name,
+                    price: room.price_per_night,
+                    entranceFee: "₱100 entrance fee per person",
+                    capacity: `${room.capacity} PEOPLE`,
+                    roomNumbers: `ROOMS ${room.room_numbers}`,
+                    features: featureList.join(', ') || room.room_type,
+                    image: roomImage,
+                    description: room.description || ''
+                  })}
+                  className="group bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-fadeInUp cursor-pointer"
+                  style={{ animationDelay: `${(index + 1) * 0.1}s` }}
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img
+                      src={roomImage}
+                      alt={room.room_name}
+                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span>🛏️</span>
-                    <span>ROOMS 105, 106, 107</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>🌀</span>
-                    <span>FAN ROOM</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Non-Aircon Room */}
-            <div 
-              onClick={() => handleRoomClick({
-                name: "Non-Aircon Room",
-                price: "₱1,000 - ₱1,200",
-                entranceFee: "₱100 entrance fee per person",
-                capacity: "2-4 PEOPLE",
-                roomNumbers: "ROOMS 109, 110",
-                features: "FAN",
-                image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&h=400&fit=crop"
-              })}
-              className="group bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-fadeInUp cursor-pointer" 
-              style={{ animationDelay: '0.4s' }}
-            >
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&h=400&fit=crop"
-                  alt="Non-Aircon Room"
-                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-              <div className="p-6">
-                <h3 className="font-serif text-2xl text-gray-900 mb-4">Non-Aircon<br />Room</h3>
-                <p className="text-yellow-700 text-2xl font-bold mb-4">₱1,000 - ₱1,200 <span className="text-sm font-normal text-gray-500">/ NIGHT</span></p>
-                <p className="text-xs text-gray-600 mb-4">💰 ₱100 entrance fee per person</p>
-                <div className="flex flex-wrap gap-3 text-xs text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <span>🌀</span>
-                    <span>FAN</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>👥</span>
-                    <span>2-4 PEOPLE</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>🛏️</span>
-                    <span>ROOMS 201-206</span>
+                  <div className="p-6">
+                    <h3 className="font-serif text-2xl text-gray-900 mb-4">{room.room_name}</h3>
+                    <p className="text-yellow-700 text-2xl font-bold mb-4">
+                      {room.price_per_night} <span className="text-sm font-normal text-gray-500">/ NIGHT</span>
+                    </p>
+                    <p className="text-xs text-gray-600 mb-4">💰 ₱100 entrance fee per person</p>
+                    <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <span>👥</span>
+                        <span>Up to {room.capacity} guests</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>🛏️</span>
+                        <span>ROOMS {room.room_numbers}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>{room.room_type.includes('Aircon') ? '❄️' : '🌀'}</span>
+                        <span>{room.room_type}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
       </section>
