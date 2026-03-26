@@ -36,7 +36,7 @@ function expressPlugin(): Plugin {
       server.middlewares.use((req, res, next) => {
         // Only pass API requests to Express
         if (req.url?.startsWith('/api/')) {
-          app(req, res, next);
+          app(req as any, res as any, next);
         } else {
           next();
         }

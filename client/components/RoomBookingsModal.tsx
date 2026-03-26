@@ -18,6 +18,7 @@ interface Booking {
 interface RoomBookingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  userEmail?: string;
 }
 
 export default function RoomBookingsModal({ isOpen, onClose }: RoomBookingsModalProps) {

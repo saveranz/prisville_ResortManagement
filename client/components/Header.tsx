@@ -319,9 +319,9 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                       </div>
 
                       {/* Admin/Receptionist Dashboard Links */}
-                      {(userRole === 'admin' || userRole === 'receptionist') && (
+                      {((userRole as string) === 'admin' || (userRole as string) === 'receptionist') && (
                         <div className="border-t border-gray-200 py-2">
-                          {userRole === 'admin' && (
+                          {(userRole as string) === 'admin' && (
                             <button
                               onClick={() => {
                                 navigate('/admin/dashboard');
@@ -336,7 +336,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                               </div>
                             </button>
                           )}
-                          {userRole === 'receptionist' && (
+                          {(userRole as string) === 'receptionist' && (
                             <button
                               onClick={() => {
                                 navigate('/receptionist/dashboard');

@@ -6,7 +6,7 @@ import * as express from "express";
 const app = createServer();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const distPath = path.join(__dirname, "../spa");
 
 // Serve static files

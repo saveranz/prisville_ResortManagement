@@ -220,7 +220,7 @@ export const updateDayPassBookingStatus: RequestHandler = async (req, res) => {
     }
 
     // Get booking details before updating
-    const [bookings] = await db.query<DayPassBooking[]>(
+    const [bookings] = await db.query<RowDataPacket[]>(
       'SELECT user_id, booking_date, number_of_pax FROM day_pass_bookings WHERE id = ?',
       [bookingId]
     );
