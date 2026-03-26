@@ -40,6 +40,11 @@ export default function Index() {
   const [openRoomBookingsTrigger, setOpenRoomBookingsTrigger] = useState(0);
   const [isFAQModalOpen, setIsFAQModalOpen] = useState(false);
   const [roomsCatalog, setRoomsCatalog] = useState<RoomCatalogItem[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [galleryDirection, setGalleryDirection] = useState<'next' | 'prev'>('next');
+  const [galleryAnimating, setGalleryAnimating] = useState(false);
+  const GALLERY_TOTAL = 18;
+  const galleryImages = Array.from({ length: GALLERY_TOTAL }, (_, i) => `/${i + 1}.jpg`);
   const isCheckingAuth = useRef(false);
   const lastScrollY = useRef(0);
   const hasScrolledDown = useRef(false);
@@ -58,10 +63,6 @@ export default function Index() {
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.user) {
-            if (data.user.role === 'admin') {
-              window.location.replace('/admin/dashboard');
-              return;
-            }
             setIsLoggedIn(true);
             setUserId(data.user.id);
             setUserRole(data.user.role);
@@ -241,7 +242,7 @@ export default function Index() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-zoomSlow"
           style={{
             backgroundImage:
-              "linear-gradient(135deg, rgba(25, 70, 50, 0.35) 0%, rgba(15, 35, 50, 0.45) 100%), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop')",
+                "linear-gradient(135deg, rgba(25, 70, 50, 0.35) 0%, rgba(15, 35, 50, 0.45) 100%), url('/image2.png')",
             backgroundAttachment: "fixed",
             backgroundPosition: "center",
           }}
@@ -470,7 +471,7 @@ export default function Index() {
             <div className="relative animate-slideInRight mt-8 lg:mt-0" style={{ animationDelay: '0.2s' }}>
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&h=600&fit=crop"
+                    src="/backgroundimage.png"
                   alt="Prisville Triangle Resort Pool"
                   className="w-full h-auto object-cover"
                   loading="lazy"
@@ -688,7 +689,7 @@ export default function Index() {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=1080&fit=crop')",
+            backgroundImage: "url('/image2.png')",
           }}
         />
         
@@ -723,6 +724,110 @@ export default function Index() {
       </section>
 
 
+
+      {/* Gallery Section */}
+      <section id="gallery" className="relative py-20 md:py-32 bg-gray-950 overflow-hidden">
+        <div className="max-w-5xl mx-auto px-4">
+          {/* Heading */}
+          <div className="text-center mb-12">
+            <p className="text-yellow-600 text-xs font-semibold tracking-[0.3em] uppercase mb-3">Photo Gallery</p>
+            <h2 className="font-serif text-3xl md:text-5xl text-white">Life at Prisville</h2>
+            <p className="text-white/50 mt-4 text-sm max-w-md mx-auto">Click the image to explore our resort</p>
+          </div>
+
+          {/* Story-style viewer */}
+          <div className="relative select-none">
+            {/* Progress bars */}
+            <div className="flex gap-1 mb-3">
+              {galleryImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setGalleryDirection(i > galleryIndex ? 'next' : 'prev'); setGalleryIndex(i); }}
+                  className="flex-1 h-[3px] rounded-full overflow-hidden bg-white/20 transition-all"
+                >
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      i < galleryIndex ? 'bg-white w-full' :
+                      i === galleryIndex ? 'bg-yellow-500 w-full' :
+                      'bg-transparent w-0'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Image container */}
+            <div
+              className="relative w-full rounded-2xl overflow-hidden cursor-pointer group"
+              style={{ aspectRatio: '16/9' }}
+              onClick={() => {
+                if (galleryAnimating) return;
+                setGalleryDirection('next');
+                setGalleryAnimating(true);
+                setTimeout(() => {
+                  setGalleryIndex(prev => (prev + 1) % GALLERY_TOTAL);
+                  setGalleryAnimating(false);
+                }, 150);
+              }}
+            >
+              <img
+                key={galleryIndex}
+                src={galleryImages[galleryIndex]}
+                alt={`Resort photo ${galleryIndex + 1}`}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                  galleryAnimating ? 'opacity-0' : 'opacity-100'
+                }`}
+              />
+              {/* Tap zones hint */}
+              <div className="absolute inset-0 flex">
+                {/* Left tap zone — go prev */}
+                <div
+                  className="w-1/3 h-full z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (galleryAnimating) return;
+                    setGalleryDirection('prev');
+                    setGalleryAnimating(true);
+                    setTimeout(() => {
+                      setGalleryIndex(prev => (prev - 1 + GALLERY_TOTAL) % GALLERY_TOTAL);
+                      setGalleryAnimating(false);
+                    }, 150);
+                  }}
+                />
+                {/* Right tap zone — go next */}
+                <div className="w-2/3 h-full z-10" />
+              </div>
+              {/* Counter badge */}
+              <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm">
+                {galleryIndex + 1} / {GALLERY_TOTAL}
+              </div>
+              {/* Hover arrow hint */}
+              <div className="absolute inset-0 flex items-center justify-end pr-6 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Thumbnail strip */}
+            <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
+              {galleryImages.map((src, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setGalleryDirection(i > galleryIndex ? 'next' : 'prev'); setGalleryIndex(i); }}
+                  className={`flex-shrink-0 w-16 h-10 rounded-lg overflow-hidden border-2 transition-all ${
+                    i === galleryIndex ? 'border-yellow-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-80'
+                  }`}
+                >
+                  <img src={src} alt={`thumb ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
       <section className="py-20 md:py-32 px-4 md:px-12 bg-gradient-to-r from-green-900/30 to-gray-900 border-t border-green-700/20">

@@ -3,7 +3,8 @@ import { createServer } from "./index";
 import * as express from "express";
 
 const app = createServer();
-const port = process.env.PORT || 3000;
+const port = Number(process.env.PORT) || 3000;
+const host = process.env.HOST || "0.0.0.0";
 
 // In production, serve the built SPA files
 const __dirname = import.meta.dirname;
@@ -13,7 +14,7 @@ const distPath = path.join(__dirname, "../spa");
 app.use(express.static(distPath));
 
 // Handle React Router - serve index.html for all non-API routes
-app.get("*", (req, res) => {
+app.get("/*path", (req, res) => {
   // Don't serve index.html for API routes
   if (req.path.startsWith("/api/") || req.path.startsWith("/health")) {
     return res.status(404).json({ error: "API endpoint not found" });
@@ -22,19 +23,37 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Fusion Starter server running on port ${port}`);
-  console.log(`📱 Frontend: http://localhost:${port}`);
-  console.log(`🔧 API: http://localhost:${port}/api`);
+const server = app.listen(port, host, () => {
+  console.log("[startup] Node environment:", process.env.NODE_ENV || "development");
+  console.log("[startup] Server listening on", `${host}:${port}`);
+  console.log("[startup] API ready at /api");
+});
+
+server.on("error", (error: NodeJS.ErrnoException) => {
+  console.error("[startup] Server failed to start:", error.message);
+  if (error.code) {
+    console.error("[startup] Error code:", error.code);
+  }
+  process.exit(1);
 });
 
 // Graceful shutdown
 process.on("SIGTERM", () => {
-  console.log("🛑 Received SIGTERM, shutting down gracefully");
-  process.exit(0);
+  console.log("[shutdown] Received SIGTERM, closing server...");
+  server.close(() => process.exit(0));
 });
 
 process.on("SIGINT", () => {
-  console.log("🛑 Received SIGINT, shutting down gracefully");
-  process.exit(0);
+  console.log("[shutdown] Received SIGINT, closing server...");
+  server.close(() => process.exit(0));
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("[fatal] Uncaught exception:", error);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[fatal] Unhandled rejection:", reason);
+  process.exit(1);
 });

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,6 +103,7 @@ interface Transaction {
 export default function ReceptionistDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'amenities' | 'daypass' | 'inventory' | 'checkin' | 'roomstatus' | 'history' | 'issues'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
   const [amenityBookings, setAmenityBookings] = useState<Booking[]>([]);
   const [dayPassBookings, setDayPassBookings] = useState<Booking[]>([]);
@@ -431,6 +432,19 @@ export default function ReceptionistDashboard() {
     calculateStats();
   }, [roomBookings, amenityBookings, dayPassBookings, transactions]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    handleFullscreenChange();
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   const calculateStats = () => {
     const allBookings = [...roomBookings, ...amenityBookings, ...dayPassBookings];
     const today = new Date().toISOString().split('T')[0];
@@ -524,6 +538,18 @@ export default function ReceptionistDashboard() {
       window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);
+    }
+  };
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error('Fullscreen toggle failed:', error);
     }
   };
 
@@ -1225,6 +1251,18 @@ export default function ReceptionistDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
+              <button
+                onClick={toggleFullscreen}
+                className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-100 transition-colors"
+                title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              >
+                {isFullscreen ? (
+                  <Minimize2 size={16} className="text-gray-700" />
+                ) : (
+                  <Maximize2 size={16} className="text-gray-700" />
+                )}
+              </button>
               <div className="hidden sm:block text-right bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-xl shadow-sm border border-gray-200">
                 <p className="text-xs text-gray-600 font-medium">Today's Date</p>
                 <p className="text-sm sm:text-base font-bold text-gray-900">
@@ -2162,8 +2200,8 @@ export default function ReceptionistDashboard() {
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Email</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Type</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Numbers</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In Date</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-Out Date</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In Date & Time</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-Out Date & Time</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guests</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Total Amount</th>
                           <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
@@ -2187,8 +2225,8 @@ export default function ReceptionistDashboard() {
                               </td>
                               <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-gray-900">{booking.room_name}</td>
                               <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{booking.room_numbers || 'N/A'}</td>
-                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{formatDate(booking.check_in)}</td>
-                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{formatDate(booking.check_out)}</td>
+                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{formatDateTime(booking.check_in)}</td>
+                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{formatDateTime(booking.check_out)}</td>
                               <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700 text-center">{booking.guests || 0}</td>
                               <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">{booking.total_amount}</td>
                               <td className="px-3 py-3 whitespace-nowrap text-center">
@@ -2301,7 +2339,7 @@ export default function ReceptionistDashboard() {
                               {formatDateTime(guest.actual_check_in)}
                             </td>
                             <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
-                              {formatDate(guest.check_out || guest.check_out_date)}
+                              {formatDateTime(guest.check_out || guest.check_out_date)}
                             </td>
                             <td className="px-3 py-3 whitespace-nowrap">
                               <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
@@ -2702,7 +2740,7 @@ export default function ReceptionistDashboard() {
             </Button>
             <Button
               onClick={confirmCheckIn}
-              className="bg-primary hover:bg-primary/90 text-white"
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md"
             >
               Confirm Check-In
             </Button>
