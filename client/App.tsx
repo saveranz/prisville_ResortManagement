@@ -1,5 +1,18 @@
 import "./global.css";
 
+// Auto-prefix /api calls with VITE_API_URL when deploying frontend separately
+// e.g. frontend on prisville.com, backend on api.prisville.com
+const API_BASE = import.meta.env.VITE_API_URL || '';
+if (API_BASE) {
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    if (typeof input === 'string' && input.startsWith('/api')) {
+      return _origFetch(API_BASE + input, init);
+    }
+    return _origFetch(input, init);
+  };
+}
+
 import { Toaster } from "@/components/ui/toaster";
 import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";

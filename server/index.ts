@@ -34,8 +34,17 @@ export function createServer() {
   const app = express();
 
   // Middleware
+  const allowedOrigins = [
+    'http://localhost:8080',
+    'http://localhost:8081',
+    'http://localhost:8082',
+    'http://localhost:8083',
+    'https://prisville.com',
+    'https://www.prisville.com',
+    ...(process.env.CORS_ORIGIN ? [process.env.CORS_ORIGIN] : []),
+  ];
   app.use(cors({
-    origin: ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:8082', 'http://localhost:8083'],
+    origin: allowedOrigins,
     credentials: true
   }));
   app.use(express.json({ limit: '50mb' }));
