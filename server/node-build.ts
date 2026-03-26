@@ -1,13 +1,12 @@
 import path from "path";
+import { fileURLToPath } from "url";
 import { createServer } from "./index";
 import * as express from "express";
 
 const app = createServer();
-const port = Number(process.env.PORT) || 3000;
-const host = process.env.HOST || "0.0.0.0";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// In production, serve the built SPA files
-const __dirname = import.meta.dirname;
+const PORT = process.env.PORT || 3000;
 const distPath = path.join(__dirname, "../spa");
 
 // Serve static files
@@ -23,9 +22,9 @@ app.get("/*path", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-const server = app.listen(port, host, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[startup] Server listening on 0.0.0.0:${PORT}`);
   console.log("[startup] Node environment:", process.env.NODE_ENV || "development");
-  console.log("[startup] Server listening on", `${host}:${port}`);
   console.log("[startup] API ready at /api");
 });
 
