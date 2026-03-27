@@ -15,6 +15,17 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: "dist/spa",
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-ui": ["framer-motion", "lucide-react", "@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-select", "@radix-ui/react-toast"],
+          "vendor-three": ["three", "@react-three/fiber", "@react-three/drei"],
+          "vendor-charts": ["recharts"],
+        },
+      },
+    },
   },
   plugins: [react(), expressPlugin()],
   resolve: {
