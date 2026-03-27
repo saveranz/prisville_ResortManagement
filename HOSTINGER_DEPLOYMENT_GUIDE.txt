@@ -1,0 +1,359 @@
+================================================================================
+  PRISVILLE RESORT SYSTEM - HOSTINGER BUSINESS SHARED HOSTING DEPLOYMENT GUIDE
+================================================================================
+
+REQUIREMENTS:
+  - Hostinger Business shared hosting plan (with Node.js support)
+  - SSH access enabled (available on Business plan)
+  - Node.js >= 20 on the server
+  - A MySQL database (provided by Hostinger)
+
+================================================================================
+PART 1: PREPARE YOUR LOCAL BUILD
+================================================================================
+
+STEP 1 - Install dependencies and build locally
+------------------------------------------------
+Open your terminal in the project root (C:\laragon\www\Prisville02):
+
+    pnpm install
+    pnpm build
+
+This creates two folders:
+  dist/spa/          -> Your React frontend (static files)
+  dist/server/       -> Your Express backend (node-build.js)
+
+
+STEP 2 - Verify the build works locally
+----------------------------------------
+    pnpm start
+
+Visit http://localhost:3000 — make sure it loads. Then stop the server (Ctrl+C).
+
+
+================================================================================
+PART 2: CREATE THE MYSQL DATABASE ON HOSTINGER
+================================================================================
+
+STEP 3 - Create a MySQL database via hPanel
+--------------------------------------------
+1. Log in to Hostinger → hPanel
+2. Go to "Databases" → "MySQL Databases"
+3. Create a new database:
+     - Database Name:  prisville02  (or whatever you prefer)
+     - Username:       prisville_user  (pick a username)
+     - Password:       (use a strong random password)
+4. Note down these values — you'll need them later:
+     - Database Name
+     - Database Username
+     - Database Password
+     - Database Host (usually localhost or shown on the page, e.g., localhost)
+
+STEP 4 - Import your database schema
+-------------------------------------
+Option A — via phpMyAdmin (easier):
+  1. In hPanel, go to "Databases" → "phpMyAdmin" → click "Enter phpMyAdmin"
+  2. Select your database from the left sidebar
+  3. Go to the "SQL" tab
+  4. Run these SQL files IN ORDER (copy-paste the contents of each file):
+
+     database/sessions_table.sql
+     database/users_table.sql
+     database/create_pending_users_table.sql
+     database/rooms_table.sql
+     database/room_bookings_table.sql
+     database/room_status_table.sql
+     database/room_extra_items_table.sql
+     database/amenities_table.sql
+     database/amenity_bookings_table.sql
+     database/day_pass_bookings_table.sql
+     database/day_pass_guests_table.sql
+     database/inventory_items_table.sql
+     database/financial_transactions_table.sql
+     database/notifications_table.sql
+     database/announcements_table.sql
+     database/announcement_views_table.sql
+     database/faq_inquiries_table.sql
+     database/booking_issues_table.sql
+     database/admin_audit_logs_table.sql
+     database/add_email_verification.sql
+     database/add_password_reset_tokens.sql
+     database/add_room_type_column.sql
+     database/add_special_requests_to_rooms.sql
+     database/add_extra_items_column.sql
+     database/add_user_status.sql
+     database/alter_room_bookings_for_checkin.sql
+     database/alter_users_enhanced_profile.sql
+     database/hash_existing_passwords.sql
+     database/site_settings_table.sql
+
+  5. (OPTIONAL) Load sample data:
+     database/mock_data.sql
+
+Option B — via SSH (if files are already uploaded):
+  mysql -u prisville_user -p prisville02 < database/sessions_table.sql
+  (repeat for each SQL file above)
+
+
+================================================================================
+PART 3: SET UP NODE.JS ON HOSTINGER
+================================================================================
+
+STEP 5 - Enable Node.js in hPanel
+----------------------------------
+1. In hPanel, go to "Advanced" → "Node.js" (or search "Node.js")
+2. Click "Create Application" or "Add New Application"
+3. Configure:
+     - Node.js Version:    20.x (pick the highest 20.x available)
+     - Application Root:   /home/YOUR_USERNAME/domains/prisville.com/prisville
+     - Application URL:    prisville.com
+     - Application Startup File:  dist/server/node-build.js
+     - Port:               Will be assigned by Hostinger (note this down)
+4. Click "Create"
+5. Note the assigned port number — Hostinger proxies traffic from port 80/443 to this port.
+
+
+STEP 6 - Upload your project files
+-----------------------------------
+You need to upload these items to the Application Root you set in Step 5:
+
+  REQUIRED FILES/FOLDERS TO UPLOAD:
+  ├── dist/                    (entire folder — your built app)
+  │   ├── spa/                 (frontend files)
+  │   └── server/              (backend files)
+  ├── package.json             (needed for npm install)
+  ├── pnpm-lock.yaml           (lock file)
+  └── .env                     (you'll create this — see Step 7)
+
+  DO NOT UPLOAD:
+  ✗ node_modules/              (will install on server)
+  ✗ client/                    (already built into dist/spa/)
+  ✗ server/                    (already built into dist/server/)
+  ✗ database/                  (already imported to MySQL)
+
+Upload methods (pick one):
+  A. File Manager: hPanel → Files → File Manager → navigate to app root → upload ZIP + extract
+  B. SFTP: Use FileZilla or WinSCP with your Hostinger SFTP credentials
+  C. SSH + Git: Clone your repo directly on the server (see Step 8)
+
+TIP: Zip the required files locally, upload the zip, then extract via File Manager or SSH:
+     In PowerShell locally:
+       Compress-Archive -Path dist, package.json, pnpm-lock.yaml -DestinationPath prisville-deploy.zip
+
+
+STEP 7 - Create the .env file on the server
+--------------------------------------------
+In your Application Root, create a file named ".env" with these contents
+(update the values with YOUR actual credentials):
+
+---------- START OF .env FILE ----------
+
+NODE_ENV=production
+PORT=3000
+
+# Database (use values from Step 4)
+DB_HOST=localhost
+DB_USER=prisville_user
+DB_PASSWORD=YOUR_DATABASE_PASSWORD_HERE
+DB_NAME=prisville02
+DB_PORT=3306
+
+# Session (CHANGE THIS to a long random string)
+SESSION_SECRET=generate-a-64-char-random-string-here-use-a-password-generator
+
+# Email (SMTP for sending verification/reset emails)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=resortprisvilletriangle@gmail.com
+EMAIL_PASS=YOUR_GMAIL_APP_PASSWORD_HERE
+EMAIL_FROM=Prisville Resort <resortprisvilletriangle@gmail.com>
+
+# App URL (your actual domain with https)
+APP_URL=https://prisville.com
+
+# CORS (your actual domain)
+CORS_ORIGIN=https://prisville.com
+
+---------- END OF .env FILE ----------
+
+IMPORTANT NOTES:
+  - SESSION_SECRET: Generate a random string. You can use:
+    https://randomkeygen.com/ → pick a "CodeIgniter Encryption Key" or similar
+  - EMAIL_PASS: This is a Gmail "App Password", not your regular Gmail password.
+    Get one at: https://myaccount.google.com/apppasswords
+  - APP_URL: Must be your actual domain (used for links in emails)
+  - DB_HOST: On Hostinger shared hosting this is usually "localhost"
+    but check your hPanel MySQL page — it might be something like
+    "mysql-server.hostinger.com" or an IP address
+
+
+STEP 8 - Install dependencies on the server via SSH
+----------------------------------------------------
+1. In hPanel, go to "Advanced" → "SSH Access"
+2. Enable SSH if not already enabled
+3. Connect via SSH (use the credentials shown in hPanel):
+     ssh YOUR_USERNAME@YOUR_SERVER_IP -p 65002
+
+4. Navigate to your app directory:
+     cd ~/domains/prisville.com/prisville
+
+5. Install production dependencies:
+     npm install --production
+
+   NOTE: If "npm" is not available or too old, try:
+     /opt/alt/alt-nodejs20/root/usr/bin/npm install --production
+
+   If pnpm is available:
+     pnpm install --prod
+
+6. Verify node_modules was created:
+     ls node_modules | head -20
+
+IMPORTANT: The server build externalizes these packages (they MUST be in node_modules):
+  - express, cors, express-session, express-mysql-session
+  - mysql2, bcrypt, nodemailer, dotenv, cookie-parser
+  - serverless-http, path, fs, url, crypto
+
+If "bcrypt" fails to install (needs native compilation), you can swap it:
+     npm uninstall bcrypt
+     npm install bcryptjs
+  Then bcrypt would need a code change — but try the normal install first.
+
+
+STEP 9 - Start/Restart the application
+---------------------------------------
+Option A — via hPanel Node.js manager:
+  1. Go to hPanel → "Advanced" → "Node.js"
+  2. Find your application
+  3. Click "Restart"
+
+Option B — via SSH:
+     cd ~/domains/prisville.com/prisville
+     node dist/server/node-build.js
+
+  For persistent running, use the Node.js manager in hPanel (it handles process management).
+
+
+STEP 10 - Configure domain/SSL
+-------------------------------
+1. In hPanel → "Security" → "SSL"
+2. Install a free Let's Encrypt SSL certificate for your domain
+3. Enable "Force HTTPS" in hPanel → "Security" → "SSL" → "Force HTTPS"
+
+After SSL is enabled, update your .env:
+  APP_URL=https://prisville.com
+  CORS_ORIGIN=https://prisville.com
+
+
+================================================================================
+PART 4: VERIFY DEPLOYMENT
+================================================================================
+
+STEP 11 - Test your deployment
+------------------------------
+1. Visit https://prisville.com
+   → You should see the Prisville login/home page
+
+2. Test the API:
+   Visit https://prisville.com/api/ping
+   → Should return a JSON response
+
+3. Test login:
+   → Try logging in with an admin account
+
+4. Check for errors via SSH:
+   Connect to SSH and check if the app is running:
+     curl http://localhost:PORT/api/ping
+   (replace PORT with the port assigned in Step 5)
+
+COMMON ISSUES:
+  - Blank page: Check browser console (F12). If you see 404 errors for JS files,
+    make sure dist/spa/ was uploaded correctly.
+  - API errors: Check the Node.js app logs in hPanel Node.js manager.
+  - "Cannot find module" errors: node_modules wasn't installed properly.
+    Re-run: npm install --production
+  - Database connection refused: Double-check DB_HOST in .env.
+    On Hostinger it might NOT be "localhost" — check your hPanel MySQL page.
+  - Session not working: Make sure SESSION_SECRET is set in .env.
+  - CORS errors: Make sure CORS_ORIGIN in .env is https://prisville.com
+    (must include https://).
+
+
+================================================================================
+PART 5: UPDATING THE APP (FUTURE DEPLOYMENTS)
+================================================================================
+
+STEP 12 - How to deploy updates
+--------------------------------
+Every time you make code changes:
+
+1. Build locally:
+     pnpm build
+
+2. Upload ONLY the updated dist/ folder to the server
+   (via SFTP, File Manager, or SSH)
+
+3. If you changed package.json (added/removed dependencies):
+     Upload the new package.json and pnpm-lock.yaml
+     SSH into the server and run: npm install --production
+
+4. Restart the app via hPanel → Node.js → Restart
+
+That's it. You don't need to re-upload node_modules or .env unless they changed.
+
+
+================================================================================
+PART 6: IMPORTANT SECURITY REMINDERS
+================================================================================
+
+  [!] Change SESSION_SECRET to a long random string (not the default)
+  [!] Use a strong MySQL database password
+  [!] Never commit .env to Git (add it to .gitignore)
+  [!] Set NODE_ENV=production in .env
+  [!] Keep your Gmail App Password secret
+  [!] Enable HTTPS and force redirect
+  [!] The cookie "secure" flag has been updated to:
+        secure: process.env.NODE_ENV === 'production'
+      This is already applied — cookies will be secure on HTTPS in production.
+
+
+================================================================================
+QUICK REFERENCE - FILE LOCATIONS ON SERVER
+================================================================================
+
+  Application Root/
+  ├── .env                          ← Your environment config
+  ├── package.json                  ← Dependencies list
+  ├── pnpm-lock.yaml                ← Lock file
+  ├── node_modules/                 ← Installed on server (npm install)
+  └── dist/
+      ├── spa/                      ← React frontend (static files)
+      │   ├── index.html
+      │   └── assets/
+      └── server/
+          └── node-build.js         ← Express backend entry point
+
+
+================================================================================
+QUICK REFERENCE - ENVIRONMENT VARIABLES
+================================================================================
+
+  VARIABLE          EXAMPLE VALUE                      REQUIRED
+  ─────────────────────────────────────────────────────────────
+  NODE_ENV          production                         Yes
+  PORT              3000                               Yes
+  DB_HOST           localhost                          Yes
+  DB_USER           prisville_user                     Yes
+  DB_PASSWORD       your-db-password                   Yes
+  DB_NAME           prisville02                        Yes
+  DB_PORT           3306                               Yes
+  SESSION_SECRET    random-64-char-string              Yes
+  EMAIL_HOST        smtp.gmail.com                     Yes
+  EMAIL_PORT        587                                Yes
+  EMAIL_USER        your-email@gmail.com               Yes
+  EMAIL_PASS        your-app-password                  Yes
+  EMAIL_FROM        Prisville <noreply@prisville.com>  Yes
+  APP_URL           https://your-domain.com            Yes
+  CORS_ORIGIN       https://your-domain.com            Recommended
+
+================================================================================
