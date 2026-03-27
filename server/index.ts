@@ -243,5 +243,14 @@ export function createServer() {
   app.put("/api/admin/inquiries/:inquiryId/status", requireStaff, updateInquiryStatus);
   app.post("/api/admin/inquiries/:inquiryId/respond", requireStaff, respondToInquiry);
   
+  // Global JSON error handler — must be last, returns JSON instead of Express 5's default HTML
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error("[error]", err?.message || err);
+    const status = err?.status || err?.statusCode || 500;
+    res.status(status).json({
+      error: err?.message || "Internal server error",
+    });
+  });
+
   return app;
 }
