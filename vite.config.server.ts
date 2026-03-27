@@ -29,9 +29,19 @@ export default defineConfig({
         "buffer",
         "querystring",
         "child_process",
-        // External dependencies that should not be bundled
+        // All server-side npm packages — load from node_modules at runtime
         "express",
         "cors",
+        "bcrypt",
+        "dotenv",
+        "mysql2",
+        "mysql2/promise",
+        "nodemailer",
+        "express-session",
+        "express-mysql-session",
+        "zod",
+        // Externalize everything matching node: protocol
+        /^node:/,
       ],
       output: {
         format: "es",
