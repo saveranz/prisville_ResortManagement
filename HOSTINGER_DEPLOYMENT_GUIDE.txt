@@ -113,32 +113,28 @@ STEP 5 - Enable Node.js in hPanel
 5. Note the assigned port number — Hostinger proxies traffic from port 80/443 to this port.
 
 
-STEP 6 - Upload your project files
------------------------------------
-You need to upload these items to the Application Root you set in Step 5:
+STEP 6 - Clone the project from GitHub via SSH
+------------------------------------------------
+1. In hPanel, go to "Advanced" → "SSH Access"
+2. Enable SSH if not already enabled
+3. Connect via SSH (use the credentials shown in hPanel):
+     ssh YOUR_USERNAME@YOUR_SERVER_IP -p 65002
 
-  REQUIRED FILES/FOLDERS TO UPLOAD:
-  ├── dist/                    (entire folder — your built app)
-  │   ├── spa/                 (frontend files)
-  │   └── server/              (backend files)
-  ├── package.json             (needed for npm install)
-  ├── pnpm-lock.yaml           (lock file)
-  └── .env                     (you'll create this — see Step 7)
+4. Navigate to your app root:
+     cd ~/domains/prisville.com/prisville
 
-  DO NOT UPLOAD:
-  ✗ node_modules/              (will install on server)
-  ✗ client/                    (already built into dist/spa/)
-  ✗ server/                    (already built into dist/server/)
-  ✗ database/                  (already imported to MySQL)
+5. Clone the repository:
+     git clone https://github.com/saveranz/prisville_ResortManagement.git .
 
-Upload methods (pick one):
-  A. File Manager: hPanel → Files → File Manager → navigate to app root → upload ZIP + extract
-  B. SFTP: Use FileZilla or WinSCP with your Hostinger SFTP credentials
-  C. SSH + Git: Clone your repo directly on the server (see Step 8)
+   NOTE: The "." at the end clones into the current directory (not a subfolder).
+   If the directory isn't empty, clone into a temp folder and move:
+     git clone https://github.com/saveranz/prisville_ResortManagement.git temp
+     mv temp/* temp/.* .
+     rmdir temp
 
-TIP: Zip the required files locally, upload the zip, then extract via File Manager or SSH:
-     In PowerShell locally:
-       Compress-Archive -Path dist, package.json, pnpm-lock.yaml -DestinationPath prisville-deploy.zip
+6. Verify the files:
+     ls -la
+   You should see: package.json, server/, client/, shared/, etc.
 
 
 STEP 7 - Create the .env file on the server
@@ -187,27 +183,34 @@ IMPORTANT NOTES:
     "mysql-server.hostinger.com" or an IP address
 
 
-STEP 8 - Install dependencies on the server via SSH
-----------------------------------------------------
-1. In hPanel, go to "Advanced" → "SSH Access"
-2. Enable SSH if not already enabled
-3. Connect via SSH (use the credentials shown in hPanel):
-     ssh YOUR_USERNAME@YOUR_SERVER_IP -p 65002
+STEP 8 - Build and install dependencies on the server via SSH
+-------------------------------------------------------------
+(You should already be connected via SSH from Step 6)
 
-4. Navigate to your app directory:
+1. Make sure you're in the project directory:
      cd ~/domains/prisville.com/prisville
 
-5. Install production dependencies:
+2. Check Node.js version:
+     node --version
+   Should be 20.x or higher. If not, select Node 20 in hPanel Node.js manager.
+
+3. Install production dependencies:
      npm install --production
 
    NOTE: If "npm" is not available or too old, try:
      /opt/alt/alt-nodejs20/root/usr/bin/npm install --production
 
-   If pnpm is available:
-     pnpm install --prod
+4. Build the project on the server:
+     npm run build
 
-6. Verify node_modules was created:
-     ls node_modules | head -20
+   This creates:
+     dist/spa/    → React frontend (static files)
+     dist/server/ → Express backend (node-build.js)
+
+5. Verify the build:
+     ls dist/spa/index.html
+     ls dist/server/node-build.js
+   Both should exist.
 
 IMPORTANT: The server build externalizes these packages (they MUST be in node_modules):
   - express, cors, express-session, express-mysql-session
@@ -280,26 +283,43 @@ COMMON ISSUES:
 
 
 ================================================================================
-PART 5: UPDATING THE APP (FUTURE DEPLOYMENTS)
+PART 5: UPDATING THE APP (FUTURE PATCHES VIA GIT)
 ================================================================================
 
-STEP 12 - How to deploy updates
---------------------------------
-Every time you make code changes:
+STEP 12 - How to deploy updates (patches)
+------------------------------------------
+Every time you make code changes locally:
 
-1. Build locally:
-     pnpm build
+1. Commit and push your changes from your local machine:
+     git add -A
+     git commit -m "fix: description of your change"
+     git push origin main
 
-2. Upload ONLY the updated dist/ folder to the server
-   (via SFTP, File Manager, or SSH)
+2. SSH into the Hostinger server:
+     ssh YOUR_USERNAME@YOUR_SERVER_IP -p 65002
 
-3. If you changed package.json (added/removed dependencies):
-     Upload the new package.json and pnpm-lock.yaml
-     SSH into the server and run: npm install --production
+3. Pull the latest code:
+     cd ~/domains/prisville.com/prisville
+     git pull origin main
 
-4. Restart the app via hPanel → Node.js → Restart
+4. If you changed package.json (added/removed dependencies):
+     npm install --production
 
-That's it. You don't need to re-upload node_modules or .env unless they changed.
+5. Rebuild the project:
+     npm run build
+
+6. Restart the app via hPanel → Node.js → Restart
+   OR via SSH:
+     # Hostinger's Node.js manager handles restarts
+     # You can also use the hPanel interface
+
+QUICK ONE-LINER (for simple patches after SSH-ing in):
+     cd ~/domains/prisville.com/prisville && git pull origin main && npm run build
+
+Then restart the Node.js app from hPanel.
+
+NOTE: You do NOT need to re-upload files manually ever again.
+Just push to GitHub → SSH pull → rebuild → restart.
 
 
 ================================================================================
@@ -321,12 +341,18 @@ PART 6: IMPORTANT SECURITY REMINDERS
 QUICK REFERENCE - FILE LOCATIONS ON SERVER
 ================================================================================
 
-  Application Root/
-  ├── .env                          ← Your environment config
-  ├── package.json                  ← Dependencies list
-  ├── pnpm-lock.yaml                ← Lock file
+  Application Root/ (cloned from GitHub)
+  ├── .env                          ← Created manually (NOT in Git)
+  ├── package.json                  ← From Git
+  ├── build.js                      ← Build script
+  ├── vite.config.ts                ← Client build config
+  ├── vite.config.server.ts         ← Server build config
+  ├── client/                       ← React source (built into dist/spa/)
+  ├── server/                       ← Express source (built into dist/server/)
+  ├── shared/                       ← Shared types
+  ├── database/                     ← SQL schema files
   ├── node_modules/                 ← Installed on server (npm install)
-  └── dist/
+  └── dist/                         ← Built on server (npm run build)
       ├── spa/                      ← React frontend (static files)
       │   ├── index.html
       │   └── assets/
