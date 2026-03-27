@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import express from "express";
 import { createServer } from "./index";
-import * as express from "express";
 
 const app = createServer();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
 const distPath = path.join(__dirname, "../spa");
 
-// Serve static files
+// Serve static files AFTER API routes (which are already registered in createServer)
 app.use(express.static(distPath));
 
 // Handle React Router - serve index.html for all non-API routes
