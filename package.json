@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:client && npm run build:server",
+    "build": "node build.js",
     "build:client": "vite build",
     "build:server": "vite build --config vite.config.server.ts --debug",
     "start": "node dist/server/node-build.js",
