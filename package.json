@@ -89,6 +89,9 @@
     "vitest": "^3.2.4",
     "zod": "^3.25.76"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
