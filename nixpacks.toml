@@ -1,0 +1,11 @@
+[phases.setup]
+aptPkgs = ["libatomic1"]
+
+[phases.install]
+cmds = ["pnpm install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "node_modules/.bin/tsx server/node-build.ts"
