@@ -33,6 +33,9 @@ const MySQLStore = MySQLStoreFactory(session);
 export function createServer() {
   const app = express();
 
+  // Trust Railway/cloud proxy so secure cookies work behind HTTPS termination
+  app.set('trust proxy', 1);
+
   // Middleware
   const allowedOrigins = [
     'http://localhost:8080',
