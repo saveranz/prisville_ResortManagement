@@ -51,22 +51,29 @@ export function createServer() {
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
   
   // Session middleware with MySQL store (using existing pool)
-  app.use(session({
-    store: new MySQLStore({
-      clearExpired: true,
-      checkExpirationInterval: 900000, // 15 minutes
-      expiration: 86400000, // 24 hours in milliseconds
-      createDatabaseTable: true, // Auto-create table if it doesn't exist
-      endConnectionOnClose: false,
-      schema: {
-        tableName: 'sessions',
-        columnNames: {
-          session_id: 'session_id',
-          expires: 'expires',
-          data: 'data'
-        }
+  const sessionStore = new MySQLStore({
+    clearExpired: true,
+    checkExpirationInterval: 900000, // 15 minutes
+    expiration: 86400000, // 24 hours in milliseconds
+    createDatabaseTable: true, // Auto-create table if it doesn't exist
+    endConnectionOnClose: false,
+    schema: {
+      tableName: 'sessions',
+      columnNames: {
+        session_id: 'session_id',
+        expires: 'expires',
+        data: 'data'
       }
-    }, pool),
+    }
+  }, pool);
+
+  // Surface store errors as warnings — do not crash the process
+  sessionStore.on('error', (err: Error) => {
+    console.error('[session-store] MySQL session store error:', err.message);
+  });
+
+  app.use(session({
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || 'prisville-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
