@@ -1,14 +1,13 @@
 console.log("SERVER STARTING...");
 import path from "path";
-import { fileURLToPath } from "url";
 import express from "express";
 import { createServer } from "./index";
 
 const app = createServer();
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const PORT = Number(process.env.PORT) || 3000;
-const distPath = path.join(__dirname, "../spa");
+// Use cwd so this works whether run from compiled dist/server/ or directly from source
+const distPath = path.join(process.cwd(), "dist/spa");
 
 // Serve static files AFTER API routes (which are already registered in createServer)
 app.use(express.static(distPath));
