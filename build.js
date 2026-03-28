@@ -6,3 +6,7 @@ console.log("STARTING FULL BUILD...");
 execSync("vite build", { stdio: "inherit" });
 
 console.log("BUILD COMPLETE");
+
+// Force exit — vite.config.ts imports server/db.ts which creates a MySQL pool
+// that keeps the Node.js event loop alive and prevents the build from exiting.
+process.exit(0);
