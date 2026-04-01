@@ -10,7 +10,7 @@ import { register, login, getCurrentUser, logout, requestPasswordReset, verifyRe
 import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates } from "./routes/bookings";
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
-import { setupDatabase, migrateRoomType, migrateUserStatus } from "./routes/setup";
+import { setupDatabase, migrateRoomType, migrateUserStatus, setupFAQs } from "./routes/setup";
 import { getInventoryItems, addInventoryItem, updateInventoryQuantity, getTransactions, addTransaction } from "./routes/inventory";
 import { getUserRecommendations, saveUserPreferences, getUserPreferences } from "./routes/recommendations";
 import { trackActivity, getUserActivity, getUserActivityStats } from "./routes/activityTracking";
@@ -102,6 +102,7 @@ export function createServer() {
   app.get("/api/demo", handleDemo);
   app.get("/api/test-db", testDatabase);
   app.get("/api/setup-db", setupDatabase);
+  app.get("/api/setup-faqs", setupFAQs);
   app.get("/api/migrate-room-type", migrateRoomType);
   app.get("/api/migrate-user-status", migrateUserStatus);
   app.get("/api/migrate-audit-logs", migrateAuditLogs);
