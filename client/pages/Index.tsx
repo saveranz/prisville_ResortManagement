@@ -41,10 +41,24 @@ export default function Index() {
   const [isFAQModalOpen, setIsFAQModalOpen] = useState(false);
   const [roomsCatalog, setRoomsCatalog] = useState<RoomCatalogItem[]>([]);
   const [galleryIndex, setGalleryIndex] = useState(0);
-  const [galleryDirection, setGalleryDirection] = useState<'next' | 'prev'>('next');
-  const [galleryAnimating, setGalleryAnimating] = useState(false);
   const GALLERY_TOTAL = 18;
   const galleryImages = Array.from({ length: GALLERY_TOTAL }, (_, i) => `/${i + 1}.jpg`);
+  const galleryAutoPlay = useRef<ReturnType<typeof setInterval> | null>(null);
+  const galleryHovered = useRef(false);
+
+  const startGalleryAutoPlay = useCallback(() => {
+    if (galleryAutoPlay.current) clearInterval(galleryAutoPlay.current);
+    galleryAutoPlay.current = setInterval(() => {
+      if (!galleryHovered.current) {
+        setGalleryIndex(prev => (prev + 1) % GALLERY_TOTAL);
+      }
+    }, 4000);
+  }, []);
+
+  useEffect(() => {
+    startGalleryAutoPlay();
+    return () => { if (galleryAutoPlay.current) clearInterval(galleryAutoPlay.current); };
+  }, [startGalleryAutoPlay]);
   const isCheckingAuth = useRef(false);
   const lastScrollY = useRef(0);
   const hasScrolledDown = useRef(false);
@@ -727,88 +741,96 @@ export default function Index() {
 
       {/* Gallery Section */}
       <section id="gallery" className="relative py-20 md:py-32 bg-gray-950 overflow-hidden">
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           {/* Heading */}
           <div className="text-center mb-12">
             <p className="text-yellow-600 text-xs font-semibold tracking-[0.3em] uppercase mb-3">Photo Gallery</p>
             <h2 className="font-serif text-3xl md:text-5xl text-white">Life at Prisville</h2>
-            <p className="text-white/50 mt-4 text-sm max-w-md mx-auto">Click the image to explore our resort</p>
+            <p className="text-white/50 mt-4 text-sm max-w-md mx-auto">A glimpse into paradise</p>
           </div>
 
-          {/* Story-style viewer */}
-          <div className="relative select-none">
-            {/* Progress bars */}
-            <div className="flex gap-1 mb-3">
+          {/* Carousel */}
+          <div
+            className="relative select-none"
+            onMouseEnter={() => { galleryHovered.current = true; }}
+            onMouseLeave={() => { galleryHovered.current = false; }}
+          >
+            {/* Film strip viewport */}
+            <div
+              className="relative w-full rounded-2xl overflow-hidden"
+              style={{ aspectRatio: '16/9' }}
+            >
+              {/* Track */}
+              <div
+                className="flex h-full transition-transform duration-500 ease-in-out"
+                style={{
+                  width: `${GALLERY_TOTAL * 100}%`,
+                  transform: `translateX(-${(galleryIndex * 100) / GALLERY_TOTAL}%)`,
+                }}
+              >
+                {galleryImages.map((src, i) => (
+                  <div
+                    key={i}
+                    className="h-full flex-shrink-0"
+                    style={{ width: `${100 / GALLERY_TOTAL}%` }}
+                  >
+                    <img
+                      src={src}
+                      alt={`Resort photo ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Left arrow */}
+              <button
+                onClick={() => {
+                  setGalleryIndex(prev => (prev - 1 + GALLERY_TOTAL) % GALLERY_TOTAL);
+                  startGalleryAutoPlay();
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/70 backdrop-blur-sm text-white rounded-full w-11 h-11 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                aria-label="Previous image"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Right arrow */}
+              <button
+                onClick={() => {
+                  setGalleryIndex(prev => (prev + 1) % GALLERY_TOTAL);
+                  startGalleryAutoPlay();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/70 backdrop-blur-sm text-white rounded-full w-11 h-11 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                aria-label="Next image"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Counter badge */}
+              <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm pointer-events-none">
+                {galleryIndex + 1} / {GALLERY_TOTAL}
+              </div>
+            </div>
+
+            {/* Dot indicators */}
+            <div className="flex justify-center gap-1.5 mt-5">
               {galleryImages.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => { setGalleryDirection(i > galleryIndex ? 'next' : 'prev'); setGalleryIndex(i); }}
-                  className="flex-1 h-[3px] rounded-full overflow-hidden bg-white/20 transition-all"
-                >
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${
-                      i < galleryIndex ? 'bg-white w-full' :
-                      i === galleryIndex ? 'bg-yellow-500 w-full' :
-                      'bg-transparent w-0'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Image container */}
-            <div
-              className="relative w-full rounded-2xl overflow-hidden cursor-pointer group"
-              style={{ aspectRatio: '16/9' }}
-              onClick={() => {
-                if (galleryAnimating) return;
-                setGalleryDirection('next');
-                setGalleryAnimating(true);
-                setTimeout(() => {
-                  setGalleryIndex(prev => (prev + 1) % GALLERY_TOTAL);
-                  setGalleryAnimating(false);
-                }, 150);
-              }}
-            >
-              <img
-                key={galleryIndex}
-                src={galleryImages[galleryIndex]}
-                alt={`Resort photo ${galleryIndex + 1}`}
-                className={`w-full h-full object-cover transition-opacity duration-300 ${
-                  galleryAnimating ? 'opacity-0' : 'opacity-100'
-                }`}
-              />
-              {/* Tap zones hint */}
-              <div className="absolute inset-0 flex">
-                {/* Left tap zone — go prev */}
-                <div
-                  className="w-1/3 h-full z-10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (galleryAnimating) return;
-                    setGalleryDirection('prev');
-                    setGalleryAnimating(true);
-                    setTimeout(() => {
-                      setGalleryIndex(prev => (prev - 1 + GALLERY_TOTAL) % GALLERY_TOTAL);
-                      setGalleryAnimating(false);
-                    }, 150);
-                  }}
+                  onClick={() => { setGalleryIndex(i); startGalleryAutoPlay(); }}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === galleryIndex
+                      ? 'bg-yellow-500 w-6 h-2'
+                      : 'bg-white/30 hover:bg-white/60 w-2 h-2'
+                  }`}
+                  aria-label={`Go to image ${i + 1}`}
                 />
-                {/* Right tap zone — go next */}
-                <div className="w-2/3 h-full z-10" />
-              </div>
-              {/* Counter badge */}
-              <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm">
-                {galleryIndex + 1} / {GALLERY_TOTAL}
-              </div>
-              {/* Hover arrow hint */}
-              <div className="absolute inset-0 flex items-center justify-end pr-6 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Thumbnail strip */}
@@ -816,9 +838,11 @@ export default function Index() {
               {galleryImages.map((src, i) => (
                 <button
                   key={i}
-                  onClick={() => { setGalleryDirection(i > galleryIndex ? 'next' : 'prev'); setGalleryIndex(i); }}
-                  className={`flex-shrink-0 w-16 h-10 rounded-lg overflow-hidden border-2 transition-all ${
-                    i === galleryIndex ? 'border-yellow-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-80'
+                  onClick={() => { setGalleryIndex(i); startGalleryAutoPlay(); }}
+                  className={`flex-shrink-0 w-16 h-10 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                    i === galleryIndex
+                      ? 'border-yellow-500 opacity-100 scale-105'
+                      : 'border-transparent opacity-40 hover:opacity-75'
                   }`}
                 >
                   <img src={src} alt={`thumb ${i + 1}`} className="w-full h-full object-cover" />
@@ -935,13 +959,11 @@ export default function Index() {
       {/* Floating FAQ Button */}
       <button
         onClick={() => setIsFAQModalOpen(true)}
-        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-primary to-accent text-white p-4 rounded-full shadow-2xl hover:scale-110 hover:shadow-primary/50 transition-all duration-300 group"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-[#2d5240] text-white pl-4 pr-5 py-3 rounded-full shadow-xl border-2 border-white hover:bg-[#3d6b4f] hover:scale-105 transition-all duration-300 group"
         aria-label="Help & FAQ"
       >
-        <HelpCircle size={28} className="group-hover:rotate-12 transition-transform" />
-        <span className="absolute -top-2 -right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-          ?
-        </span>
+        <HelpCircle size={22} className="group-hover:rotate-12 transition-transform flex-shrink-0" />
+        <span className="text-sm font-semibold">Help</span>
       </button>
     </div>
   );
