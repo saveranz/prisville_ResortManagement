@@ -74,18 +74,19 @@ export const register: RequestHandler = async (req, res) => {
         [hashedPassword, name, hashedToken, tokenExpiry, pendingUser.id]
       );
       
-      // Send verification email in background (non-blocking)
-      sendVerificationEmail(email, verificationToken, name)
-        .then(() => console.log('✅ Verification email resent to existing pending user:', email))
-        .catch((emailError) => {
-          console.error('❌ Failed to send verification email:', emailError);
-          if (process.env.NODE_ENV === 'development') {
-            const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${verificationToken}`;
-            console.log('\n📧 EMAIL DELIVERY FAILED - Copy this URL to verify manually:');
-            console.log('🔗', verificationUrl);
-            console.log('');
-          }
-        });
+      // Send verification email
+      try {
+        await sendVerificationEmail(email, verificationToken, name);
+        console.log('✅ Verification email resent to existing pending user:', email);
+      } catch (emailError) {
+        console.error('❌ Failed to send verification email:', emailError);
+        if (process.env.NODE_ENV === 'development') {
+          const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${verificationToken}`;
+          console.log('\n📧 EMAIL DELIVERY FAILED - Copy this URL to verify manually:');
+          console.log('🔗', verificationUrl);
+          console.log('');
+        }
+      }
       
       res.json({ 
         success: true, 
@@ -117,20 +118,21 @@ export const register: RequestHandler = async (req, res) => {
       [email, hashedPassword, name, hashedToken, tokenExpiry]
     );
 
-    // Send verification email in background (non-blocking)
-    sendVerificationEmail(email, verificationToken, name)
-      .then(() => console.log('✅ Verification email sent to:', email))
-      .catch((emailError) => {
-        console.error('❌ Failed to send verification email:', emailError);
-        if (process.env.NODE_ENV === 'development') {
-          const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${verificationToken}`;
-          console.log('\n📧 EMAIL DELIVERY FAILED - Copy this URL to verify manually:');
-          console.log('🔗', verificationUrl);
-          console.log('');
-        }
-      });
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, verificationToken, name);
+      console.log('✅ Verification email sent to:', email);
+    } catch (emailError) {
+      console.error('❌ Failed to send verification email:', emailError);
+      if (process.env.NODE_ENV === 'development') {
+        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${verificationToken}`;
+        console.log('\n📧 EMAIL DELIVERY FAILED - Copy this URL to verify manually:');
+        console.log('🔗', verificationUrl);
+        console.log('');
+      }
+    }
 
-    console.log('✅ Pending registration created, verification email queued:', {
+    console.log('✅ Pending registration created, verification email sent:', {
       pendingUserId: result.insertId,
       userEmail: email
     });
@@ -728,18 +730,19 @@ export const resendVerification: RequestHandler = async (req, res) => {
       [hashedToken, tokenExpiry, pendingUser.id]
     );
 
-    // Send verification email in background (non-blocking)
-    sendVerificationEmail(email, verificationToken, pendingUser.name)
-      .then(() => console.log('✅ Verification email resent to:', email))
-      .catch((emailError) => {
-        console.error('❌ Failed to resend verification email:', emailError);
-        if (process.env.NODE_ENV === 'development') {
-          const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${verificationToken}`;
-          console.log('\n📧 EMAIL DELIVERY FAILED - Copy this URL to verify manually:');
-          console.log('🔗', verificationUrl);
-          console.log('');
-        }
-      });
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, verificationToken, pendingUser.name);
+      console.log('✅ Verification email resent to:', email);
+    } catch (emailError) {
+      console.error('❌ Failed to resend verification email:', emailError);
+      if (process.env.NODE_ENV === 'development') {
+        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${verificationToken}`;
+        console.log('\n📧 EMAIL DELIVERY FAILED - Copy this URL to verify manually:');
+        console.log('🔗', verificationUrl);
+        console.log('');
+      }
+    }
 
     res.json({ 
       success: true, 
