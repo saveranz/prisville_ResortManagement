@@ -8,8 +8,8 @@ const EMAIL_HOST = process.env.EMAIL_HOST || 'smtp.gmail.com';
 const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || '587');
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Prisville Resort <noreply@prisville.com>';
 
-// Create reusable transporter with connection pooling
-const transporter = nodemailer.createTransport({
+// Create reusable transporter
+const createTransporter = () => nodemailer.createTransport({
   host: EMAIL_HOST,
   port: EMAIL_PORT,
   secure: EMAIL_PORT === 465, // true for 465, false for other ports
@@ -17,9 +17,6 @@ const transporter = nodemailer.createTransport({
     user: EMAIL_USER,
     pass: EMAIL_PASS,
   },
-  pool: true,
-  maxConnections: 3,
-  maxMessages: 100,
   connectionTimeout: 10000,
   greetingTimeout: 10000,
   socketTimeout: 15000,
@@ -28,7 +25,7 @@ const transporter = nodemailer.createTransport({
 // Test email connection (optional, for debugging)
 export const testEmailConnection = async () => {
   try {
-    await transporter.verify();
+    await createTransporter().verify();
     console.log('✅ Email server is ready to send messages');
     return true;
   } catch (error) {
@@ -193,7 +190,7 @@ The Prisville Resort Team
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await createTransporter().sendMail(mailOptions);
     console.log('✅ Password reset email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -330,7 +327,7 @@ The Prisville Resort Team
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await createTransporter().sendMail(mailOptions);
     console.log('✅ Password changed confirmation email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -512,7 +509,7 @@ The Prisville Resort Team
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await createTransporter().sendMail(mailOptions);
     console.log('✅ Verification email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -680,7 +677,7 @@ The Prisville Resort Team
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await createTransporter().sendMail(mailOptions);
     console.log('✅ Welcome email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -689,4 +686,4 @@ The Prisville Resort Team
   }
 };
 
-export default transporter;
+export default createTransporter;
