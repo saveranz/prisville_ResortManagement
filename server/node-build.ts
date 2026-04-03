@@ -26,6 +26,9 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`[startup] Server listening on 0.0.0.0:${PORT}`);
   console.log("[startup] Node environment:", process.env.NODE_ENV || "development");
   console.log("[startup] API ready at /api");
+  console.log("[startup] APP_URL:", process.env.APP_URL || "⚠️  NOT SET - emails will use localhost:8080");
+  console.log("[startup] FRONTEND_URL:", process.env.FRONTEND_URL || "⚠️  NOT SET - emails will use localhost:8080");
+  console.log("[startup] EMAIL_USER:", process.env.EMAIL_USER ? `${process.env.EMAIL_USER.slice(0,3)}***` : "⚠️  NOT SET");
 });
 
 server.on("error", (error: NodeJS.ErrnoException) => {

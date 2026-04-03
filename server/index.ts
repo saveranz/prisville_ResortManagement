@@ -129,6 +129,19 @@ export function createServer() {
     });
   });
 
+  // Debug: check if email is in users vs pending_users
+  app.get("/api/debug/check-user/:email", async (req, res) => {
+    const { email } = req.params;
+    const [users] = await db.query<any[]>('SELECT id, email, name, role, email_verified, created_at FROM users WHERE email = ?', [email]);
+    const [pending] = await db.query<any[]>('SELECT id, email, name, created_at FROM pending_users WHERE email = ?', [email]);
+    res.json({
+      in_users_table: users.length > 0,
+      user: users[0] || null,
+      in_pending_table: pending.length > 0,
+      pending: pending[0] || null,
+    });
+  });
+
   app.get("/api/demo", handleDemo);
   app.get("/api/test-db", testDatabase);
   app.get("/api/setup-db", setupDatabase);
