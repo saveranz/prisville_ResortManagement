@@ -1,4 +1,4 @@
-import { X, Eye, EyeOff } from "lucide-react";
+import { X, Eye, EyeOff, Mail, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ForgotPasswordModal from "./ForgotPasswordModal";
@@ -22,6 +22,9 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [verificationPending, setVerificationPending] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [resending, setResending] = useState(false);
 
   if (!isOpen) return null;
 
@@ -61,16 +64,15 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
         // Clear form
         setName("");
         setPassword("");
-        setEmail("");
         
-        // If requires verification, show message
+        // If requires verification, show verification pending screen
         if (data.requiresVerification) {
           setError("");
-          // Close modal after showing message
-          setTimeout(() => {
-            onClose();
-          }, 2000);
+          setRegisteredEmail(email);
+          setEmail("");
+          setVerificationPending(true);
         } else {
+          setEmail("");
           // Switch to login form after 2 seconds (fallback for non-verification flow)
           setTimeout(() => {
             setIsRegistering(false);
@@ -170,6 +172,86 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
 
         {/* Modal Content */}
         <div className="p-8">
+          {verificationPending ? (
+            /* Verification Pending Screen */
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+                <Mail className="text-blue-600" size={32} />
+              </div>
+              <h2 className="font-serif text-3xl text-gray-900 mb-2">Check Your Email</h2>
+              <p className="text-gray-600 text-sm mb-2">
+                We sent a verification link to:
+              </p>
+              <p className="text-gray-900 font-semibold mb-6">{registeredEmail}</p>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left mb-6">
+                <p className="text-sm text-blue-900 mb-2"><strong>What to do next:</strong></p>
+                <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                  <li>Check your email inbox (and spam folder)</li>
+                  <li>Click the verification link</li>
+                  <li>Come back and log in</li>
+                </ol>
+              </div>
+
+              <p className="text-xs text-gray-500 mb-4">
+                Didn't receive the email? Click below to resend.
+              </p>
+
+              <button
+                type="button"
+                disabled={resending}
+                onClick={async () => {
+                  setResending(true);
+                  try {
+                    const response = await fetch('/api/auth/resend-verification', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: registeredEmail })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                      toast({
+                        variant: "success",
+                        title: "Email Sent",
+                        description: "A new verification email has been sent. Check your inbox.",
+                      });
+                    } else {
+                      toast({
+                        variant: "destructive",
+                        title: "Failed",
+                        description: data.message || "Could not resend email.",
+                      });
+                    }
+                  } catch {
+                    toast({
+                      variant: "destructive",
+                      title: "Error",
+                      description: "Failed to resend verification email.",
+                    });
+                  } finally {
+                    setResending(false);
+                  }
+                }}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2 mb-3"
+              >
+                <RefreshCw size={16} className={resending ? "animate-spin" : ""} />
+                {resending ? "Sending..." : "Resend Verification Email"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setVerificationPending(false);
+                  setIsRegistering(false);
+                  setError("");
+                }}
+                className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 shadow-md"
+              >
+                Back to Login
+              </button>
+            </div>
+          ) : (
+          <>
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center overflow-hidden bg-white">
@@ -328,6 +410,8 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
               </>
             )}
           </p>
+          </>
+          )}
         </div>
       </div>
 

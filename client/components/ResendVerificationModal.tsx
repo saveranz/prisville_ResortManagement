@@ -189,6 +189,12 @@ export default function ResendVerificationModal({ isOpen, onClose, defaultEmail 
                   The link will expire in 24 hours.
                 </p>
                 <button
+                  onClick={() => setEmailSent(false)}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-300 shadow-md mb-3"
+                >
+                  Send Again
+                </button>
+                <button
                   onClick={handleClose}
                   className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 shadow-md"
                 >
