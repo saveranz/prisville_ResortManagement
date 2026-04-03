@@ -20,6 +20,7 @@ const createTransporter = () => nodemailer.createTransport({
   connectionTimeout: 10000,
   greetingTimeout: 10000,
   socketTimeout: 15000,
+  family: 4, // Force IPv4 to avoid IPv6 issues on Railway
 });
 
 // Test email connection (optional, for debugging)
