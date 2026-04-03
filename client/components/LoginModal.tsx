@@ -78,6 +78,19 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
             setIsRegistering(false);
           }, 2000);
         }
+      } else if (data.requiresVerification) {
+        // Email send failed but account was created — show verification screen with resend
+        toast({
+          variant: "destructive",
+          title: "Email Send Failed",
+          description: "Your account was created but the verification email failed. Please try resending.",
+        });
+        setName("");
+        setPassword("");
+        setRegisteredEmail(email);
+        setEmail("");
+        setError("");
+        setVerificationPending(true);
       } else {
         setError(data.message || "Registration failed");
       }

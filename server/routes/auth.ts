@@ -78,14 +78,15 @@ export const register: RequestHandler = async (req, res) => {
       try {
         await sendVerificationEmail(email, verificationToken, name);
         console.log('✅ Verification email resent to existing pending user:', email);
-      } catch (emailError) {
+      } catch (emailError: any) {
         console.error('❌ Failed to send verification email:', emailError);
-        if (process.env.NODE_ENV === 'development') {
-          const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${verificationToken}`;
-          console.log('\n📧 EMAIL DELIVERY FAILED - Copy this URL to verify manually:');
-          console.log('🔗', verificationUrl);
-          console.log('');
-        }
+        const errMsg = emailError?.message || String(emailError);
+        res.status(500).json({ 
+          success: false, 
+          message: `Account created but failed to send verification email: ${errMsg}. Please try resending.`,
+          requiresVerification: true
+        });
+        return;
       }
       
       res.json({ 
@@ -122,14 +123,15 @@ export const register: RequestHandler = async (req, res) => {
     try {
       await sendVerificationEmail(email, verificationToken, name);
       console.log('✅ Verification email sent to:', email);
-    } catch (emailError) {
+    } catch (emailError: any) {
       console.error('❌ Failed to send verification email:', emailError);
-      if (process.env.NODE_ENV === 'development') {
-        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${verificationToken}`;
-        console.log('\n📧 EMAIL DELIVERY FAILED - Copy this URL to verify manually:');
-        console.log('🔗', verificationUrl);
-        console.log('');
-      }
+      const errMsg = emailError?.message || String(emailError);
+      res.status(500).json({ 
+        success: false, 
+        message: `Account created but failed to send verification email: ${errMsg}. Please try resending.`,
+        requiresVerification: true
+      });
+      return;
     }
 
     console.log('✅ Pending registration created, verification email sent:', {

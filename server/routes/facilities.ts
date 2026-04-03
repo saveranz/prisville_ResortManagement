@@ -12,7 +12,9 @@ const VALID_ROOM_TYPES = [
 const normalizePrice = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return trimmed;
-  return trimmed.startsWith('₱') ? trimmed : `₱${trimmed}`;
+  // Strip any corrupted/non-numeric prefix and ensure clean ₱ sign
+  const digitsAndCommas = trimmed.replace(/[^\d,]/g, '');
+  return `₱${digitsAndCommas}`;
 };
 
 const parseCapacity = (value: unknown): number => {
@@ -51,9 +53,15 @@ export const getAllRooms: RequestHandler = async (req, res) => {
 
       connection.release();
 
+      // Normalize price_per_night to fix any encoding issues with ₱ sign
+      const normalizedRooms = (rooms as any[]).map(room => ({
+        ...room,
+        price_per_night: room.price_per_night ? normalizePrice(String(room.price_per_night)) : room.price_per_night
+      }));
+
       res.json({
         success: true,
-        rooms
+        rooms: normalizedRooms
       });
 
     } catch (error) {
