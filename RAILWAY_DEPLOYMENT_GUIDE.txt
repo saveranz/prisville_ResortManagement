@@ -1,0 +1,457 @@
+================================================================================
+  PRISVILLE RESORT SYSTEM - RAILWAY DEPLOYMENT GUIDE
+  Domain: prisville.com | Repo: github.com/saveranz/prisville_ResortManagement
+================================================================================
+
+WHAT IS RAILWAY?
+  - Cloud hosting platform with full Node.js support
+  - GitHub auto-deploy: every push to main = automatic redeploy
+  - Built-in MySQL database service
+  - Free trial included, then ~$5/month (Hobby plan)
+  - URL: https://railway.app
+
+================================================================================
+PART 1: CREATE YOUR RAILWAY ACCOUNT
+================================================================================
+
+STEP 1 - Sign up on Railway
+-----------------------------
+1. Go to https://railway.app
+2. Click "Login" → "Login with GitHub"
+3. Authorize Railway to access your GitHub account (saveranz)
+4. You'll land on the Railway dashboard
+
+
+STEP 2 - Verify your account (important)
+-----------------------------------------
+Railway requires a verified account to deploy from GitHub:
+1. Click your profile icon (top right)
+2. Go to "Account Settings"
+3. Verify your email if prompted
+4. Add a payment method (required to go beyond free trial limits)
+   → You won't be charged immediately, but it unlocks full features
+
+
+================================================================================
+PART 2: CREATE A NEW PROJECT WITH MYSQL
+================================================================================
+
+STEP 3 - Create a new project
+-------------------------------
+1. On the Railway dashboard, click "New Project"
+2. Select "Empty Project"
+3. Railway will create a blank project workspace
+
+
+STEP 4 - Add a MySQL database
+-------------------------------
+1. Inside your project, click "+ New" (or "Add a Service")
+2. Select "Database"
+3. Select "MySQL"
+4. Railway will provision a MySQL server automatically
+5. Click on the MySQL service once it's created
+6. Go to the "Variables" tab
+7. Note down (or keep this tab open) — you'll need these values later:
+     - MYSQLHOST
+     - MYSQLPORT
+     - MYSQLUSER
+     - MYSQLPASSWORD
+     - MYSQLDATABASE
+
+   TIP: You can also click "Connect" tab → copy the connection string.
+
+
+================================================================================
+PART 3: CONNECT YOUR GITHUB REPO
+================================================================================
+
+STEP 5 - Add your GitHub repo as a service
+--------------------------------------------
+1. Inside your Railway project, click "+ New" again
+2. Select "GitHub Repo"
+3. Find and select: saveranz/prisville_ResortManagement
+4. Railway will start preparing to deploy
+
+
+STEP 6 - Configure build and start commands
+---------------------------------------------
+1. Click on your GitHub service (the one you just added)
+2. Go to "Settings" tab
+3. Under "Build Command", enter:
+     npm run build
+4. Under "Start Command", enter:
+     node dist/server/node-build.js
+5. Under "Root Directory", leave empty (use repo root)
+6. Railway may auto-detect these — double check they are correct
+
+
+================================================================================
+PART 4: SET ENVIRONMENT VARIABLES
+================================================================================
+
+STEP 7 - Add environment variables
+-------------------------------------
+1. Click on your GitHub service
+2. Go to the "Variables" tab
+3. Click "Add Variable" and add each one below:
+
+   NOTE: Get DB values from the MySQL service Variables tab (Step 4)
+
+   +---------------------+------------------------------------------+
+   | Variable Name       | Value                                    |
+   +---------------------+------------------------------------------+
+   | NODE_ENV            | production                               |
+   | DB_HOST             | (copy MYSQLHOST from MySQL service)      |
+   | DB_PORT             | (copy MYSQLPORT from MySQL service)      |
+   | DB_USER             | (copy MYSQLUSER from MySQL service)      |
+   | DB_PASSWORD         | (copy MYSQLPASSWORD from MySQL service)  |
+   | DB_NAME             | (copy MYSQLDATABASE from MySQL service)  |
+   | SESSION_SECRET      | (generate a long random string — see below) |
+   | EMAIL_HOST          | smtp.gmail.com                           |
+   | EMAIL_PORT          | 587                                      |
+   | EMAIL_USER          | resortprisvilletriangle@gmail.com        |
+   | EMAIL_PASS          | (your Gmail App Password)                |
+   | EMAIL_FROM          | Prisville Resort <resortprisvilletriangle@gmail.com> |
+   | APP_URL             | https://prisville.com                    |
+   | CORS_ORIGIN         | https://prisville.com                    |
+   +---------------------+------------------------------------------+
+
+   NOTE: PORT is set automatically by Railway — do not set it manually.
+         Your app already reads process.env.PORT, so it will work automatically.
+
+   IMPORTANT: Set CORS_ORIGIN to your Railway URL first (e.g. https://xxx.up.railway.app)
+   so you can test before connecting prisville.com. After connecting the domain,
+   change CORS_ORIGIN to https://prisville.com
+
+GENERATING SESSION_SECRET:
+  Go to: https://randomkeygen.com/
+  Copy a "CodeIgniter Encryption Key" (or any 64+ character random string)
+  Example: a8f3b2e91c4d70f5a1b6e3c8d2f9a4b7e5c1d8f3a6b9c2e5f8d1a4b7c0e3f6
+
+GMAIL APP PASSWORD:
+  If you haven't set one up yet:
+  1. Go to https://myaccount.google.com/apppasswords
+  2. Select app: "Mail", device: "Other (Custom name)"
+  3. Type "Prisville" and click Generate
+  4. Copy the 16-character password (no spaces)
+
+
+================================================================================
+PART 5: IMPORT DATABASE SCHEMA (DO THIS BEFORE FIRST DEPLOY)
+================================================================================
+
+Railway's MySQL is empty — import the schema FIRST before deploying,
+otherwise the app will crash because tables don't exist.
+
+Plan: Export local database → one .sql file → import via terminal using
+Laragon's mysql.exe. No new software needed.
+
+
+────────────────────────────────────────────────────────────────────────────────
+STEP 8 — EXPORT your local database from phpMyAdmin
+────────────────────────────────────────────────────────────────────────────────
+
+  1. Make sure Laragon is running
+       → Open Laragon app → click "Start All"
+
+  2. Open your browser and go to:
+       http://localhost/phpmyadmin
+
+  3. In the LEFT SIDEBAR, click your database name:
+       prisville02
+
+  4. Click the "Export" tab at the very top menu bar
+       (next to Structure, SQL, Search, etc.)
+
+  5. You will see two options:
+       ● Quick  ← leave this selected
+       ● Custom
+
+  6. Format should already say "SQL" — leave it as is
+
+  7. Click the "Go" button (bottom right)
+
+  8. Your browser will automatically download a file named:
+       prisville02.sql
+
+  9. Move the file to your Desktop so it's easy to find:
+       Default download location: C:\Users\THIS PC\Downloads\prisville02.sql
+       Move it to:                C:\Users\THIS PC\Desktop\prisville02.sql
+
+       In PowerShell:
+         Move-Item "$env:USERPROFILE\Downloads\prisville02.sql" "$env:USERPROFILE\Desktop\prisville02.sql"
+
+  NOTE: Quick export includes BOTH table structure AND any existing data.
+        This is what you want — it will recreate everything on Railway exactly
+        as it is on your local machine.
+
+
+────────────────────────────────────────────────────────────────────────────────
+STEP 9 — Get your Railway MySQL credentials
+────────────────────────────────────────────────────────────────────────────────
+
+  1. Open https://railway.app/dashboard
+  2. Click your project
+  3. Click the "MySQL" service (the database one, not your app)
+  4. Click the "Variables" tab
+  5. You will see a list of variables — note down these 5:
+
+       MYSQLHOST     = (something like) monorail.proxy.rlwy.net
+       MYSQLPORT     = (something like) 27825   ← NOT always 3306!
+       MYSQLUSER     = root
+       MYSQLPASSWORD = (long random string)
+       MYSQLDATABASE = railway
+
+  TIP: Click the eye icon next to each variable to reveal the value.
+  TIP: You can also click "Connect" tab → "Available Variables" for a clean list.
+
+
+────────────────────────────────────────────────────────────────────────────────
+STEP 10 — Import into Railway using Laragon's mysql.exe
+────────────────────────────────────────────────────────────────────────────────
+
+No new software needed. Laragon already has mysql.exe at:
+  C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe
+
+  1. Open PowerShell
+       → Press Windows Key, type "powershell", press Enter
+
+  2. Build your import command by replacing each value:
+
+       & "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe" `
+         -h YOUR_MYSQLHOST `
+         -P YOUR_MYSQLPORT `
+         -u YOUR_MYSQLUSER `
+         -pYOUR_MYSQLPASSWORD `
+         YOUR_MYSQLDATABASE `
+         < "$env:USERPROFILE\Desktop\prisville02.sql"
+
+  REAL EXAMPLE (with fake credentials — use your actual values):
+
+       & "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe" `
+         -h monorail.proxy.rlwy.net `
+         -P 27825 `
+         -u root `
+         -pAbCdEfGhIjKlMnOp `
+         railway `
+         < "$env:USERPROFILE\Desktop\prisville02.sql"
+
+  SINGLE-LINE VERSION (same command, easier to copy-paste):
+
+       & "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe" -h monorail.proxy.rlwy.net -P 27825 -u root -pAbCdEfGhIjKlMnOp railway < "$env:USERPROFILE\Desktop\prisville02.sql"
+
+  3. Press Enter and wait
+       → No output while running = normal, it's working
+       → Small files: done in seconds
+       → Large files: may take 1-2 minutes
+       → When finished: returns to the prompt (PS C:\...) with no error message
+
+  IMPORTANT RULES:
+  ✓ -p has NO space before the password:  -pAbCdEfGhIjKl  ← correct
+  ✗ NOT like this:                        -p AbCdEfGhIjKl  ← wrong (will prompt)
+  ✓ -P (capital P) is the PORT
+  ✓ -p (lowercase p) is the PASSWORD
+
+
+────────────────────────────────────────────────────────────────────────────────
+TROUBLESHOOTING
+────────────────────────────────────────────────────────────────────────────────
+
+  ERROR 1045 (Access denied)
+  → Wrong username or password — copy-paste from Railway Variables tab exactly
+
+  ERROR 2003 (Can't connect to server)
+  → Wrong host or port — double check MYSQLHOST and MYSQLPORT values
+
+  ERROR 1049 (Unknown database)
+  → The database name is wrong — use the exact MYSQLDATABASE value
+
+  "< was unexpected at this token"
+  → You're using Command Prompt (cmd), not PowerShell
+  → Switch to PowerShell or replace < with Get-Content syntax:
+    Get-Content "$env:USERPROFILE\Desktop\prisville02.sql" | & "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe" -h HOST -P PORT -u USER -pPASS DATABASE
+
+
+────────────────────────────────────────────────────────────────────────────────
+VERIFY the import worked
+────────────────────────────────────────────────────────────────────────────────
+
+  Option A — Railway dashboard:
+    → Click MySQL service → "Data" tab
+    → You should see 20+ tables in the left panel
+
+  Option B — Terminal verify command:
+    & "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe" -h HOST -P PORT -u root -pPASSWORD railway -e "SHOW TABLES;"
+    → Should list all table names
+
+
+================================================================================
+PART 6: DEPLOY AND VERIFY
+================================================================================
+
+STEP 9 - Trigger deployment
+------------------------------
+1. After importing the schema and setting variables, Railway will auto-deploy
+2. Click on your GitHub service → "Deployments" tab
+3. Watch the build logs — it should:
+     → Run: npm install
+     → Run: npm run build  (builds client SPA + server bundle)
+     → Start: node dist/server/node-build.js
+4. Wait for status to show "Active" (green)
+5. If it fails, click the failed deployment to see error logs
+
+
+STEP 10 - Get your Railway URL and test
+----------------------------------------
+1. Click on your GitHub service → "Settings" tab
+2. Under "Networking" → "Public Networking", click "Generate Domain"
+3. Railway gives you a URL like: https://prisville-production.up.railway.app
+4. Open that URL in your browser
+   → Should show: Prisville Triangle Resort login page
+5. Test the API:
+   → https://your-railway-url.up.railway.app/api/ping
+   → Should return: {"message":"ping"}
+
+
+================================================================================
+PART 7: CONNECT prisville.com DOMAIN
+================================================================================
+
+STEP 11 - Add custom domain in Railway
+----------------------------------------
+1. Click your GitHub service → "Settings" tab
+2. Under "Networking" → "Custom Domain", click "Add Custom Domain"
+3. Type: prisville.com
+4. Click "Add Domain"
+5. Railway shows you a DNS record to add — it will look like:
+     Type:  CNAME
+     Name:  @ (or prisville.com)
+     Value: some-random.railway.app
+
+
+STEP 12 - Point DNS in Hostinger
+----------------------------------
+1. Log in to Hostinger hPanel
+2. Go to "Domains" → click "prisville.com"
+3. Click "DNS Zone Editor" (or "DNS / Nameservers")
+4. Find the existing "A" or "CNAME" record for "@" (root domain)
+5. Edit or replace it with what Railway gave you in Step 11:
+     Type:  CNAME
+     Name:  @
+     Value: (the .railway.app address Railway gave you)
+     TTL:   3600
+
+   NOTE: If Railway gives you an IP address (A record) instead of CNAME:
+     Type:  A
+     Name:  @
+     Value: (the IP address)
+
+6. Also add www:
+     Type:  CNAME
+     Name:  www
+     Value: (same .railway.app address)
+
+7. Save and wait 10-30 minutes for DNS to propagate
+
+STEP 13 - Verify SSL is active
+--------------------------------
+1. Back in Railway → your service → Settings → Custom Domain
+2. Once DNS propagates, Railway auto-provisions SSL certificate
+3. Green padlock appears next to prisville.com
+4. Visit https://prisville.com — your app should load!
+
+
+================================================================================
+PART 8: FUTURE PATCHES (AUTO-DEPLOY WORKFLOW)
+================================================================================
+
+STEP 14 - How to deploy updates
+---------------------------------
+This is the beauty of Railway — it's fully automatic:
+
+1. Make changes to your code locally
+2. Commit and push to GitHub:
+     git add -A
+     git commit -m "fix: description of your change"
+     git push origin main
+
+3. Railway AUTOMATICALLY detects the push and:
+     → Pulls the latest code
+     → Runs: npm run build
+     → Restarts the server with the new version
+     → Zero downtime (old version stays up until new one is ready)
+
+You don't need to SSH anywhere. Just push to GitHub.
+
+MONITORING DEPLOYS:
+  → Railway dashboard → your service → "Deployments" tab
+  → See real-time build logs for every deploy
+  → Rollback to any previous deployment with one click if something breaks
+
+
+================================================================================
+COMMON ISSUES & FIXES
+================================================================================
+
+ISSUE: Build fails with "bcrypt" error
+FIX:   Railway uses Linux — bcrypt needs to compile natively.
+       Run this locally and push:
+         npm uninstall bcrypt
+         npm install bcrypt
+       (Railway's build environment has the right C++ tools)
+       If still failing, check build logs for the exact error.
+
+ISSUE: "Cannot connect to database"
+FIX:   Double-check all DB_ environment variables match the Railway
+       MySQL service exactly. Copy-paste, don't type manually.
+
+ISSUE: App shows blank page
+FIX:   Check build logs — dist/spa/index.html must be created.
+       Make sure build command is "npm run build" not "npm run build:client".
+
+ISSUE: Session not persisting (login resets)
+FIX:   Make sure SESSION_SECRET is set in Railway variables.
+       Make sure NODE_ENV=production is set.
+
+ISSUE: Emails not sending
+FIX:   Check EMAIL_PASS is the Gmail App Password (16 chars, no spaces).
+       Make sure 2FA is enabled on your Gmail account (required for app passwords).
+
+ISSUE: prisville.com not loading after DNS change
+FIX:   DNS takes up to 24-48 hours to fully propagate worldwide.
+       Test immediately at: https://dnschecker.org/#A/prisville.com
+
+
+================================================================================
+QUICK REFERENCE - RAILWAY ENVIRONMENT VARIABLES
+================================================================================
+
+  VARIABLE          SOURCE                              REQUIRED
+  ─────────────────────────────────────────────────────────────────
+  NODE_ENV          production                          Yes
+  DB_HOST           Railway MySQL → MYSQLHOST           Yes
+  DB_USER           Railway MySQL → MYSQLUSER           Yes
+  DB_PASSWORD       Railway MySQL → MYSQLPASSWORD       Yes
+  DB_NAME           Railway MySQL → MYSQLDATABASE       Yes
+  DB_PORT           Railway MySQL → MYSQLPORT           Yes
+  SESSION_SECRET    Random 64-char string               Yes
+  EMAIL_HOST        smtp.gmail.com                      Yes
+  EMAIL_PORT        587                                 Yes
+  EMAIL_USER        resortprisvilletriangle@gmail.com   Yes
+  EMAIL_PASS        Gmail App Password (16 chars)       Yes
+  EMAIL_FROM        Prisville Resort <email>            Yes
+  APP_URL           https://prisville.com               Yes
+  CORS_ORIGIN       https://prisville.com               Yes
+  PORT              (set automatically by Railway)      Auto
+
+================================================================================
+QUICK REFERENCE - RAILWAY LINKS
+================================================================================
+
+  Railway Dashboard:    https://railway.app/dashboard
+  Your GitHub Repo:     https://github.com/saveranz/prisville_ResortManagement
+  DNS Checker:          https://dnschecker.org
+  Gmail App Passwords:  https://myaccount.google.com/apppasswords
+  Random Key Gen:       https://randomkeygen.com/
+
+================================================================================

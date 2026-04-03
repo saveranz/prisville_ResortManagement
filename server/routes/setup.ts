@@ -398,3 +398,214 @@ export const setupFAQs: RequestHandler = async (_req, res) => {
     });
   }
 };
+
+// Creates ALL tables that may be missing (rooms, amenities, site_settings, announcements, faqs, inquiries)
+// Safe to run multiple times — uses CREATE TABLE IF NOT EXISTS and only seeds empty tables
+export const setupAllMissingTables: RequestHandler = async (_req, res) => {
+  const results: string[] = [];
+
+  try {
+    // --- ROOMS ---
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS rooms (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        room_name VARCHAR(100) NOT NULL UNIQUE,
+        room_type ENUM('Standard Room (Aircon)', 'Non-Aircon Room', 'Family Fan Room', 'Large Family Room') NOT NULL,
+        room_numbers VARCHAR(255) NOT NULL,
+        capacity INT NOT NULL,
+        price_per_night VARCHAR(50) NOT NULL,
+        amenities TEXT,
+        description TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    const [roomCount] = await db.query<any[]>('SELECT COUNT(*) as count FROM rooms');
+    if (roomCount[0].count === 0) {
+      await db.query(`
+        INSERT INTO rooms (room_name, room_type, room_numbers, capacity, price_per_night, amenities, description) VALUES
+        ('Standard Room (Aircon)', 'Standard Room (Aircon)', '101, 102, 103, 201, 202, 203', 2, '₱1,600', 'Air conditioning, Double bed, TV, Private bathroom', 'Comfortable standard room with air conditioning, perfect for couples or solo travelers.'),
+        ('Non-Aircon Room', 'Non-Aircon Room', '109, 110, 111, 209, 210', 3, '₱800', 'Fan, Double bed, TV, Private bathroom', 'Budget-friendly room with fan, suitable for backpackers and budget-conscious travelers.'),
+        ('Family Fan Room', 'Family Fan Room', '105, 106, 107, 205, 206', 4, '₱1,600', 'Fans, Multiple beds, TV, Private bathroom, Spacious layout', 'Spacious family room with multiple beds and fan cooling, ideal for small families.'),
+        ('Large Family Room', 'Large Family Room', '104, 108, 204, 208', 6, '₱3,200', 'Air conditioning, Multiple beds, TV, Private bathroom, Extra space', 'Large family room with air conditioning, perfect for bigger families or groups.')
+      `);
+      results.push('rooms: created + seeded 4 rooms');
+    } else {
+      results.push(`rooms: already exists (${roomCount[0].count} rows)`);
+    }
+
+    // --- AMENITIES ---
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS amenities (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        amenity_name VARCHAR(100) NOT NULL UNIQUE,
+        amenity_type ENUM('pool', 'function-hall', 'conference', 'picnic', 'karaoke', 'sports') NOT NULL,
+        capacity INT NOT NULL,
+        price_per_pax VARCHAR(50),
+        base_price VARCHAR(50),
+        operating_hours VARCHAR(100),
+        features TEXT,
+        description TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    const [amenityCount] = await db.query<any[]>('SELECT COUNT(*) as count FROM amenities');
+    if (amenityCount[0].count === 0) {
+      await db.query(`
+        INSERT INTO amenities (amenity_name, amenity_type, capacity, price_per_pax, base_price, operating_hours, features, description) VALUES
+        ('Swimming Pool', 'pool', 50, '₱500', NULL, '6:00 AM - 8:00 PM', 'Olympic-size pool, Kiddie pool, Lifeguard on duty', 'Enjoy our resort-style swimming pool with separate adult and children areas.'),
+        ('Grand Function Hall', 'function-hall', 200, NULL, '₱35,000', 'Flexible booking', 'Stage, Sound system, Projector, Tables and chairs', 'Perfect for weddings, corporate events, and large gatherings.'),
+        ('Conference Room', 'conference', 30, '₱400', '₱12,000', '8:00 AM - 6:00 PM', 'Projector, Whiteboard, WiFi, Air conditioning', 'Professional meeting space ideal for corporate events and seminars.'),
+        ('Picnic Area A', 'picnic', 20, '₱200', NULL, '7:00 AM - 7:00 PM', 'BBQ grills, Picnic tables, Covered area', 'Outdoor picnic area with BBQ facilities.'),
+        ('Picnic Area B', 'picnic', 15, '₱150', NULL, '7:00 AM - 7:00 PM', 'BBQ grills, Picnic tables, Garden view', 'Smaller picnic area with beautiful garden views.'),
+        ('Karaoke Room', 'karaoke', 15, '₱250', NULL, '2:00 PM - 12:00 AM', 'Karaoke machine, Sound system, Disco lights', 'Private karaoke room with modern equipment.'),
+        ('Basketball Court', 'sports', 10, NULL, '₱1,000', '6:00 AM - 10:00 PM', 'Full court, Lighting, Basketball provided', 'Full-size outdoor basketball court.'),
+        ('Badminton Court', 'sports', 4, NULL, '₱500', '6:00 AM - 9:00 PM', 'Indoor court, Rackets and shuttlecocks included', 'Indoor badminton court with equipment provided.')
+      `);
+      results.push('amenities: created + seeded 8 amenities');
+    } else {
+      results.push(`amenities: already exists (${amenityCount[0].count} rows)`);
+    }
+
+    // --- SITE SETTINGS ---
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS site_settings (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        setting_key VARCHAR(100) NOT NULL UNIQUE,
+        setting_value TEXT,
+        setting_type ENUM('text', 'color', 'image', 'number', 'boolean') DEFAULT 'text',
+        category VARCHAR(50) NOT NULL,
+        description TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        updated_by INT NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    const [settingsCount] = await db.query<any[]>('SELECT COUNT(*) as count FROM site_settings');
+    if (settingsCount[0].count === 0) {
+      await db.query(`
+        INSERT INTO site_settings (setting_key, setting_value, setting_type, category, description) VALUES
+        ('site_name', 'Prisville Resort', 'text', 'branding', 'Name of the resort'),
+        ('site_tagline', 'Your Perfect Getaway Destination', 'text', 'branding', 'Site tagline'),
+        ('site_logo_url', '', 'image', 'branding', 'URL to the main logo'),
+        ('hero_image_url', '', 'image', 'branding', 'Main hero/banner image URL'),
+        ('primary_color', '#8B5CF6', 'color', 'colors', 'Primary brand color'),
+        ('accent_color', '#EC4899', 'color', 'colors', 'Accent/secondary color'),
+        ('welcome_message', 'Welcome to Prisville Resort! Book your perfect vacation with us.', 'text', 'content', 'Homepage welcome message'),
+        ('contact_email', 'resortprisvilletriangle@gmail.com', 'text', 'content', 'Contact email address'),
+        ('contact_phone', '+63 123-456-7890', 'text', 'content', 'Contact phone number'),
+        ('footer_text', '© 2026 Prisville Resort. All rights reserved.', 'text', 'content', 'Footer copyright text'),
+        ('show_announcements', 'true', 'boolean', 'layout', 'Show announcements banner'),
+        ('show_recommendations', 'true', 'boolean', 'layout', 'Show recommendations section')
+      `);
+      results.push('site_settings: created + seeded 12 default settings');
+    } else {
+      results.push(`site_settings: already exists (${settingsCount[0].count} rows)`);
+    }
+
+    // --- ANNOUNCEMENTS ---
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS announcements (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        target_audience ENUM('all', 'clients', 'staff', 'specific') DEFAULT 'all',
+        target_user_ids JSON NULL,
+        start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        end_date TIMESTAMP NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        priority ENUM('low', 'normal', 'high', 'critical') DEFAULT 'normal',
+        banner_color VARCHAR(50) DEFAULT '#3b82f6',
+        icon VARCHAR(50) DEFAULT 'info',
+        created_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        views_count INT DEFAULT 0,
+        INDEX idx_active_dates (is_active, start_date, end_date),
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    results.push('announcements: table ready');
+
+    // --- ANNOUNCEMENT VIEWS ---
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS announcement_views (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        announcement_id INT NOT NULL,
+        user_id INT NOT NULL,
+        viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_view (announcement_id, user_id),
+        FOREIGN KEY (announcement_id) REFERENCES announcements(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    results.push('announcement_views: table ready');
+
+    // --- FAQS ---
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS faqs (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        category VARCHAR(50) DEFAULT 'general',
+        display_order INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by INT NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    const [faqCount] = await db.query<any[]>('SELECT COUNT(*) as count FROM faqs');
+    if (faqCount[0].count === 0) {
+      await db.query(`
+        INSERT INTO faqs (question, answer, category, display_order) VALUES
+        ('What are your check-in and check-out times?', 'Check-in time is 2:00 PM and check-out time is 12:00 PM. Early check-in and late check-out are subject to availability and may incur additional charges.', 'booking', 1),
+        ('How do I make a reservation?', 'You can make a reservation directly through our website by selecting your desired room or amenity, choosing your dates, and completing the booking form. You will need to provide payment proof for confirmation.', 'booking', 2),
+        ('What is your cancellation policy?', 'We do not allow cancellations. All bookings are final and non-refundable once confirmed. Please ensure your travel dates are confirmed before making a reservation.', 'booking', 3),
+        ('Do you offer day passes?', 'Yes! We offer day passes that give you access to our resort facilities for the day. Day passes can be booked through our website and include access to the swimming pool and common areas.', 'facilities', 4),
+        ('What amenities are included in the room?', 'All our rooms include comfortable beds, private bathrooms, TV, and free WiFi. Air-conditioned rooms also include climate control. Please check the specific room details for complete amenity lists.', 'facilities', 5),
+        ('Is there parking available?', 'Yes, we provide complimentary parking for all our guests. Parking is available on a first-come, first-served basis.', 'facilities', 6),
+        ('Can I book amenities like the function hall or swimming pool?', 'Absolutely! Our amenities including the swimming pool, function halls, conference rooms, and picnic areas can be booked separately. Check our Amenities section for details.', 'facilities', 7),
+        ('What payment methods do you accept?', 'We accept GCash and bank transfers only. You will need to upload payment proof when making your reservation.', 'payment', 8),
+        ('Are pets allowed?', 'Unfortunately, we do not allow pets at this time, with the exception of service animals.', 'policies', 9),
+        ('Is there a minimum stay requirement?', 'There is no minimum stay requirement for regular bookings. However, during peak seasons and holidays, a minimum 2-night stay may be required.', 'policies', 10)
+      `);
+      results.push('faqs: created + seeded 10 default FAQs');
+    } else {
+      results.push(`faqs: already exists (${faqCount[0].count} rows)`);
+    }
+
+    // --- GUEST INQUIRIES ---
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS guest_inquiries (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(50),
+        subject VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        category VARCHAR(50) DEFAULT 'general',
+        status ENUM('pending', 'in_progress', 'resolved', 'closed') DEFAULT 'pending',
+        priority ENUM('low', 'normal', 'high', 'urgent') DEFAULT 'normal',
+        response TEXT,
+        responded_by INT NULL,
+        responded_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    results.push('guest_inquiries: table ready');
+
+    res.json({ success: true, results });
+  } catch (error) {
+    console.error('❌ setup-all error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Setup failed',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      resultsBeforeError: results
+    });
+  }
+};

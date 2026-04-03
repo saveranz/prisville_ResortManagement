@@ -52,7 +52,7 @@ export default function Index() {
       if (!galleryHovered.current) {
         setGalleryIndex(prev => (prev + 1) % GALLERY_TOTAL);
       }
-    }, 4000);
+    }, 2500);
   }, []);
 
   useEffect(() => {
