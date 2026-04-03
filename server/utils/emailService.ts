@@ -1,36 +1,22 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 // Email configuration
-// In production, use environment variables for sensitive data
-const EMAIL_USER = process.env.EMAIL_USER || 'noreply@prisville.com';
-const EMAIL_PASS = process.env.EMAIL_PASS || '';
-const EMAIL_HOST = process.env.EMAIL_HOST || 'smtp.gmail.com';
-const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || '587');
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Prisville Resort <noreply@prisville.com>';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Prisville Resort <onboarding@resend.dev>';
 
-// Create reusable transporter
-const createTransporter = () => nodemailer.createTransport({
-  host: EMAIL_HOST,
-  port: EMAIL_PORT,
-  secure: EMAIL_PORT === 465, // true for 465, false for other ports
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-  family: 4, // Force IPv4 to avoid IPv6 issues on Railway
-});
+const getResend = () => new Resend(RESEND_API_KEY);
 
 // Test email connection (optional, for debugging)
 export const testEmailConnection = async () => {
   try {
-    await createTransporter().verify();
-    console.log('✅ Email server is ready to send messages');
+    if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set');
+    const resend = getResend();
+    const { data, error } = await resend.apiKeys.list();
+    if (error) throw new Error(error.message);
+    console.log('✅ Resend API key is valid');
     return true;
   } catch (error) {
-    console.error('❌ Email server connection failed:', error);
+    console.error('❌ Resend connection failed:', error);
     return false;
   }
 };
@@ -191,12 +177,19 @@ The Prisville Resort Team
   };
 
   try {
-    const info = await createTransporter().sendMail(mailOptions);
-    console.log('✅ Password reset email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const resend = getResend();
+    const { data, error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: mailOptions.to as string,
+      subject: mailOptions.subject,
+      html: mailOptions.html as string,
+      text: mailOptions.text as string,
+    });
+    if (error) throw new Error(error.message);
+    console.log('✅ Password reset email sent:', data?.id);
+    return { success: true, messageId: data?.id };
   } catch (error) {
     console.error('❌ Failed to send password reset email:', error);
-    // In development, log the reset URL for testing
     if (process.env.NODE_ENV === 'development') {
       console.log('🔗 Password Reset URL (for testing):', resetUrl);
     }
@@ -328,9 +321,17 @@ The Prisville Resort Team
   };
 
   try {
-    const info = await createTransporter().sendMail(mailOptions);
-    console.log('✅ Password changed confirmation email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const resend = getResend();
+    const { data, error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: mailOptions.to as string,
+      subject: mailOptions.subject,
+      html: mailOptions.html as string,
+      text: mailOptions.text as string,
+    });
+    if (error) throw new Error(error.message);
+    console.log('✅ Password changed confirmation email sent:', data?.id);
+    return { success: true, messageId: data?.id };
   } catch (error) {
     console.error('❌ Failed to send password changed email:', error);
     throw error;
@@ -510,12 +511,19 @@ The Prisville Resort Team
   };
 
   try {
-    const info = await createTransporter().sendMail(mailOptions);
-    console.log('✅ Verification email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const resend = getResend();
+    const { data, error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: mailOptions.to as string,
+      subject: mailOptions.subject,
+      html: mailOptions.html as string,
+      text: mailOptions.text as string,
+    });
+    if (error) throw new Error(error.message);
+    console.log('✅ Verification email sent:', data?.id);
+    return { success: true, messageId: data?.id };
   } catch (error) {
     console.error('❌ Failed to send verification email:', error);
-    // In development, log the verification URL for testing
     if (process.env.NODE_ENV === 'development') {
       console.log('🔗 Verification URL (for testing):', verificationUrl);
     }
@@ -678,13 +686,19 @@ The Prisville Resort Team
   };
 
   try {
-    const info = await createTransporter().sendMail(mailOptions);
-    console.log('✅ Welcome email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const resend = getResend();
+    const { data, error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: mailOptions.to as string,
+      subject: mailOptions.subject,
+      html: mailOptions.html as string,
+      text: mailOptions.text as string,
+    });
+    if (error) throw new Error(error.message);
+    console.log('✅ Welcome email sent:', data?.id);
+    return { success: true, messageId: data?.id };
   } catch (error) {
     console.error('❌ Failed to send welcome email:', error);
     throw error;
   }
 };
-
-export default createTransporter;

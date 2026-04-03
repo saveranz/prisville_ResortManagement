@@ -102,30 +102,26 @@ export function createServer() {
   // Email config diagnostic (no secrets exposed)
   app.get("/api/test-email-config", async (_req, res) => {
     const { testEmailConnection } = await import("./utils/emailService");
-    const hasUser = !!process.env.EMAIL_USER;
-    const hasPass = !!process.env.EMAIL_PASS;
-    const host = process.env.EMAIL_HOST || 'NOT SET (default: smtp.gmail.com)';
-    const port = process.env.EMAIL_PORT || 'NOT SET (default: 587)';
+    const hasKey = !!process.env.RESEND_API_KEY;
     const appUrl = process.env.APP_URL || 'NOT SET';
     const frontendUrl = process.env.FRONTEND_URL || 'NOT SET';
+    const emailFrom = process.env.EMAIL_FROM || 'NOT SET (default: onboarding@resend.dev)';
     
-    let smtpConnected = false;
-    let smtpError = '';
+    let connected = false;
+    let connError = '';
     try {
-      smtpConnected = await testEmailConnection();
+      connected = await testEmailConnection();
     } catch (err: any) {
-      smtpError = err.message || String(err);
+      connError = err.message || String(err);
     }
 
     res.json({
-      EMAIL_USER_SET: hasUser,
-      EMAIL_PASS_SET: hasPass,
-      EMAIL_HOST: host,
-      EMAIL_PORT: port,
+      RESEND_API_KEY_SET: hasKey,
+      EMAIL_FROM: emailFrom,
       APP_URL: appUrl,
       FRONTEND_URL: frontendUrl,
-      SMTP_CONNECTION: smtpConnected ? 'OK' : 'FAILED',
-      SMTP_ERROR: smtpError || undefined,
+      RESEND_CONNECTION: connected ? 'OK' : 'FAILED',
+      ERROR: connError || undefined,
     });
   });
 
