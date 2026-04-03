@@ -734,17 +734,12 @@ export const resendVerification: RequestHandler = async (req, res) => {
     try {
       await sendVerificationEmail(email, verificationToken, pendingUser.name);
       console.log('✅ Verification email resent to:', email);
-    } catch (emailError) {
+    } catch (emailError: any) {
       console.error('❌ Failed to resend verification email:', emailError);
-      if (process.env.NODE_ENV === 'development') {
-        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${verificationToken}`;
-        console.log('\n📧 EMAIL DELIVERY FAILED - Copy this URL to verify manually:');
-        console.log('🔗', verificationUrl);
-        console.log('');
-      }
+      const errMsg = emailError?.message || String(emailError);
       res.status(500).json({ 
         success: false, 
-        message: 'Failed to send verification email. Please try again.' 
+        message: `Failed to send verification email: ${errMsg}` 
       });
       return;
     }
