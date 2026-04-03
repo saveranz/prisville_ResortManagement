@@ -178,6 +178,23 @@ export const setupDatabase: RequestHandler = async (_req, res) => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Create room_extra_items table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS room_extra_items (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        room_id INT NOT NULL,
+        item_name VARCHAR(100) NOT NULL,
+        price VARCHAR(50) NOT NULL,
+        unit VARCHAR(50),
+        description TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_room_item (room_id, item_name)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     // Create staff users with hashed passwords
     console.log('Creating staff users...');
     
@@ -597,6 +614,24 @@ export const setupAllMissingTables: RequestHandler = async (_req, res) => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     results.push('guest_inquiries: table ready');
+
+    // --- ROOM EXTRA ITEMS ---
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS room_extra_items (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        room_id INT NOT NULL,
+        item_name VARCHAR(100) NOT NULL,
+        price VARCHAR(50) NOT NULL,
+        unit VARCHAR(50),
+        description TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_room_item (room_id, item_name)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    results.push('room_extra_items: table ready');
 
     res.json({ success: true, results });
   } catch (error) {
