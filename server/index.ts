@@ -151,6 +151,27 @@ export function createServer() {
   app.get("/api/migrate-user-status", migrateUserStatus);
   app.get("/api/migrate-audit-logs", migrateAuditLogs);
   app.get("/api/admin/audit-logs", requireAdmin, getAuditLogs);
+
+  // TEMPORARY: Full DB reset (remove after use)
+  app.get("/api/reset-db-prisville2026", async (_req, res) => {
+    try {
+      await db.query("SET FOREIGN_KEY_CHECKS = 0");
+      const tables = [
+        "pending_users", "sessions", "user_activity_tracking", "user_preferences",
+        "notifications", "room_bookings", "amenity_bookings", "day_pass_bookings",
+        "day_pass_guests", "financial_transactions", "stay_history", "booking_issues",
+        "admin_audit_logs", "announcement_views"
+      ];
+      for (const table of tables) {
+        try { await db.query(`TRUNCATE TABLE \`${table}\``); } catch {}
+      }
+      await db.query("DELETE FROM users WHERE role = 'client'");
+      await db.query("SET FOREIGN_KEY_CHECKS = 1");
+      res.json({ success: true, message: "Database reset complete. All client users and data cleared. Admin and receptionist kept." });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
   
   // Auth routes
   app.post("/api/auth/register", register);
