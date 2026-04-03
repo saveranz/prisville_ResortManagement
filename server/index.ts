@@ -155,7 +155,7 @@ export function createServer() {
   // TEMPORARY: Full DB reset (remove after use)
   app.get("/api/reset-db-prisville2026", async (_req, res) => {
     try {
-      await db.query("SET FOREIGN_KEY_CHECKS = 0");
+      await pool.query("SET FOREIGN_KEY_CHECKS = 0");
       const tables = [
         "pending_users", "sessions", "user_activity_tracking", "user_preferences",
         "notifications", "room_bookings", "amenity_bookings", "day_pass_bookings",
@@ -163,10 +163,10 @@ export function createServer() {
         "admin_audit_logs", "announcement_views"
       ];
       for (const table of tables) {
-        try { await db.query(`TRUNCATE TABLE \`${table}\``); } catch {}
+        try { await pool.query(`TRUNCATE TABLE \`${table}\``); } catch {}
       }
-      await db.query("DELETE FROM users WHERE role = 'client'");
-      await db.query("SET FOREIGN_KEY_CHECKS = 1");
+      await pool.query("DELETE FROM users WHERE role = 'client'");
+      await pool.query("SET FOREIGN_KEY_CHECKS = 1");
       res.json({ success: true, message: "Database reset complete. All client users and data cleared. Admin and receptionist kept." });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
