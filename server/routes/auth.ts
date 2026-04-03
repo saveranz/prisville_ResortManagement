@@ -742,6 +742,11 @@ export const resendVerification: RequestHandler = async (req, res) => {
         console.log('🔗', verificationUrl);
         console.log('');
       }
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to send verification email. Please try again.' 
+      });
+      return;
     }
 
     res.json({ 

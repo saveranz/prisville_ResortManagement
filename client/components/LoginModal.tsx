@@ -206,6 +206,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
                     const response = await fetch('/api/auth/resend-verification', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
                       body: JSON.stringify({ email: registeredEmail })
                     });
                     const data = await response.json();
