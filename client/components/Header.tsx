@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, User, Calendar, Home, Umbrella, LogOut, ChevronDown, LayoutDashboard } from "lucide-react";
+import { Menu, User, Calendar, Home, Umbrella, LogOut, ChevronDown, LayoutDashboard, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import LoginModal from "./LoginModal";
 import RoomBookingsModal from "./RoomBookingsModal";
@@ -28,6 +28,8 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isRoomBookingsModalOpen, setIsRoomBookingsModalOpen] = useState(false);
   const [isAmenityBookingsModalOpen, setIsAmenityBookingsModalOpen] = useState(false);
   const [isDayPassBookingsModalOpen, setIsDayPassBookingsModalOpen] = useState(false);
@@ -109,7 +111,18 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
     // If role is 'client', stay on current page
   };
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setIsDropdownOpen(false);
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setShowLogoutConfirm(false);
+    setIsLoggingOut(true);
+
+    // Show "logging out" for at least 1 second
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     try {
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
@@ -140,6 +153,8 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
       if (onLogoutSuccess) {
         onLogoutSuccess();
       }
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -357,7 +372,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                       {/* Logout */}
                       <div className="border-t border-gray-200">
                         <button
-                          onClick={handleLogout}
+                          onClick={handleLogoutClick}
                           className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 transition text-red-600"
                         >
                           <LogOut size={18} />
@@ -408,7 +423,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                         {/* Logout */}
                         <div className="py-2">
                           <button
-                            onClick={handleLogout}
+                            onClick={handleLogoutClick}
                             className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 transition text-red-600"
                           >
                             <LogOut size={18} />
@@ -484,6 +499,45 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
         onClose={() => setIsDayPassBookingsModalOpen(false)}
         userEmail={userEmail}
       />
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" onClick={() => setShowLogoutConfirm(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-fadeInDown" onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <LogOut size={24} className="text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Log out?</h3>
+              <p className="text-sm text-gray-500 mb-6">Are you sure you want to log out of your account?</p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLogoutConfirm}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logging Out Overlay */}
+      {isLoggingOut && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center gap-4 animate-fadeInDown">
+            <Loader2 size={36} className="text-primary animate-spin" />
+            <p className="text-lg font-medium text-gray-900">Logging out...</p>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
