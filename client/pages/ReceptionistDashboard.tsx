@@ -1893,6 +1893,7 @@ export default function ReceptionistDashboard() {
                     <table className="w-full table-auto">
                       <thead>
                         <tr className="bg-primary/20 border-b-2 border-primary/30">
+                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">ID</th>
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Item Name</th>
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Category</th>
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Qty</th>
@@ -1905,6 +1906,7 @@ export default function ReceptionistDashboard() {
                       <tbody className="divide-y divide-gray-700/50 bg-gray-800">
                         {paginatedInventory.map((item) => (
                           <tr key={item.id} className="hover:bg-gray-700/30 transition-colors">
+                            <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap font-mono">#{item.id}</td>
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.item_name}</td>
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.category}</td>
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.quantity} {item.unit}</td>

@@ -503,6 +503,7 @@ export default function ReceptionistInventory() {
               <table className="w-full">
                 <thead className="bg-amber-50 border-b-2 border-amber-200">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Item ID</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Item Name</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Category</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Quantity</th>
@@ -515,6 +516,7 @@ export default function ReceptionistInventory() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedInventory.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-100">
+                      <td className="px-6 py-4 text-sm text-gray-500 font-mono">#{item.id}</td>
                       <td className="px-6 py-4 text-sm font-semibold text-black">{item.item_name}</td>
                       <td className="px-6 py-4 text-sm text-black">{item.category}</td>
                       <td className="px-6 py-4 text-sm text-black">{item.quantity} {item.unit}</td>
