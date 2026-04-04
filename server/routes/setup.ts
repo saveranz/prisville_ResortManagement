@@ -18,12 +18,16 @@ export const setupDatabase: RequestHandler = async (_req, res) => {
         room_numbers VARCHAR(255) NOT NULL,
         check_in DATE NOT NULL,
         check_out DATE NOT NULL,
+        actual_check_in TIMESTAMP NULL,
+        actual_check_out TIMESTAMP NULL,
         guests INT NOT NULL,
         contact_number VARCHAR(50) NOT NULL,
         special_requests TEXT,
+        extra_items JSON NULL,
         total_amount VARCHAR(50) NOT NULL,
         payment_proof LONGTEXT NOT NULL,
         status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        room_status ENUM('vacant','occupied','checked_out','maintenance') DEFAULT 'vacant',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -632,6 +636,23 @@ export const setupAllMissingTables: RequestHandler = async (_req, res) => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     results.push('room_extra_items: table ready');
+
+    // --- MIGRATIONS: Add missing columns to room_bookings ---
+    const addColumnIfNotExists = async (table: string, column: string, definition: string) => {
+      const [cols] = await db.query<any[]>(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+        [table, column]
+      );
+      if (cols.length === 0) {
+        await db.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+        results.push(`migration: added ${table}.${column}`);
+      }
+    };
+
+    await addColumnIfNotExists('room_bookings', 'extra_items', 'JSON NULL AFTER special_requests');
+    await addColumnIfNotExists('room_bookings', 'actual_check_in', 'TIMESTAMP NULL AFTER check_out');
+    await addColumnIfNotExists('room_bookings', 'actual_check_out', 'TIMESTAMP NULL AFTER actual_check_in');
+    await addColumnIfNotExists('room_bookings', 'room_status', "ENUM('vacant','occupied','checked_out','maintenance') DEFAULT 'vacant' AFTER status");
 
     res.json({ success: true, results });
   } catch (error) {
