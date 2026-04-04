@@ -498,7 +498,6 @@ export default function ReceptionistInventory() {
                 </DialogContent>
               </Dialog>
             )}
-            )}
 
             <div className="overflow-x-auto">
               <table className="w-full">
