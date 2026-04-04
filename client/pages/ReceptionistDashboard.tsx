@@ -164,7 +164,8 @@ export default function ReceptionistDashboard() {
   const [notificationModal, setNotificationModal] = useState({ open: false, message: '', type: 'success' as 'success' | 'error' });
   const [checkInConfirmModal, setCheckInConfirmModal] = useState({ open: false, booking: null as Booking | null, bookingType: '' });
   const [selectedRoom, setSelectedRoom] = useState<string>('');
-  const [checkOutModal, setCheckOutModal] = useState({ open: false, booking: null as Booking | null, bookingType: '', notes: '' });
+  const [checkInRooms, setCheckInRooms] = useState<RoomStatus[]>([]);
+  const [checkInRoomsLoading, setCheckInRoomsLoading] = useState(false);  const [checkOutModal, setCheckOutModal] = useState({ open: false, booking: null as Booking | null, bookingType: '', notes: '' });
   
   // Transaction filters
   const [showFilters, setShowFilters] = useState(false);
@@ -631,7 +632,24 @@ export default function ReceptionistDashboard() {
 
   const handleCheckIn = async (booking: Booking, bookingType: string) => {
     setSelectedRoom('');
+    setCheckInRooms([]);
     setCheckInConfirmModal({ open: true, booking, bookingType });
+
+    // Fetch real-time room availability for this booking
+    if (bookingType === 'room') {
+      setCheckInRoomsLoading(true);
+      try {
+        const response = await fetch(`/api/checkin/available-rooms?bookingId=${booking.id}`, { credentials: 'include' });
+        const data = await response.json();
+        if (data.success) {
+          setCheckInRooms(data.rooms);
+        }
+      } catch (error) {
+        console.error('Error fetching available rooms:', error);
+      } finally {
+        setCheckInRoomsLoading(false);
+      }
+    }
   };
 
   const confirmCheckIn = async () => {
@@ -2738,17 +2756,19 @@ export default function ReceptionistDashboard() {
               {checkInConfirmModal.bookingType === 'room' && checkInConfirmModal.booking.room_name && (
                 <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg space-y-3">
                   <p className="text-sm font-semibold text-gray-800">Assign Room</p>
+                  {checkInRoomsLoading ? (
+                    <p className="text-sm text-gray-500 italic">Loading available rooms...</p>
+                  ) : (
                   <div className="grid grid-cols-3 gap-2">
                     {(() => {
-                      const roomName = checkInConfirmModal.booking?.room_name || '';
-                      const availableRooms = roomStatuses.filter(
-                        (r: RoomStatus) => r.room_name === roomName && r.status === 'available'
+                      const availableRooms = checkInRooms.filter(
+                        (r: RoomStatus) => r.status === 'available'
                       );
-                      const unavailableRooms = roomStatuses.filter(
-                        (r: RoomStatus) => r.room_name === roomName && r.status !== 'available'
+                      const unavailableRooms = checkInRooms.filter(
+                        (r: RoomStatus) => r.status !== 'available'
                       );
 
-                      if (availableRooms.length === 0 && unavailableRooms.length === 0) {
+                      if (checkInRooms.length === 0) {
                         return <p className="col-span-3 text-sm text-gray-500 italic">No room status data available</p>;
                       }
 
@@ -2782,7 +2802,8 @@ export default function ReceptionistDashboard() {
                       );
                     })()}
                   </div>
-                  {!selectedRoom && (
+                  )}
+                  {!selectedRoom && !checkInRoomsLoading && (
                     <p className="text-xs text-yellow-700">Please select a room to proceed</p>
                   )}
                 </div>

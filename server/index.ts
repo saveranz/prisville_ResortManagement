@@ -15,7 +15,7 @@ import { getInventoryItems, addInventoryItem, updateInventoryQuantity, getTransa
 import { getUserRecommendations, saveUserPreferences, getUserPreferences } from "./routes/recommendations";
 import { trackActivity, getUserActivity, getUserActivityStats } from "./routes/activityTracking";
 import { getAllRoomStatus, updateRoomStatus, markRoomCleaned, getRoomStatusByNumbers } from "./routes/roomStatus";
-import { checkInGuest, checkOutGuest, getCurrentlyCheckedIn } from "./routes/checkInOut";
+import { checkInGuest, checkOutGuest, getCurrentlyCheckedIn, getAvailableRoomsForCheckIn } from "./routes/checkInOut";
 import { getUserStayHistory, getAllStayHistory, getGuestStatistics, updateStayHistory } from "./routes/stayHistory";
 import { createBookingIssue, getAllBookingIssues, getUserBookingIssues, getBookingIssueById, updateBookingIssueStatus, updateBookingIssuePriority, deleteBookingIssue } from "./routes/bookingIssues";
 import { getUserNotifications, getUnreadCount, markAsRead, markAllAsRead, createNotification, deleteNotification } from "./routes/notifications";
@@ -229,6 +229,7 @@ export function createServer() {
   app.post("/api/checkin", requireReceptionist, checkInGuest);
   app.post("/api/checkout", requireReceptionist, checkOutGuest);
   app.get("/api/checkin/current", requireReceptionist, getCurrentlyCheckedIn);
+  app.get("/api/checkin/available-rooms", requireReceptionist, getAvailableRoomsForCheckIn);
   
   // Stay History routes - Require staff authorization for management, regular users can view their own
   app.get("/api/stay-history/user", getUserStayHistory);

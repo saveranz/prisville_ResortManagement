@@ -322,6 +322,95 @@ export const checkOutGuest: RequestHandler = async (req, res) => {
   }
 };
 
+// Get real-time available rooms for a specific booking's check-in
+export const getAvailableRoomsForCheckIn: RequestHandler = async (req, res) => {
+  try {
+    const bookingId = Number(req.query.bookingId);
+    if (!bookingId) {
+      res.status(400).json({ success: false, message: 'Booking ID is required' });
+      return;
+    }
+
+    // Get the booking details to know room type and dates
+    const [bookings] = await db.query<RowDataPacket[]>(
+      `SELECT room_name, check_in, check_out FROM room_bookings WHERE id = ?`,
+      [bookingId]
+    );
+
+    if (bookings.length === 0) {
+      res.status(404).json({ success: false, message: 'Booking not found' });
+      return;
+    }
+
+    const { room_name, check_in, check_out } = bookings[0];
+
+    // Get all rooms of this type with their current status
+    const [allRooms] = await db.query<RowDataPacket[]>(
+      `SELECT * FROM room_status WHERE room_name = ? ORDER BY room_numbers ASC`,
+      [room_name]
+    );
+
+    // Find rooms that have overlapping approved/checked-in bookings (excluding current booking)
+    const [conflictingBookings] = await db.query<RowDataPacket[]>(
+      `SELECT room_numbers FROM room_bookings 
+       WHERE id != ? 
+         AND room_name = ?
+         AND room_status IN ('checked_in')
+         AND actual_check_in IS NOT NULL 
+         AND actual_check_out IS NULL
+         AND room_numbers IS NOT NULL
+         AND room_numbers != ''`,
+      [bookingId, room_name]
+    );
+
+    // Also check for approved bookings with overlapping dates that already have an assigned single room
+    const [overlappingApproved] = await db.query<RowDataPacket[]>(
+      `SELECT room_numbers FROM room_bookings 
+       WHERE id != ? 
+         AND room_name = ?
+         AND status = 'approved'
+         AND room_status = 'checked_in'
+         AND room_numbers IS NOT NULL
+         AND CHAR_LENGTH(room_numbers) <= 5
+         AND check_in < ? AND check_out > ?`,
+      [bookingId, room_name, check_out, check_in]
+    );
+
+    const occupiedRoomNumbers = new Set<string>();
+    for (const b of conflictingBookings) {
+      if (b.room_numbers) occupiedRoomNumbers.add(b.room_numbers.trim());
+    }
+    for (const b of overlappingApproved) {
+      if (b.room_numbers) occupiedRoomNumbers.add(b.room_numbers.trim());
+    }
+
+    // Build availability for each room
+    const rooms = allRooms.map((room: RowDataPacket) => {
+      let availabilityStatus: string = room.status; // from room_status table
+      
+      // If room_status says available, but bookings say occupied → mark as occupied
+      if (room.status === 'available' && occupiedRoomNumbers.has(room.room_numbers)) {
+        availabilityStatus = 'occupied';
+      }
+
+      return {
+        id: room.id,
+        room_name: room.room_name,
+        room_numbers: room.room_numbers,
+        status: availabilityStatus,
+        current_booking_id: room.current_booking_id,
+        current_guest_email: room.current_guest_email,
+        notes: room.notes,
+      };
+    });
+
+    res.json({ success: true, rooms });
+  } catch (error) {
+    console.error('Get available rooms error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch available rooms' });
+  }
+};
+
 // Get currently checked-in guests
 export const getCurrentlyCheckedIn: RequestHandler = async (req, res) => {
   try {
