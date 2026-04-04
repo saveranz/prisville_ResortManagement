@@ -1797,54 +1797,96 @@ export default function ReceptionistDashboard() {
                   </div>
 
                   {showAddItem && (
-                    <div className="p-6 border-b border-gray-200 bg-gray-50">
-                      <form onSubmit={handleAddItem} className="grid grid-cols-5 gap-4">
-                        <input
-                          type="text"
-                          placeholder="Item Name"
-                          value={newItem.item_name}
-                          onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                        />
-                        <input
-                          type="text"
-                          placeholder="Category"
-                          value={newItem.category}
-                          onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                        />
-                        <input
-                          type="number"
-                          placeholder="Quantity"
-                          value={newItem.quantity}
-                          onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                        />
-                        <input
-                          type="text"
-                          placeholder="Unit (pcs, kg, etc)"
-                          value={newItem.unit}
-                          onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                        />
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="Unit Price"
-                          value={newItem.unit_price}
-                          onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                        />
-                        <button type="submit" className="col-span-5 bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-3 rounded-xl border border-accent/50 hover:shadow-accent/20 hover:shadow-lg transition-all font-semibold">
-                          Save Item
-                        </button>
-                      </form>
-                    </div>
+                    <Dialog open={showAddItem} onOpenChange={(open) => { setShowAddItem(open); if (!open) setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '' }); }}>
+                      <DialogContent className="bg-white border-primary/20 text-gray-900 max-w-lg">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
+                            <Plus className="text-accent" size={24} />
+                            Add New Item
+                          </DialogTitle>
+                          <DialogDescription className="text-gray-600">
+                            Fill in the details for the new inventory item.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleAddItem} className="space-y-4">
+                          <div className="space-y-3">
+                            <div>
+                              <Label className="text-gray-700">Item Name</Label>
+                              <Input
+                                type="text"
+                                placeholder="Enter item name"
+                                value={newItem.item_name}
+                                onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
+                                className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                required
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label className="text-gray-700">Category</Label>
+                                <Input
+                                  type="text"
+                                  placeholder="e.g., Toiletries"
+                                  value={newItem.category}
+                                  onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-gray-700">Unit</Label>
+                                <Input
+                                  type="text"
+                                  placeholder="pcs, kg, etc."
+                                  value={newItem.unit}
+                                  onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
+                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                  required
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label className="text-gray-700">Quantity</Label>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  value={newItem.quantity}
+                                  onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-gray-700">Unit Price (₱)</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  value={newItem.unit_price}
+                                  onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
+                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <DialogFooter className="gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => { setShowAddItem(false); setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '' }); }}
+                              className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                            >
+                              Cancel
+                            </Button>
+                            <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                              Save Item
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                   )}
 
                   <div className="overflow-x-auto">

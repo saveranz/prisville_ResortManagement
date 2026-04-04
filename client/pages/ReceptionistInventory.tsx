@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Package, Plus, Minus, DollarSign, TrendingUp, TrendingDown, Filter, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface InventoryItem {
   id: number;
@@ -392,72 +393,111 @@ export default function ReceptionistInventory() {
             </div>
 
             {showAddItem && (
-              <div className="p-6 border-b border-gray-200 bg-gray-50">
-                <form onSubmit={handleAddItem} className="space-y-4">
-                  <div className="grid grid-cols-5 gap-4">
-                    <input
-                      type="text"
-                      placeholder="Item Name"
-                      value={newItem.item_name}
-                      onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
-                      className="px-4 py-2 border rounded-lg text-gray-900"
-                      required
-                    />
-                    <input
-                      type="text"
-                      placeholder="Category"
-                      value={newItem.category}
-                      onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                      className="px-4 py-2 border rounded-lg text-gray-900"
-                      required
-                    />
-                    <input
-                      type="number"
-                      placeholder="Quantity"
-                      value={newItem.quantity}
-                      onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
-                      className="px-4 py-2 border rounded-lg text-gray-900"
-                      required
-                    />
-                    <input
-                      type="text"
-                      placeholder="Unit (pcs, kg, etc)"
-                      value={newItem.unit}
-                      onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
-                      className="px-4 py-2 border rounded-lg text-gray-900"
-                      required
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="Unit Price"
-                      value={newItem.unit_price}
-                      onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
-                      className="px-4 py-2 border rounded-lg text-gray-900"
-                      required
-                    />
-                  </div>
-                  
-                  {/* Calculated Total Display */}
-                  {(newItem.quantity && newItem.unit_price) && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Calculated Total Value:</span>
-                        <span className="text-2xl font-bold text-blue-600">
-                          ₱{calculatedTotal.toLocaleString()}
-                        </span>
+              <Dialog open={showAddItem} onOpenChange={(open) => { setShowAddItem(open); if (!open) setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '' }); }}>
+                <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
+                      <Plus className="text-blue-600" size={24} />
+                      Add New Item
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600">
+                      Fill in the details for the new inventory item.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleAddItem} className="space-y-4">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                        <input
+                          type="text"
+                          placeholder="Enter item name"
+                          value={newItem.item_name}
+                          onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {newItem.quantity} × ₱{parseFloat(newItem.unit_price).toLocaleString()} = Total Value
-                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Toiletries"
+                            value={newItem.category}
+                            onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                          <input
+                            type="text"
+                            placeholder="pcs, kg, etc."
+                            value={newItem.unit}
+                            onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={newItem.quantity}
+                            onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (₱)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={newItem.unit_price}
+                            onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  
-                  <button type="submit" className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                    Save Item
-                  </button>
-                </form>
-              </div>
+                    
+                    {(newItem.quantity && newItem.unit_price) && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-700">Calculated Total Value:</span>
+                          <span className="text-2xl font-bold text-blue-600">
+                            ₱{calculatedTotal.toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {newItem.quantity} × ₱{parseFloat(newItem.unit_price).toLocaleString()} = Total Value
+                        </p>
+                      </div>
+                    )}
+                    
+                    <DialogFooter className="gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { setShowAddItem(false); setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '' }); }}
+                        className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                      >
+                        Cancel
+                      </button>
+                      <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">
+                        Save Item
+                      </button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
             )}
 
             <div className="overflow-x-auto">
