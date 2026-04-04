@@ -8,11 +8,18 @@ export const checkInGuest: RequestHandler = async (req, res) => {
   console.log('Request body:', JSON.stringify(req.body, null, 2));
   
   try {
-    const { bookingId, bookingType } = req.body;
+    const { bookingId, bookingType, assignedRoom } = req.body;
 
     if (!bookingId || !bookingType) {
       console.log('❌ ERROR: Missing required fields');
       res.status(400).json({ success: false, message: 'Booking ID and type are required' });
+      return;
+    }
+
+    // For room bookings, require an assigned room
+    if (bookingType === 'room' && !assignedRoom) {
+      console.log('❌ ERROR: No room assigned for room check-in');
+      res.status(400).json({ success: false, message: 'Please select a room for the guest' });
       return;
     }
 
@@ -72,7 +79,7 @@ export const checkInGuest: RequestHandler = async (req, res) => {
           return;
         }
 
-        roomNumbers = booking.room_numbers;
+        roomNumbers = assignedRoom || booking.room_numbers;
         userEmail = booking.user_email;
         roomName = booking.room_name;
         totalAmount = booking.total_amount;
@@ -80,11 +87,11 @@ export const checkInGuest: RequestHandler = async (req, res) => {
         checkInDate = booking.check_in;
         checkOutDate = booking.check_out;
 
-        console.log('[Check-In] Step 1: Updating booking record...');
-        // Update booking with actual check-in
+        console.log('[Check-In] Step 1: Updating booking record with assigned room...');
+        // Update booking with actual check-in and assigned room
         await connection.query(
-          `UPDATE ${tableName} SET actual_check_in = NOW(), room_status = 'checked_in' WHERE id = ?`,
-          [bookingId]
+          `UPDATE ${tableName} SET actual_check_in = NOW(), room_status = 'checked_in', room_numbers = ? WHERE id = ?`,
+          [roomNumbers, bookingId]
         );
 
         console.log('[Check-In] Step 2: Updating room status...');

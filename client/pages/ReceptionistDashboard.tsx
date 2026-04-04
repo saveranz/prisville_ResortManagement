@@ -163,6 +163,7 @@ export default function ReceptionistDashboard() {
   // Notification modal states
   const [notificationModal, setNotificationModal] = useState({ open: false, message: '', type: 'success' as 'success' | 'error' });
   const [checkInConfirmModal, setCheckInConfirmModal] = useState({ open: false, booking: null as Booking | null, bookingType: '' });
+  const [selectedRoom, setSelectedRoom] = useState<string>('');
   const [checkOutModal, setCheckOutModal] = useState({ open: false, booking: null as Booking | null, bookingType: '', notes: '' });
   
   // Transaction filters
@@ -629,12 +630,19 @@ export default function ReceptionistDashboard() {
   };
 
   const handleCheckIn = async (booking: Booking, bookingType: string) => {
+    setSelectedRoom('');
     setCheckInConfirmModal({ open: true, booking, bookingType });
   };
 
   const confirmCheckIn = async () => {
     const { booking, bookingType } = checkInConfirmModal;
     if (!booking) return;
+
+    // For room bookings, require a room selection
+    if (bookingType === 'room' && !selectedRoom) {
+      setNotificationModal({ open: true, message: 'Please select a room for the guest', type: 'error' });
+      return;
+    }
 
     setCheckInConfirmModal({ open: false, booking: null, bookingType: '' });
 
@@ -643,7 +651,7 @@ export default function ReceptionistDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ bookingId: booking.id, bookingType })
+        body: JSON.stringify({ bookingId: booking.id, bookingType, assignedRoom: selectedRoom || undefined })
       });
 
       const data = await response.json();
@@ -2197,14 +2205,11 @@ export default function ReceptionistDashboard() {
                     <table className="w-full table-auto">
                       <thead>
                         <tr className="bg-gray-800">
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Booking ID</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Name</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Type</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Numbers</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In Date & Time</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-Out Date & Time</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Stay Period</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guests</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Total Amount</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amount</th>
                           <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
                         </tr>
                       </thead>
@@ -2212,22 +2217,26 @@ export default function ReceptionistDashboard() {
                         {filteredCheckInBookings.map(booking => (
                             <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
                               <td className="px-3 py-3 whitespace-nowrap">
-                                <span className="text-xs font-bold text-primary">#{booking.id}</span>
-                              </td>
-                              <td className="px-3 py-3 whitespace-nowrap">
                                 <div className="flex items-center gap-2">
                                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                                     <span className="text-primary font-bold text-xs">
-                                      {booking.user_email?.charAt(0).toUpperCase()}
+                                      {(booking.guest_name || booking.user_email)?.charAt(0).toUpperCase()}
                                     </span>
                                   </div>
-                                  <span className="text-xs font-medium text-gray-700 truncate max-w-[200px]">{booking.guest_name || booking.user_email}</span>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-gray-900 truncate max-w-[160px]">{booking.guest_name || booking.user_email}</p>
+                                    <p className="text-[10px] text-gray-400">#{booking.id}</p>
+                                  </div>
                                 </div>
                               </td>
-                              <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-gray-900">{booking.room_name}</td>
-                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{booking.room_numbers || 'N/A'}</td>
-                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{formatDateTime(booking.check_in)}</td>
-                              <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">{formatDateTime(booking.check_out)}</td>
+                              <td className="px-3 py-3 whitespace-nowrap">
+                                <p className="text-xs font-medium text-gray-900">{booking.room_name}</p>
+                                <p className="text-[10px] text-gray-500">{booking.room_numbers || 'N/A'}</p>
+                              </td>
+                              <td className="px-3 py-3 whitespace-nowrap">
+                                <p className="text-xs text-gray-700">{formatDateTime(booking.check_in)}</p>
+                                <p className="text-[10px] text-gray-500">to {formatDateTime(booking.check_out)}</p>
+                              </td>
                               <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700 text-center">{booking.guests || 0}</td>
                               <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">{booking.total_amount}</td>
                               <td className="px-3 py-3 whitespace-nowrap text-center">
@@ -2302,12 +2311,10 @@ export default function ReceptionistDashboard() {
                     <table className="w-full table-auto">
                       <thead>
                         <tr className="bg-gray-800">
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Booking ID</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Name</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Type</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room/Amenity</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In Time</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Expected Check-Out</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Expected Out</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
                           <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
                         </tr>
@@ -2316,22 +2323,17 @@ export default function ReceptionistDashboard() {
                         {filteredCheckOutGuests.map((guest: any) => (
                           <tr key={`${guest.booking_type}-${guest.booking_id}`} className="hover:bg-gray-50 transition-colors">
                             <td className="px-3 py-3 whitespace-nowrap">
-                              <span className="text-xs font-bold text-primary">#{guest.booking_id}</span>
-                            </td>
-                            <td className="px-3 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
                                   <span className="text-accent font-bold text-xs">
-                                    {guest.user_email?.charAt(0).toUpperCase()}
+                                    {(guest.guest_name || guest.user_email)?.charAt(0).toUpperCase()}
                                   </span>
                                 </div>
-                                <span className="text-xs font-medium text-gray-700 truncate max-w-[200px]">{guest.guest_name || guest.user_email}</span>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold text-gray-900 truncate max-w-[160px]">{guest.guest_name || guest.user_email}</p>
+                                  <p className="text-[10px] text-gray-400">#{guest.booking_id} · {guest.booking_type}</p>
+                                </div>
                               </div>
-                            </td>
-                            <td className="px-3 py-3 whitespace-nowrap">
-                              <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">
-                                {guest.booking_type}
-                              </span>
                             </td>
                             <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-gray-900">
                               {guest.room_name || guest.amenity_name || 'Day Pass'}
@@ -2704,19 +2706,21 @@ export default function ReceptionistDashboard() {
       </Dialog>
 
       {/* Check-In Confirmation Modal */}
-      <Dialog open={checkInConfirmModal.open} onOpenChange={(open) => setCheckInConfirmModal({ ...checkInConfirmModal, open })}>
+      <Dialog open={checkInConfirmModal.open} onOpenChange={(open) => { setCheckInConfirmModal({ ...checkInConfirmModal, open }); if (!open) setSelectedRoom(''); }}>
         <DialogContent className="bg-white border-primary/20 text-gray-900 max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
               <LogIn className="text-primary" size={24} />
-              Confirm Check-In
+              Check-In Guest
             </DialogTitle>
             <DialogDescription className="text-gray-600">
-              Please confirm that you want to check in this guest.
+              {checkInConfirmModal.bookingType === 'room' 
+                ? 'Select an available room and confirm check-in.'
+                : 'Please confirm that you want to check in this guest.'}
             </DialogDescription>
           </DialogHeader>
           {checkInConfirmModal.booking && (
-            <div className="py-4 space-y-3">
+            <div className="py-2 space-y-3">
               <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg space-y-2">
                 <p className="text-sm text-gray-600">Guest Name</p>
                 <p className="font-semibold text-gray-900">{checkInConfirmModal.booking.guest_name || checkInConfirmModal.booking.user_email}</p>
@@ -2729,19 +2733,74 @@ export default function ReceptionistDashboard() {
                    'Day Pass'}
                 </p>
               </div>
+
+              {/* Room Selection for room bookings */}
+              {checkInConfirmModal.bookingType === 'room' && checkInConfirmModal.booking.room_name && (
+                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg space-y-3">
+                  <p className="text-sm font-semibold text-gray-800">Assign Room</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(() => {
+                      const roomName = checkInConfirmModal.booking?.room_name || '';
+                      const availableRooms = roomStatuses.filter(
+                        (r: RoomStatus) => r.room_name === roomName && r.status === 'available'
+                      );
+                      const unavailableRooms = roomStatuses.filter(
+                        (r: RoomStatus) => r.room_name === roomName && r.status !== 'available'
+                      );
+
+                      if (availableRooms.length === 0 && unavailableRooms.length === 0) {
+                        return <p className="col-span-3 text-sm text-gray-500 italic">No room status data available</p>;
+                      }
+
+                      return (
+                        <>
+                          {availableRooms.map((room: RoomStatus) => (
+                            <button
+                              key={room.room_numbers}
+                              onClick={() => setSelectedRoom(room.room_numbers)}
+                              className={`px-3 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all ${
+                                selectedRoom === room.room_numbers
+                                  ? 'border-green-600 bg-green-100 text-green-800 ring-2 ring-green-300'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50'
+                              }`}
+                            >
+                              Room {room.room_numbers}
+                            </button>
+                          ))}
+                          {unavailableRooms.map((room: RoomStatus) => (
+                            <button
+                              key={room.room_numbers}
+                              disabled
+                              className="px-3 py-2.5 rounded-lg border-2 border-gray-100 bg-gray-50 text-gray-400 text-sm font-semibold cursor-not-allowed"
+                              title={`Room ${room.room_numbers} - ${room.status}`}
+                            >
+                              Room {room.room_numbers}
+                              <span className="block text-[10px] font-normal capitalize">{room.status}</span>
+                            </button>
+                          ))}
+                        </>
+                      );
+                    })()}
+                  </div>
+                  {!selectedRoom && (
+                    <p className="text-xs text-yellow-700">Please select a room to proceed</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
-              onClick={() => setCheckInConfirmModal({ open: false, booking: null, bookingType: '' })}
+              onClick={() => { setCheckInConfirmModal({ open: false, booking: null, bookingType: '' }); setSelectedRoom(''); }}
               className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
             >
               Cancel
             </Button>
             <Button
               onClick={confirmCheckIn}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md"
+              disabled={checkInConfirmModal.bookingType === 'room' && !selectedRoom}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Confirm Check-In
             </Button>
