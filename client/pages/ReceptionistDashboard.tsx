@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface Booking {
   id: number;
   user_email: string;
+  guest_name?: string;
   booking_date?: string;
   booking_type?: string;
   check_in?: string;
@@ -888,7 +889,7 @@ export default function ReceptionistDashboard() {
                  <Users size={22} />}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-gray-900 truncate">{booking.user_email}</p>
+                <p className="font-semibold text-gray-900 truncate">{booking.guest_name || booking.user_email}</p>
                 <p className="text-sm text-gray-600 truncate">
                   {booking.room_name || booking.amenity_name || 'Day Pass'} • {formatDate(booking.check_in || booking.booking_date)}
                 </p>
@@ -935,7 +936,7 @@ export default function ReceptionistDashboard() {
           <thead>
             <tr className="bg-gray-800">
               <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Booking ID</th>
-              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Email</th>
+              <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Name</th>
               {type === 'room' && <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Type</th>}
               {type === 'amenity' && <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amenity</th>}
               <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Date</th>
@@ -956,10 +957,10 @@ export default function ReceptionistDashboard() {
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center flex-shrink-0 shadow-sm">
                       <span className="text-primary text-xs font-bold">
-                        {booking.user_email.charAt(0).toUpperCase()}
+                        {(booking.guest_name || booking.user_email).charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-700 truncate max-w-[120px]" title={booking.user_email}>{booking.user_email}</span>
+                    <span className="text-xs text-gray-700 truncate max-w-[120px]" title={booking.guest_name || booking.user_email}>{booking.guest_name || booking.user_email}</span>
                   </div>
                 </td>
                 {type === 'room' && <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-gray-900">{booking.room_name}</td>}
@@ -2197,7 +2198,7 @@ export default function ReceptionistDashboard() {
                       <thead>
                         <tr className="bg-gray-800">
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Booking ID</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Email</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Name</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Type</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room Numbers</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In Date & Time</th>
@@ -2220,7 +2221,7 @@ export default function ReceptionistDashboard() {
                                       {booking.user_email?.charAt(0).toUpperCase()}
                                     </span>
                                   </div>
-                                  <span className="text-xs font-medium text-gray-700 truncate max-w-[200px]">{booking.user_email}</span>
+                                  <span className="text-xs font-medium text-gray-700 truncate max-w-[200px]">{booking.guest_name || booking.user_email}</span>
                                 </div>
                               </td>
                               <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-gray-900">{booking.room_name}</td>
@@ -2302,7 +2303,7 @@ export default function ReceptionistDashboard() {
                       <thead>
                         <tr className="bg-gray-800">
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Booking ID</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Email</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Name</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Type</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room/Amenity</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In Time</th>
@@ -2324,7 +2325,7 @@ export default function ReceptionistDashboard() {
                                     {guest.user_email?.charAt(0).toUpperCase()}
                                   </span>
                                 </div>
-                                <span className="text-xs font-medium text-gray-700 truncate max-w-[200px]">{guest.user_email}</span>
+                                <span className="text-xs font-medium text-gray-700 truncate max-w-[200px]">{guest.guest_name || guest.user_email}</span>
                               </div>
                             </td>
                             <td className="px-3 py-3 whitespace-nowrap">
@@ -2717,8 +2718,8 @@ export default function ReceptionistDashboard() {
           {checkInConfirmModal.booking && (
             <div className="py-4 space-y-3">
               <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg space-y-2">
-                <p className="text-sm text-gray-600">Guest Email</p>
-                <p className="font-semibold text-gray-900">{checkInConfirmModal.booking.user_email}</p>
+                <p className="text-sm text-gray-600">Guest Name</p>
+                <p className="font-semibold text-gray-900">{checkInConfirmModal.booking.guest_name || checkInConfirmModal.booking.user_email}</p>
               </div>
               <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg space-y-2">
                 <p className="text-sm text-gray-600">Booking For</p>
@@ -2763,8 +2764,8 @@ export default function ReceptionistDashboard() {
           {checkOutModal.booking && (
             <div className="space-y-4">
               <div className="bg-accent/5 border border-accent/20 p-4 rounded-lg space-y-2">
-                <p className="text-sm text-gray-600">Guest Email</p>
-                <p className="font-semibold text-gray-900">{checkOutModal.booking.user_email}</p>
+                <p className="text-sm text-gray-600">Guest Name</p>
+                <p className="font-semibold text-gray-900">{checkOutModal.booking.guest_name || checkOutModal.booking.user_email}</p>
               </div>
               <div className="bg-accent/5 border border-accent/20 p-4 rounded-lg space-y-2">
                 <p className="text-sm text-gray-600">Booking For</p>

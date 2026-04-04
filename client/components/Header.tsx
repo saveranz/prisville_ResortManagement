@@ -25,6 +25,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [userId, setUserId] = useState<number | null>(null);
   const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -60,6 +61,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
           if (data.success && data.user) {
             setUserId(data.user.id);
             setUserEmail(data.user.email);
+            setUserName(data.user.name || "");
             setUserRole(data.user.role);
             setIsLoggedIn(true);
           } else {
@@ -133,6 +135,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
         setIsLoggedIn(false);
         setUserId(null);
         setUserEmail("");
+        setUserName("");
         setUserRole(null);
         setIsDropdownOpen(false);
         
@@ -146,6 +149,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
       setIsLoggedIn(false);
       setUserId(null);
       setUserEmail("");
+      setUserName("");
       setUserRole(null);
       setIsDropdownOpen(false);
       
@@ -285,7 +289,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                       {/* User Info */}
                       <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
                         <p className="text-xs text-gray-500">Signed in as {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'Client'}</p>
-                        <p className="text-sm font-semibold text-black truncate">{userEmail}</p>
+                        <p className="text-sm font-semibold text-black truncate">{userName || userEmail}</p>
                       </div>
 
                       {/* Menu Items */}
@@ -417,7 +421,7 @@ export default function Header({ onLoginModalChange, externalLoginModalOpen, onL
                         {/* User Info */}
                         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
                           <p className="text-xs text-gray-500">Signed in as {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User'}</p>
-                          <p className="text-sm font-semibold text-black truncate">{userEmail}</p>
+                          <p className="text-sm font-semibold text-black truncate">{userName || userEmail}</p>
                         </div>
 
                         {/* Logout */}

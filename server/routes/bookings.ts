@@ -315,7 +315,7 @@ export const getAllRoomBookings: RequestHandler = async (req, res) => {
     }
 
     const [bookings] = await db.query<Booking[]>(
-      `SELECT * FROM room_bookings ORDER BY created_at DESC`
+      `SELECT rb.*, u.name as guest_name FROM room_bookings rb LEFT JOIN users u ON rb.user_id = u.id ORDER BY rb.created_at DESC`
     );
 
     res.json({ 
