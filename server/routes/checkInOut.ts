@@ -415,8 +415,9 @@ export const getAvailableRoomsForCheckIn: RequestHandler = async (req, res) => {
 export const getCurrentlyCheckedIn: RequestHandler = async (req, res) => {
   try {
     const [rooms] = await db.query<RowDataPacket[]>(
-      `SELECT rb.*, rs.status as room_current_status, 'room' as booking_type, rb.id as booking_id
+      `SELECT rb.*, u.name as guest_name, rs.status as room_current_status, 'room' as booking_type, rb.id as booking_id
        FROM room_bookings rb
+       LEFT JOIN users u ON rb.user_id = u.id
        LEFT JOIN room_status rs ON rb.room_numbers = rs.room_numbers
        WHERE rb.actual_check_in IS NOT NULL 
        AND rb.actual_check_out IS NULL

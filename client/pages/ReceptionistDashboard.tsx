@@ -45,8 +45,10 @@ interface RoomStatus {
 interface StayHistory {
   id: number;
   user_email: string;
+  guest_name?: string;
   booking_type: string;
   room_name?: string;
+  room_numbers?: string;
   amenity_name?: string;
   check_in_date?: string;
   actual_check_in?: string;
@@ -2331,6 +2333,7 @@ export default function ReceptionistDashboard() {
                         <tr className="bg-gray-800">
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room/Amenity</th>
+                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room #</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Check-In</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Expected Out</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
@@ -2355,6 +2358,9 @@ export default function ReceptionistDashboard() {
                             </td>
                             <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-gray-900">
                               {guest.room_name || guest.amenity_name || 'Day Pass'}
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
+                              {guest.room_numbers ? `Room ${guest.room_numbers}` : '-'}
                             </td>
                             <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
                               {formatDateTime(guest.actual_check_in)}
@@ -2453,8 +2459,8 @@ export default function ReceptionistDashboard() {
           {activeTab === 'history' && (
             <div className="bg-white rounded-xl shadow-md border border-gray-200">
               <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-display font-bold text-gray-900">Guest Stay History</h3>
-                <p className="text-sm text-gray-600 mt-1">Complete record of all guest stays</p>
+                <h3 className="text-lg font-display font-bold text-gray-900">Check-In / Check-Out History</h3>
+                <p className="text-sm text-gray-600 mt-1">Complete record of all guest check-ins and check-outs</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -2462,34 +2468,47 @@ export default function ReceptionistDashboard() {
                     <tr className="bg-primary/20 border-b-2 border-primary/30">
                       <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Guest</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Room #</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-In</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-Out</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Nights</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Total Spent</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Rating</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Total</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {stayHistory.map((stay: StayHistory) => (
                       <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-semibold text-black">{stay.user_email}</td>
+                        <td className="px-4 py-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-black truncate max-w-[180px]">{stay.guest_name || stay.user_email}</p>
+                            <p className="text-[10px] text-gray-400">{stay.room_name || stay.amenity_name || 'Day Pass'}</p>
+                          </div>
+                        </td>
                         <td className="px-4 py-3">
                           <span className="px-2 py-1 bg-accent/20 text-accent border border-accent/30 text-xs font-semibold rounded-full">
                             {stay.booking_type}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-black">
-                          {new Date(stay.actual_check_in).toLocaleString()}
+                        <td className="px-4 py-3 text-sm font-semibold text-black">
+                          {stay.room_numbers ? `Room ${stay.room_numbers}` : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm text-black">
-                          {stay.actual_check_out ? new Date(stay.actual_check_out).toLocaleString() : 'Active'}
+                          {stay.actual_check_in ? new Date(stay.actual_check_in).toLocaleString() : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-black">
+                          {stay.actual_check_out ? new Date(stay.actual_check_out).toLocaleString() : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-black">{stay.nights_stayed || '-'}</td>
                         <td className="px-4 py-3 text-sm font-bold text-green-600">
                           {stay.total_spent ? `₱${parseFloat(stay.total_spent).toLocaleString()}` : '-'}
                         </td>
-                        <td className="px-4 py-3 text-sm text-amber-600 font-semibold">
-                          {stay.rating ? `⭐ ${stay.rating}/5` : '-'}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {stay.actual_check_out ? (
+                            <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Checked Out</span>
+                          ) : (
+                            <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Checked In</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -2497,7 +2516,7 @@ export default function ReceptionistDashboard() {
                 </table>
                 {stayHistory.length === 0 && (
                   <div className="text-center py-12 text-gray-500">
-                    <p>No stay history records</p>
+                    <p>No check-in/check-out history records</p>
                   </div>
                 )}
               </div>
@@ -2855,6 +2874,12 @@ export default function ReceptionistDashboard() {
                    'Day Pass'}
                 </p>
               </div>
+              {checkOutModal.booking.room_numbers && (
+                <div className="bg-accent/5 border border-accent/20 p-4 rounded-lg space-y-2">
+                  <p className="text-sm text-gray-600">Assigned Room</p>
+                  <p className="font-semibold text-gray-900">Room {checkOutModal.booking.room_numbers}</p>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="checkout-notes" className="text-gray-700">Checkout Notes</Label>
                 <Textarea

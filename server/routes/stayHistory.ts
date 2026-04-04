@@ -30,8 +30,11 @@ export const getUserStayHistory: RequestHandler = async (req, res) => {
 export const getAllStayHistory: RequestHandler = async (req, res) => {
   try {
     const [history] = await db.query<RowDataPacket[]>(
-      `SELECT * FROM stay_history 
-       ORDER BY created_at DESC 
+      `SELECT sh.*, u.name as guest_name, rb.room_numbers
+       FROM stay_history sh
+       LEFT JOIN users u ON sh.user_id = u.id
+       LEFT JOIN room_bookings rb ON sh.booking_id = rb.id AND sh.booking_type = 'room'
+       ORDER BY sh.created_at DESC 
        LIMIT 100`
     );
 
