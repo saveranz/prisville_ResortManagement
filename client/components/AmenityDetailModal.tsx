@@ -543,7 +543,7 @@ export default function AmenityDetailModal({ isOpen, onClose, isLoggedIn, onLogi
 
             {/* Confirmation Dialog */}
             <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-              <AlertDialogContent className="z-[200]">
+              <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirm Your Booking</AlertDialogTitle>
                   <AlertDialogDescription>

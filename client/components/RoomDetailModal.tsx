@@ -923,7 +923,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
 
             {/* Confirmation Dialog */}
             <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-              <AlertDialogContent className="z-[200]">
+              <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirm Your Booking</AlertDialogTitle>
                   <AlertDialogDescription>
