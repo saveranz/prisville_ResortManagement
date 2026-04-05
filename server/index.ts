@@ -11,7 +11,7 @@ import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBooki
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
 import { setupDatabase, migrateRoomType, migrateUserStatus, setupFAQs, setupAllMissingTables } from "./routes/setup";
-import { getInventoryItems, addInventoryItem, updateInventoryQuantity, getTransactions, addTransaction } from "./routes/inventory";
+import { getInventoryItems, addInventoryItem, updateInventoryItem, deleteInventoryItem, updateInventoryQuantity, receiveStock, issueStock, getInventoryTransactions, getInventoryStats, getTransactions, addTransaction } from "./routes/inventory";
 import { getUserRecommendations, saveUserPreferences, getUserPreferences } from "./routes/recommendations";
 import { trackActivity, getUserActivity, getUserActivityStats } from "./routes/activityTracking";
 import { getAllRoomStatus, updateRoomStatus, markRoomCleaned, getRoomStatusByNumbers } from "./routes/roomStatus";
@@ -128,8 +128,8 @@ export function createServer() {
   // Debug: check if email is in users vs pending_users
   app.get("/api/debug/check-user/:email", async (req, res) => {
     const { email } = req.params;
-    const [users] = await db.query<any[]>('SELECT id, email, name, role, email_verified, created_at FROM users WHERE email = ?', [email]);
-    const [pending] = await db.query<any[]>('SELECT id, email, name, created_at FROM pending_users WHERE email = ?', [email]);
+    const [users] = await pool.query<any[]>('SELECT id, email, name, role, email_verified, created_at FROM users WHERE email = ?', [email]);
+    const [pending] = await pool.query<any[]>('SELECT id, email, name, created_at FROM pending_users WHERE email = ?', [email]);
     res.json({
       in_users_table: users.length > 0,
       user: users[0] || null,
@@ -204,8 +204,14 @@ export function createServer() {
 
   // Inventory routes - Require receptionist/admin authorization
   app.get("/api/inventory", requireStaff, getInventoryItems);
+  app.get("/api/inventory/stats", requireStaff, getInventoryStats);
   app.post("/api/inventory", requireStaff, addInventoryItem);
+  app.put("/api/inventory/update", requireStaff, updateInventoryItem);
+  app.delete("/api/inventory", requireStaff, deleteInventoryItem);
   app.put("/api/inventory/update-quantity", requireStaff, updateInventoryQuantity);
+  app.post("/api/inventory/receive", requireStaff, receiveStock);
+  app.post("/api/inventory/issue", requireStaff, issueStock);
+  app.get("/api/inventory/stock-transactions", requireStaff, getInventoryTransactions);
   app.get("/api/inventory/transactions", requireStaff, getTransactions);
   app.post("/api/inventory/transactions", requireStaff, addTransaction);
   

@@ -107,12 +107,33 @@ export const setupDatabase: RequestHandler = async (_req, res) => {
         item_name VARCHAR(255) NOT NULL,
         category VARCHAR(100) NOT NULL,
         quantity INT NOT NULL DEFAULT 0,
+        min_stock INT NOT NULL DEFAULT 0,
         unit VARCHAR(50) NOT NULL,
         unit_price VARCHAR(50) NOT NULL,
+        supplier VARCHAR(255) NULL,
+        expiry_date DATE NULL,
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_category (category),
         INDEX idx_item_name (item_name)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // Create inventory_transactions table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS inventory_transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        item_id INT NOT NULL,
+        type ENUM('received', 'issued') NOT NULL,
+        quantity INT NOT NULL,
+        performed_by VARCHAR(255) NOT NULL,
+        supplier VARCHAR(255) NULL,
+        notes TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_item_id (item_id),
+        INDEX idx_type (type),
+        INDEX idx_created_at (created_at),
+        FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
@@ -653,6 +674,30 @@ export const setupAllMissingTables: RequestHandler = async (_req, res) => {
     await addColumnIfNotExists('room_bookings', 'actual_check_in', 'TIMESTAMP NULL AFTER check_out');
     await addColumnIfNotExists('room_bookings', 'actual_check_out', 'TIMESTAMP NULL AFTER actual_check_in');
     await addColumnIfNotExists('room_bookings', 'room_status', "ENUM('vacant','occupied','checked_out','maintenance') DEFAULT 'vacant' AFTER status");
+
+    // --- MIGRATIONS: Add missing columns to inventory_items ---
+    await addColumnIfNotExists('inventory_items', 'min_stock', 'INT NOT NULL DEFAULT 0 AFTER quantity');
+    await addColumnIfNotExists('inventory_items', 'supplier', 'VARCHAR(255) NULL AFTER unit_price');
+    await addColumnIfNotExists('inventory_items', 'expiry_date', 'DATE NULL AFTER supplier');
+
+    // Create inventory_transactions table if not exists
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS inventory_transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        item_id INT NOT NULL,
+        type ENUM('received', 'issued') NOT NULL,
+        quantity INT NOT NULL,
+        performed_by VARCHAR(255) NOT NULL,
+        supplier VARCHAR(255) NULL,
+        notes TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_item_id (item_id),
+        INDEX idx_type (type),
+        INDEX idx_created_at (created_at),
+        FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    results.push('inventory_transactions: table ready');
 
     res.json({ success: true, results });
   } catch (error) {

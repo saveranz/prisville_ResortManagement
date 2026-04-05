@@ -87,8 +87,11 @@ interface InventoryItem {
   item_name: string;
   category: string;
   quantity: number;
+  min_stock: number;
   unit: string;
   unit_price: string;
+  supplier: string | null;
+  expiry_date: string | null;
   last_updated: string;
   created_at: string;
 }
@@ -134,7 +137,10 @@ export default function ReceptionistDashboard() {
     category: '',
     quantity: '',
     unit: '',
-    unit_price: ''
+    unit_price: '',
+    min_stock: '',
+    supplier: '',
+    expiry_date: ''
   });
   const [newTransaction, setNewTransaction] = useState({
     type: 'income' as 'income' | 'expense',
@@ -816,7 +822,7 @@ export default function ReceptionistDashboard() {
       if (data.success) {
         fetchInventory();
         setShowAddItem(false);
-        setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '' });
+        setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' });
       }
     } catch (error) {
       console.error('Error adding item:', error);
@@ -1797,7 +1803,7 @@ export default function ReceptionistDashboard() {
                   </div>
 
                   {showAddItem && (
-                    <Dialog open={showAddItem} onOpenChange={(open) => { setShowAddItem(open); if (!open) setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '' }); }}>
+                    <Dialog open={showAddItem} onOpenChange={(open) => { setShowAddItem(open); if (!open) setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' }); }}>
                       <DialogContent className="bg-white border-primary/20 text-gray-900 max-w-lg">
                         <DialogHeader>
                           <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
@@ -1875,7 +1881,7 @@ export default function ReceptionistDashboard() {
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => { setShowAddItem(false); setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '' }); }}
+                              onClick={() => { setShowAddItem(false); setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' }); }}
                               className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
                             >
                               Cancel
@@ -1896,47 +1902,33 @@ export default function ReceptionistDashboard() {
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">ID</th>
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Item Name</th>
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Category</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Qty</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Stock</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">PAR</th>
                           <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Price</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Total</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Date Added</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Actions</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-700/50 bg-gray-800">
-                        {paginatedInventory.map((item) => (
-                          <tr key={item.id} className="hover:bg-gray-700/30 transition-colors">
+                        {paginatedInventory.map((item) => {
+                          const isLow = item.min_stock > 0 && item.quantity <= item.min_stock;
+                          return (
+                          <tr key={item.id} className={`hover:bg-gray-700/30 transition-colors ${isLow ? 'bg-red-900/20' : ''}`}>
                             <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap font-mono">#{item.id}</td>
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.item_name}</td>
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.category}</td>
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.quantity} {item.unit}</td>
+                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap font-semibold">{item.quantity} {item.unit}</td>
+                            <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">{item.min_stock > 0 ? `${item.min_stock}` : '—'}</td>
                             <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.unit_price}</td>
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">
-                              ₱{(item.quantity * parseFloat(item.unit_price.replace(/[₱,]/g, ''))).toLocaleString()}
-                            </td>
-                            <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">
-                              {new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                            </td>
                             <td className="px-3 py-2 text-xs whitespace-nowrap">
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => updateQuantity(item.id, 1)}
-                                  className="text-primary hover:text-accent p-1 transition-colors"
-                                  title="Increase quantity"
-                                >
-                                  <Plus size={16} />
-                                </button>
-                                <button
-                                  onClick={() => updateQuantity(item.id, -1)}
-                                  className="text-accent hover:text-primary p-1 transition-colors"
-                                  title="Decrease quantity"
-                                >
-                                  <Minus size={16} />
-                                </button>
-                              </div>
+                              {isLow ? (
+                                <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-red-500/20 text-red-400">Low Stock</span>
+                              ) : (
+                                <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-green-500/20 text-green-400">OK</span>
+                              )}
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
