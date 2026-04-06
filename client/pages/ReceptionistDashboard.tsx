@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
+import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -132,6 +132,11 @@ export default function ReceptionistDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const [showReceiveStock, setShowReceiveStock] = useState(false);
+  const [showIssueStock, setShowIssueStock] = useState(false);
+  const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItem | null>(null);
+  const [receiveForm, setReceiveForm] = useState({ quantity: '', supplier: '', notes: '' });
+  const [issueForm, setIssueForm] = useState({ quantity: '', notes: '' });
   const [newItem, setNewItem] = useState({
     item_name: '',
     category: '',
@@ -843,6 +848,54 @@ export default function ReceptionistDashboard() {
       }
     } catch (error) {
       console.error('Error updating quantity:', error);
+    }
+  };
+
+  const handleReceiveStock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInventoryItem) return;
+    try {
+      const response = await fetch('/api/inventory/receive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ itemId: selectedInventoryItem.id, ...receiveForm })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setShowReceiveStock(false);
+        setSelectedInventoryItem(null);
+        setReceiveForm({ quantity: '', supplier: '', notes: '' });
+        fetchInventory();
+      } else {
+        alert(data.message || 'Failed to receive stock');
+      }
+    } catch (error) {
+      console.error('Error receiving stock:', error);
+    }
+  };
+
+  const handleIssueStock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInventoryItem) return;
+    try {
+      const response = await fetch('/api/inventory/issue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ itemId: selectedInventoryItem.id, ...issueForm })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setShowIssueStock(false);
+        setSelectedInventoryItem(null);
+        setIssueForm({ quantity: '', notes: '' });
+        fetchInventory();
+      } else {
+        alert(data.message || 'Failed to issue stock');
+      }
+    } catch (error) {
+      console.error('Error issuing stock:', error);
     }
   };
 
@@ -1782,6 +1835,13 @@ export default function ReceptionistDashboard() {
                   <div className="p-6 border-b border-gray-200 flex justify-between items-center">
                     <h2 className="text-lg font-display font-bold text-gray-900 tracking-tight">Inventory Items</h2>
                     <div className="flex gap-2 items-center">
+                      <button
+                        onClick={() => navigate('/receptionist/inventory')}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-300 transition-all flex items-center gap-2 text-sm font-medium"
+                      >
+                        <ExternalLink size={16} />
+                        Full Inventory
+                      </button>
                       <input
                         type="text"
                         placeholder="Search items..."
@@ -1898,33 +1958,46 @@ export default function ReceptionistDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full table-auto">
                       <thead>
-                        <tr className="bg-primary/20 border-b-2 border-primary/30">
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">ID</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Item Name</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Category</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Stock</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">PAR</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Price</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Status</th>
+                        <tr className="bg-gray-800 border-b-2 border-gray-700">
+                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">ID</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Item Name</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Category</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Stock</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">PAR</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Price</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
+                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-700/50 bg-gray-800">
+                      <tbody className="divide-y divide-gray-200 bg-white">
                         {paginatedInventory.map((item) => {
                           const isLow = item.min_stock > 0 && item.quantity <= item.min_stock;
                           return (
-                          <tr key={item.id} className={`hover:bg-gray-700/30 transition-colors ${isLow ? 'bg-red-900/20' : ''}`}>
-                            <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap font-mono">#{item.id}</td>
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.item_name}</td>
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.category}</td>
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap font-semibold">{item.quantity} {item.unit}</td>
-                            <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">{item.min_stock > 0 ? `${item.min_stock}` : '—'}</td>
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{item.unit_price}</td>
+                          <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${isLow ? 'bg-red-50' : ''}`}>
+                            <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap font-mono">#{item.id}</td>
+                            <td className="px-3 py-2 text-xs text-black font-semibold whitespace-nowrap">{item.item_name}</td>
+                            <td className="px-3 py-2 text-xs text-black whitespace-nowrap">{item.category}</td>
+                            <td className="px-3 py-2 text-xs text-black whitespace-nowrap font-semibold">{item.quantity} {item.unit}</td>
+                            <td className="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{item.min_stock > 0 ? `${item.min_stock}` : '—'}</td>
+                            <td className="px-3 py-2 text-xs text-black whitespace-nowrap">₱{parseFloat(String(item.unit_price).replace(/[^0-9.]/g, '')).toLocaleString()}</td>
                             <td className="px-3 py-2 text-xs whitespace-nowrap">
                               {isLow ? (
-                                <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-red-500/20 text-red-400">Low Stock</span>
+                                <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-red-100 text-red-700">Low Stock</span>
                               ) : (
-                                <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-green-500/20 text-green-400">OK</span>
+                                <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-green-100 text-green-700">OK</span>
                               )}
+                            </td>
+                            <td className="px-3 py-2 text-xs whitespace-nowrap">
+                              <div className="flex gap-1">
+                                <button onClick={() => { setSelectedInventoryItem(item); setReceiveForm({ quantity: '', supplier: item.supplier || '', notes: '' }); setShowReceiveStock(true); }}
+                                  title="Receive Stock" className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors">
+                                  <ArrowDownToLine size={15} />
+                                </button>
+                                <button onClick={() => { setSelectedInventoryItem(item); setIssueForm({ quantity: '', notes: '' }); setShowIssueStock(true); }}
+                                  title="Issue Stock" className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors">
+                                  <ArrowUpFromLine size={15} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                           );
@@ -2996,6 +3069,78 @@ export default function ReceptionistDashboard() {
           </div>
         </div>
       )}
+
+      {/* Receive Stock Modal */}
+      <Dialog open={showReceiveStock} onOpenChange={(open) => { setShowReceiveStock(open); if (!open) { setSelectedInventoryItem(null); setReceiveForm({ quantity: '', supplier: '', notes: '' }); } }}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
+              <ArrowDownToLine className="text-green-600" size={24} /> Receive Stock
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Record delivery for <strong>{selectedInventoryItem?.item_name}</strong> (Current: {selectedInventoryItem?.quantity} {selectedInventoryItem?.unit})
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleReceiveStock} className="space-y-4">
+            <div>
+              <Label className="text-gray-700">Quantity Received *</Label>
+              <Input type="number" min="1" placeholder="How many received?" value={receiveForm.quantity}
+                onChange={(e) => setReceiveForm({ ...receiveForm, quantity: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" required />
+            </div>
+            <div>
+              <Label className="text-gray-700">Supplier</Label>
+              <Input type="text" placeholder="Supplier name" value={receiveForm.supplier}
+                onChange={(e) => setReceiveForm({ ...receiveForm, supplier: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" />
+            </div>
+            <div>
+              <Label className="text-gray-700">Notes</Label>
+              <Input type="text" placeholder="e.g., Invoice #12345" value={receiveForm.notes}
+                onChange={(e) => setReceiveForm({ ...receiveForm, notes: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowReceiveStock(false)}
+                className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300">Cancel</Button>
+              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white font-semibold">Receive Stock</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Issue Stock Modal */}
+      <Dialog open={showIssueStock} onOpenChange={(open) => { setShowIssueStock(open); if (!open) { setSelectedInventoryItem(null); setIssueForm({ quantity: '', notes: '' }); } }}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
+              <ArrowUpFromLine className="text-blue-600" size={24} /> Issue Stock
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Issue stock for <strong>{selectedInventoryItem?.item_name}</strong> (Available: {selectedInventoryItem?.quantity} {selectedInventoryItem?.unit})
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleIssueStock} className="space-y-4">
+            <div>
+              <Label className="text-gray-700">Quantity to Issue *</Label>
+              <Input type="number" min="1" max={selectedInventoryItem?.quantity} placeholder="How many to issue?" value={issueForm.quantity}
+                onChange={(e) => setIssueForm({ ...issueForm, quantity: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" required />
+            </div>
+            <div>
+              <Label className="text-gray-700">Notes / Reason</Label>
+              <Input type="text" placeholder="e.g., For Room 101 cleaning" value={issueForm.notes}
+                onChange={(e) => setIssueForm({ ...issueForm, notes: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowIssueStock(false)}
+                className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300">Cancel</Button>
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">Issue Stock</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
