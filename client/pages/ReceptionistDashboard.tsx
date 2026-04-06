@@ -1890,14 +1890,17 @@ export default function ReceptionistDashboard() {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <Label className="text-gray-700">Category</Label>
-                                <Input
-                                  type="text"
-                                  placeholder="e.g., Toiletries"
+                                <select
                                   value={newItem.category}
                                   onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
                                   required
-                                />
+                                >
+                                  <option value="">Select category</option>
+                                  {[...new Set(inventory.map(i => i.category).filter(Boolean))].sort().map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                  ))}
+                                </select>
                               </div>
                               <div>
                                 <Label className="text-gray-700">Unit</Label>
@@ -1933,6 +1936,28 @@ export default function ReceptionistDashboard() {
                                   onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
                                   className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
                                   required
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label className="text-gray-700">PAR Level (Min Stock)</Label>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  value={newItem.min_stock}
+                                  onChange={(e) => setNewItem({ ...newItem, min_stock: e.target.value })}
+                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-gray-700">Supplier</Label>
+                                <Input
+                                  type="text"
+                                  placeholder="Supplier name"
+                                  value={newItem.supplier}
+                                  onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
+                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
                                 />
                               </div>
                             </div>
