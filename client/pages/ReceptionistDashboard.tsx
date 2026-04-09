@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 interface Booking {
   id: number;
@@ -569,6 +570,8 @@ export default function ReceptionistDashboard() {
     }
   };
 
+  const { toast } = useToast();
+
   // Inventory Management Functions
   const fetchInventory = async () => {
     try {
@@ -576,6 +579,17 @@ export default function ReceptionistDashboard() {
       const data = await response.json();
       if (data.success) {
         setInventory(data.items);
+        // Check for low stock items
+        const lowStockItems = (data.items as InventoryItem[]).filter(
+          (item) => item.min_stock > 0 && item.quantity <= item.min_stock
+        );
+        if (lowStockItems.length > 0) {
+          toast({
+            variant: "destructive",
+            title: "⚠️ Low Stock Warning",
+            description: `${lowStockItems.length} item${lowStockItems.length > 1 ? 's are' : ' is'} at or below PAR level: ${lowStockItems.map(i => i.item_name).join(', ')}`,
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching inventory:', error);

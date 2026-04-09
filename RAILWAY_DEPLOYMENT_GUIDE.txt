@@ -234,7 +234,7 @@ No new software needed. Laragon already has mysql.exe at:
          -u root `
          -pAbCdEfGhIjKlMnOp `
          railway `
-         < "$env:USERPROFILE\Desktop\prisville02.sql"
+         < "$env:Users\This PC\Desktop\prisville02.sql"
 
   SINGLE-LINE VERSION (same command, easier to copy-paste):
 
@@ -346,7 +346,7 @@ STEP 12 - Point DNS in Hostinger
      Name:  @
      Value: (the IP address)
 
-6. Also add www:
+6. Also add www:    
      Type:  CNAME
      Name:  www
      Value: (same .railway.app address)
