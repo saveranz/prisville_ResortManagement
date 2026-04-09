@@ -830,12 +830,14 @@ export default function ReceptionistDashboard() {
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (newItem.category === '__new__' || newItem.supplier === '__new__') return;
+    const itemToSend = { ...newItem, supplier: newItem.supplier || '' };
     try {
       const response = await fetch('/api/inventory', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(newItem)
+        body: JSON.stringify(itemToSend)
       });
       const data = await response.json();
       if (data.success) {
@@ -1904,17 +1906,35 @@ export default function ReceptionistDashboard() {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <Label className="text-gray-700">Category</Label>
-                                <select
-                                  value={newItem.category}
-                                  onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                  required
-                                >
-                                  <option value="">Select category</option>
-                                  {[...new Set(inventory.map(i => i.category).filter(Boolean))].sort().map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                  ))}
-                                </select>
+                                {newItem.category === '__new__' ? (
+                                  <div className="flex gap-1">
+                                    <Input
+                                      type="text"
+                                      placeholder="New category name"
+                                      autoFocus
+                                      onChange={(e) => setNewItem({ ...newItem, category: e.target.value === '' ? '__new__' : e.target.value })}
+                                      className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                      required
+                                    />
+                                    <Button type="button" variant="outline" size="icon" className="shrink-0 h-10 w-10 border-gray-300"
+                                      onClick={() => setNewItem({ ...newItem, category: '' })}>
+                                      <X size={14} />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <select
+                                    value={newItem.category}
+                                    onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    required
+                                  >
+                                    <option value="">Select category</option>
+                                    {[...new Set(inventory.map(i => i.category).filter(Boolean))].sort().map(cat => (
+                                      <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                    <option value="__new__">+ Add New Category</option>
+                                  </select>
+                                )}
                               </div>
                               <div>
                                 <Label className="text-gray-700">Unit</Label>
@@ -1966,13 +1986,33 @@ export default function ReceptionistDashboard() {
                               </div>
                               <div>
                                 <Label className="text-gray-700">Supplier</Label>
-                                <Input
-                                  type="text"
-                                  placeholder="Supplier name"
-                                  value={newItem.supplier}
-                                  onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
-                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                />
+                                {newItem.supplier === '__new__' ? (
+                                  <div className="flex gap-1">
+                                    <Input
+                                      type="text"
+                                      placeholder="New supplier name"
+                                      autoFocus
+                                      onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value === '' ? '__new__' : e.target.value })}
+                                      className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    />
+                                    <Button type="button" variant="outline" size="icon" className="shrink-0 h-10 w-10 border-gray-300"
+                                      onClick={() => setNewItem({ ...newItem, supplier: '' })}>
+                                      <X size={14} />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <select
+                                    value={newItem.supplier}
+                                    onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
+                                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                  >
+                                    <option value="">Select supplier</option>
+                                    {[...new Set(inventory.map(i => i.supplier).filter(Boolean))].sort().map(sup => (
+                                      <option key={sup} value={sup}>{sup}</option>
+                                    ))}
+                                    <option value="__new__">+ Add New Supplier</option>
+                                  </select>
+                                )}
                               </div>
                             </div>
                           </div>
