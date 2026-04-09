@@ -138,6 +138,8 @@ export default function ReceptionistDashboard() {
   const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItem | null>(null);
   const [receiveForm, setReceiveForm] = useState({ quantity: '', supplier: '', notes: '' });
   const [issueForm, setIssueForm] = useState({ quantity: '', notes: '' });
+  const [addingNewCategory, setAddingNewCategory] = useState(false);
+  const [addingNewSupplier, setAddingNewSupplier] = useState(false);
   const [newItem, setNewItem] = useState({
     item_name: '',
     category: '',
@@ -844,6 +846,8 @@ export default function ReceptionistDashboard() {
         fetchInventory();
         setShowAddItem(false);
         setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' });
+        setAddingNewCategory(false);
+        setAddingNewSupplier(false);
       }
     } catch (error) {
       console.error('Error adding item:', error);
@@ -1879,7 +1883,7 @@ export default function ReceptionistDashboard() {
                   </div>
 
                   {showAddItem && (
-                    <Dialog open={showAddItem} onOpenChange={(open) => { setShowAddItem(open); if (!open) setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' }); }}>
+                    <Dialog open={showAddItem} onOpenChange={(open) => { setShowAddItem(open); if (!open) { setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' }); setAddingNewCategory(false); setAddingNewSupplier(false); } }}>
                       <DialogContent className="bg-white border-primary/20 text-gray-900 max-w-lg">
                         <DialogHeader>
                           <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
@@ -1906,25 +1910,33 @@ export default function ReceptionistDashboard() {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <Label className="text-gray-700">Category</Label>
-                                {newItem.category === '__new__' ? (
+                                {addingNewCategory ? (
                                   <div className="flex gap-1">
                                     <Input
                                       type="text"
                                       placeholder="New category name"
                                       autoFocus
-                                      onChange={(e) => setNewItem({ ...newItem, category: e.target.value === '' ? '__new__' : e.target.value })}
+                                      value={newItem.category}
+                                      onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
                                       className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
                                       required
                                     />
                                     <Button type="button" variant="outline" size="icon" className="shrink-0 h-10 w-10 border-gray-300"
-                                      onClick={() => setNewItem({ ...newItem, category: '' })}>
+                                      onClick={() => { setAddingNewCategory(false); setNewItem({ ...newItem, category: '' }); }}>
                                       <X size={14} />
                                     </Button>
                                   </div>
                                 ) : (
                                   <select
                                     value={newItem.category}
-                                    onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                                    onChange={(e) => {
+                                      if (e.target.value === '__new__') {
+                                        setAddingNewCategory(true);
+                                        setNewItem({ ...newItem, category: '' });
+                                      } else {
+                                        setNewItem({ ...newItem, category: e.target.value });
+                                      }
+                                    }}
                                     className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
                                     required
                                   >
@@ -1986,24 +1998,32 @@ export default function ReceptionistDashboard() {
                               </div>
                               <div>
                                 <Label className="text-gray-700">Supplier</Label>
-                                {newItem.supplier === '__new__' ? (
+                                {addingNewSupplier ? (
                                   <div className="flex gap-1">
                                     <Input
                                       type="text"
                                       placeholder="New supplier name"
                                       autoFocus
-                                      onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value === '' ? '__new__' : e.target.value })}
+                                      value={newItem.supplier}
+                                      onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
                                       className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
                                     />
                                     <Button type="button" variant="outline" size="icon" className="shrink-0 h-10 w-10 border-gray-300"
-                                      onClick={() => setNewItem({ ...newItem, supplier: '' })}>
+                                      onClick={() => { setAddingNewSupplier(false); setNewItem({ ...newItem, supplier: '' }); }}>
                                       <X size={14} />
                                     </Button>
                                   </div>
                                 ) : (
                                   <select
                                     value={newItem.supplier}
-                                    onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
+                                    onChange={(e) => {
+                                      if (e.target.value === '__new__') {
+                                        setAddingNewSupplier(true);
+                                        setNewItem({ ...newItem, supplier: '' });
+                                      } else {
+                                        setNewItem({ ...newItem, supplier: e.target.value });
+                                      }
+                                    }}
                                     className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
                                   >
                                     <option value="">Select supplier</option>
@@ -2020,7 +2040,7 @@ export default function ReceptionistDashboard() {
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => { setShowAddItem(false); setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' }); }}
+                              onClick={() => { setShowAddItem(false); setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' }); setAddingNewCategory(false); setAddingNewSupplier(false); }}
                               className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
                             >
                               Cancel
