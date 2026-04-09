@@ -156,6 +156,20 @@ interface InventoryTransaction {
   created_at: string;
 }
 
+interface StockTransaction {
+  id: number;
+  item_id: number;
+  item_name: string;
+  category: string;
+  unit: string;
+  type: 'received' | 'issued';
+  quantity: number;
+  performed_by: string;
+  supplier: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
 interface AuditLog {
   id: number;
   user_id: number;
@@ -273,9 +287,10 @@ export default function AdminDashboard() {
   const [userActionConfirm, setUserActionConfirm] = useState<{userId: number; action: 'lock' | 'unlock' | 'delete'} | null>(null);
 
   // Inventory tab state
-  const [inventorySubTab, setInventorySubTab] = useState<'items' | 'transactions'>('items');
+  const [inventorySubTab, setInventorySubTab] = useState<'items' | 'transactions' | 'stock-log'>('items');
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [inventoryTransactions, setInventoryTransactions] = useState<InventoryTransaction[]>([]);
+  const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>([]);
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [inventorySearch, setInventorySearch] = useState('');
   const [transactionSearch, setTransactionSearch] = useState('');
@@ -334,6 +349,7 @@ export default function AdminDashboard() {
     if (activeTab === 'inventory') {
       fetchInventory();
       fetchInventoryTransactions();
+      fetchStockTransactions();
     } else if (activeTab === 'audit') {
       fetchAuditLogs(1);
     }
@@ -515,6 +531,16 @@ export default function AdminDashboard() {
       console.error('Failed to fetch transactions:', error);
     } finally {
       setInventoryLoading(false);
+    }
+  };
+
+  const fetchStockTransactions = async () => {
+    try {
+      const res = await fetch('/api/inventory/stock-transactions', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) setStockTransactions(data.transactions || []);
+    } catch (error) {
+      console.error('Failed to fetch stock transactions:', error);
     }
   };
 
@@ -2414,6 +2440,12 @@ export default function AdminDashboard() {
               >
                 Financial Transactions
               </button>
+              <button
+                onClick={() => setInventorySubTab('stock-log')}
+                className={`px-5 py-2 rounded-xl font-semibold text-sm transition-all ${inventorySubTab === 'stock-log' ? 'bg-primary text-white shadow' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+              >
+                Stock Log
+              </button>
             </div>
 
             {inventorySubTab === 'items' && (() => {
@@ -2710,6 +2742,56 @@ export default function AdminDashboard() {
                 </div>
               );
             })()}
+
+            {inventorySubTab === 'stock-log' && (
+              <div className="space-y-4">
+                <div className="bg-amber-50 rounded-2xl border border-amber-100 shadow-sm p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Stock Receiving & Issuance Log</h3>
+                  <p className="text-sm text-gray-500 mb-4">All stock movements — deliveries received and items issued to staff.</p>
+                  
+                  {stockTransactions.length === 0 ? (
+                    <p className="text-center text-gray-400 py-8">No stock transactions recorded yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto rounded-xl border border-gray-200">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-800 text-white">
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Date</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Type</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Item</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Category</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Qty</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Supplier</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Performed By</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Notes</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                          {stockTransactions.map((tx) => (
+                            <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
+                                {new Date(tx.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${tx.type === 'received' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                  {tx.type === 'received' ? '📦 Received' : '📤 Issued'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{tx.item_name}</td>
+                              <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tx.category}</td>
+                              <td className="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap">{tx.quantity} {tx.unit}</td>
+                              <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tx.supplier || '—'}</td>
+                              <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tx.performed_by}</td>
+                              <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{tx.notes || '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
