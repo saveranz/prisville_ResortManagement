@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import ReceptionistInventory from "./ReceptionistInventory";
 
 interface Booking {
   id: number;
@@ -478,7 +479,7 @@ export default function ReceptionistDashboard() {
     // Calculate total revenue from transaction history (income transactions only)
     const totalRevenue = transactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[₱,]/g, '')), 0);
+      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[â‚±,]/g, '')), 0);
 
     setStats({ totalBookings, pendingBookings, approvedToday, totalRevenue });
   };
@@ -588,7 +589,7 @@ export default function ReceptionistDashboard() {
         if (lowStockItems.length > 0) {
           toast({
             variant: "destructive",
-            title: "⚠️ Low Stock Warning",
+            title: "âš ï¸ Low Stock Warning",
             description: `${lowStockItems.length} item${lowStockItems.length > 1 ? 's are' : ' is'} at or below PAR level: ${lowStockItems.map(i => i.item_name).join(', ')}`,
           });
         }
@@ -949,14 +950,14 @@ export default function ReceptionistDashboard() {
     const income = filteredTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => {
-        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+        const amount = parseFloat(t.amount.replace(/[â‚±,]/g, ''));
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
     
     const expenses = filteredTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => {
-        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+        const amount = parseFloat(t.amount.replace(/[â‚±,]/g, ''));
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
     
@@ -998,7 +999,7 @@ export default function ReceptionistDashboard() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-gray-900 truncate">{booking.guest_name || booking.user_email}</p>
                 <p className="text-sm text-gray-600 truncate">
-                  {booking.room_name || booking.amenity_name || 'Day Pass'} • {formatDate(booking.check_in || booking.booking_date)}
+                  {booking.room_name || booking.amenity_name || 'Day Pass'} â€¢ {formatDate(booking.check_in || booking.booking_date)}
                 </p>
               </div>
             </div>
@@ -1439,7 +1440,7 @@ export default function ReceptionistDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-600 text-sm font-medium">Total Revenue</p>
-                      <p className="text-3xl font-display font-bold text-gray-900 mt-2 tracking-tight">₱{stats.totalRevenue.toLocaleString()}</p>
+                      <p className="text-3xl font-display font-bold text-gray-900 mt-2 tracking-tight">â‚±{stats.totalRevenue.toLocaleString()}</p>
                       <p className="text-accent text-sm mt-2 flex items-center gap-1">
                         <DollarSign size={14} />
                         Income transactions
@@ -1466,7 +1467,7 @@ export default function ReceptionistDashboard() {
                     onClick={() => setActiveTab('rooms')}
                     className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all shadow-lg"
                   >
-                    View Details →
+                    View Details â†’
                   </button>
                 </div>
 
@@ -1482,7 +1483,7 @@ export default function ReceptionistDashboard() {
                     onClick={() => setActiveTab('amenities')}
                     className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all shadow-lg"
                   >
-                    View Details →
+                    View Details â†’
                   </button>
                 </div>
 
@@ -1498,7 +1499,7 @@ export default function ReceptionistDashboard() {
                     onClick={() => setActiveTab('daypass')}
                     className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all shadow-lg"
                   >
-                    View Details →
+                    View Details â†’
                   </button>
                 </div>
               </div>
@@ -1781,571 +1782,7 @@ export default function ReceptionistDashboard() {
           )}
           
           {activeTab === 'inventory' && (
-            <>
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 hover:shadow-lg transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Total Income</p>
-                      <p className="text-3xl font-display font-bold text-green-600 mt-1 tracking-tight">₱{calculateTotals().income.toLocaleString()}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-                      <TrendingUp className="text-white" size={24} />
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500 hover:shadow-lg transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Total Expenses</p>
-                      <p className="text-3xl font-display font-bold text-red-600 mt-1 tracking-tight">₱{calculateTotals().expenses.toLocaleString()}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                      <TrendingDown className="text-white" size={24} />
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary hover:shadow-lg transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Net Profit</p>
-                      <p className={`text-3xl font-display font-bold mt-1 tracking-tight ${calculateTotals().profit >= 0 ? 'text-primary' : 'text-red-600'}`}>
-                        ₱{calculateTotals().profit.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${calculateTotals().profit >= 0 ? 'bg-gradient-to-br from-primary to-primary/90' : 'bg-gradient-to-br from-red-500 to-red-600'}`}>
-                      <DollarSign className="text-white" size={24} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation Tabs for Inventory */}
-              <div className="border-b border-gray-200 mb-6">
-                <nav className="-mb-px flex gap-8">
-                  <button
-                    onClick={() => setInventoryTab('inventory')}
-                    className={`flex items-center gap-2 py-4 px-1 border-b-2 font-semibold text-sm transition-all ${
-                      inventoryTab === 'inventory'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <Package size={20} />
-                    Inventory Items
-                  </button>
-                  <button
-                    onClick={() => setInventoryTab('transactions')}
-                    className={`flex items-center gap-2 py-4 px-1 border-b-2 font-semibold text-sm transition-all ${
-                      inventoryTab === 'transactions'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <DollarSign size={20} />
-                    Transactions
-                  </button>
-                </nav>
-              </div>
-
-              {/* Inventory Items */}
-              {inventoryTab === 'inventory' && (
-                <div className="bg-white rounded-xl shadow-md border border-gray-200">
-                  <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-                    <h2 className="text-lg font-display font-bold text-gray-900 tracking-tight">Inventory Items</h2>
-                    <div className="flex gap-2 items-center">
-                      <button
-                        onClick={() => navigate('/receptionist/inventory')}
-                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-300 transition-all flex items-center gap-2 text-sm font-medium"
-                      >
-                        <ExternalLink size={16} />
-                        Full Inventory
-                      </button>
-                      <input
-                        type="text"
-                        placeholder="Search items..."
-                        value={inventorySearchTerm}
-                        onChange={(e) => {
-                          setInventorySearchTerm(e.target.value);
-                          setInventoryPage(1); // Reset to first page on search
-                        }}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                      />
-                      <button
-                        onClick={() => setShowAddItem(!showAddItem)}
-                        className="bg-accent hover:bg-accent/90 text-accent-foreground px-5 py-2.5 rounded-xl border border-accent/50 hover:shadow-accent/20 hover:shadow-lg transition-all flex items-center gap-2 font-semibold"
-                      >
-                        <Plus size={20} />
-                        Add Item
-                      </button>
-                    </div>
-                  </div>
-
-                  {showAddItem && (
-                    <Dialog open={showAddItem} onOpenChange={(open) => { setShowAddItem(open); if (!open) { setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' }); setAddingNewCategory(false); setAddingNewSupplier(false); } }}>
-                      <DialogContent className="bg-white border-primary/20 text-gray-900 max-w-lg">
-                        <DialogHeader>
-                          <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
-                            <Plus className="text-accent" size={24} />
-                            Add New Item
-                          </DialogTitle>
-                          <DialogDescription className="text-gray-600">
-                            Fill in the details for the new inventory item.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleAddItem} className="space-y-4">
-                          <div className="space-y-3">
-                            <div>
-                              <Label className="text-gray-700">Item Name</Label>
-                              <Input
-                                type="text"
-                                placeholder="Enter item name"
-                                value={newItem.item_name}
-                                onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
-                                className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                required
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <Label className="text-gray-700">Category</Label>
-                                {addingNewCategory ? (
-                                  <div className="flex gap-1">
-                                    <Input
-                                      type="text"
-                                      placeholder="New category name"
-                                      autoFocus
-                                      value={newItem.category}
-                                      onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                                      className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                      required
-                                    />
-                                    <Button type="button" variant="outline" size="icon" className="shrink-0 h-10 w-10 border-gray-300"
-                                      onClick={() => { setAddingNewCategory(false); setNewItem({ ...newItem, category: '' }); }}>
-                                      <X size={14} />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <select
-                                    value={newItem.category}
-                                    onChange={(e) => {
-                                      if (e.target.value === '__new__') {
-                                        setAddingNewCategory(true);
-                                        setNewItem({ ...newItem, category: '' });
-                                      } else {
-                                        setNewItem({ ...newItem, category: e.target.value });
-                                      }
-                                    }}
-                                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    required
-                                  >
-                                    <option value="">Select category</option>
-                                    {[...new Set(inventory.map(i => i.category).filter(Boolean))].sort().map(cat => (
-                                      <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                    <option value="__new__">+ Add New Category</option>
-                                  </select>
-                                )}
-                              </div>
-                              <div>
-                                <Label className="text-gray-700">Unit</Label>
-                                <Input
-                                  type="text"
-                                  placeholder="pcs, kg, etc."
-                                  value={newItem.unit}
-                                  onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
-                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                  required
-                                />
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <Label className="text-gray-700">Quantity</Label>
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  value={newItem.quantity}
-                                  onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
-                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                  required
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-gray-700">Unit Price (₱)</Label>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  placeholder="0.00"
-                                  value={newItem.unit_price}
-                                  onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
-                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                  required
-                                />
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <Label className="text-gray-700">PAR Level (Min Stock)</Label>
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  value={newItem.min_stock}
-                                  onChange={(e) => setNewItem({ ...newItem, min_stock: e.target.value })}
-                                  className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-gray-700">Supplier</Label>
-                                {addingNewSupplier ? (
-                                  <div className="flex gap-1">
-                                    <Input
-                                      type="text"
-                                      placeholder="New supplier name"
-                                      autoFocus
-                                      value={newItem.supplier}
-                                      onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
-                                      className="bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    />
-                                    <Button type="button" variant="outline" size="icon" className="shrink-0 h-10 w-10 border-gray-300"
-                                      onClick={() => { setAddingNewSupplier(false); setNewItem({ ...newItem, supplier: '' }); }}>
-                                      <X size={14} />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <select
-                                    value={newItem.supplier}
-                                    onChange={(e) => {
-                                      if (e.target.value === '__new__') {
-                                        setAddingNewSupplier(true);
-                                        setNewItem({ ...newItem, supplier: '' });
-                                      } else {
-                                        setNewItem({ ...newItem, supplier: e.target.value });
-                                      }
-                                    }}
-                                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                                  >
-                                    <option value="">Select supplier</option>
-                                    {[...new Set(inventory.map(i => i.supplier).filter(Boolean))].sort().map(sup => (
-                                      <option key={sup} value={sup}>{sup}</option>
-                                    ))}
-                                    <option value="__new__">+ Add New Supplier</option>
-                                  </select>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <DialogFooter className="gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => { setShowAddItem(false); setNewItem({ item_name: '', category: '', quantity: '', unit: '', unit_price: '', min_stock: '', supplier: '', expiry_date: '' }); setAddingNewCategory(false); setAddingNewSupplier(false); }}
-                              className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
-                            >
-                              Cancel
-                            </Button>
-                            <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                              Save Item
-                            </Button>
-                          </DialogFooter>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full table-auto">
-                      <thead>
-                        <tr className="bg-gray-800 border-b-2 border-gray-700">
-                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">ID</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Item Name</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Category</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Stock</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">PAR</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Price</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
-                        {paginatedInventory.map((item) => {
-                          const isLow = item.min_stock > 0 && item.quantity <= item.min_stock;
-                          return (
-                          <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${isLow ? 'bg-red-50' : ''}`}>
-                            <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap font-mono">#{item.id}</td>
-                            <td className="px-3 py-2 text-xs text-black font-semibold whitespace-nowrap">{item.item_name}</td>
-                            <td className="px-3 py-2 text-xs text-black whitespace-nowrap">{item.category}</td>
-                            <td className="px-3 py-2 text-xs text-black whitespace-nowrap font-semibold">{item.quantity} {item.unit}</td>
-                            <td className="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{item.min_stock > 0 ? `${item.min_stock}` : '—'}</td>
-                            <td className="px-3 py-2 text-xs text-black whitespace-nowrap">₱{parseFloat(String(item.unit_price).replace(/[^0-9.]/g, '')).toLocaleString()}</td>
-                            <td className="px-3 py-2 text-xs whitespace-nowrap">
-                              {isLow ? (
-                                <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-red-100 text-red-700">Low Stock</span>
-                              ) : (
-                                <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-green-100 text-green-700">OK</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2 text-xs whitespace-nowrap">
-                              <div className="flex gap-1">
-                                <button onClick={() => { setSelectedInventoryItem(item); setReceiveForm({ quantity: '', supplier: item.supplier || '', notes: '' }); setShowReceiveStock(true); }}
-                                  title="Receive Stock" className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors">
-                                  <ArrowDownToLine size={15} />
-                                </button>
-                                <button onClick={() => { setSelectedInventoryItem(item); setIssueForm({ quantity: '', notes: '' }); setShowIssueStock(true); }}
-                                  title="Issue Stock" className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors">
-                                  <ArrowUpFromLine size={15} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  {/* Pagination Controls */}
-                  {totalInventoryPages > 1 && (
-                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                      <div className="text-sm text-gray-600">
-                        Showing {((inventoryPage - 1) * inventoryItemsPerPage) + 1} to {Math.min(inventoryPage * inventoryItemsPerPage, filteredInventory.length)} of {filteredInventory.length} items
-                        {inventorySearchTerm && ` (filtered from ${inventory.length} total)`}
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setInventoryPage(prev => Math.max(1, prev - 1))}
-                          disabled={inventoryPage === 1}
-                          className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          Previous
-                        </button>
-                        
-                        <div className="flex gap-1">
-                          {Array.from({ length: totalInventoryPages }, (_, i) => i + 1).map(pageNum => (
-                            <button
-                              key={pageNum}
-                              onClick={() => setInventoryPage(pageNum)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                pageNum === inventoryPage
-                                  ? 'bg-primary text-white'
-                                  : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
-                              }`}
-                            >
-                              {pageNum}
-                            </button>
-                          ))}
-                        </div>
-                        
-                        <button
-                          onClick={() => setInventoryPage(prev => Math.min(totalInventoryPages, prev + 1))}
-                          disabled={inventoryPage === totalInventoryPages}
-                          className="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Transactions */}
-              {inventoryTab === 'transactions' && (
-                <div className="bg-white rounded-xl shadow-md">
-                  <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-                    <h2 className="text-lg font-display font-bold text-gray-900 tracking-tight">Financial Transactions</h2>
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        placeholder="Search transactions..."
-                        value={transactionSearchTerm}
-                        onChange={(e) => setTransactionSearchTerm(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                      />
-                      <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`px-4 py-2.5 rounded-xl flex items-center gap-2 font-semibold transition-all border-2 ${
-                          showFilters || hasActiveFilters
-                            ? 'bg-primary text-white border-primary hover:shadow-md'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <Filter size={20} />
-                        Filters {hasActiveFilters && `(${Object.values(filters).filter(v => v && v !== 'all').length})`}
-                      </button>
-                      <button
-                        onClick={() => setShowAddTransaction(!showAddTransaction)}
-                        className="bg-primary/10 hover:bg-primary/20 text-primary px-5 py-2.5 rounded-xl border-2 border-primary/30 hover:shadow-md transition-all flex items-center gap-2 font-semibold"
-                      >
-                        <Plus size={20} />
-                        Add Transaction
-                      </button>
-                    </div>
-                  </div>
-
-                  {showFilters && (
-                    <div className="p-6 border-b border-gray-200 bg-gradient-to-br from-primary/5 to-white">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="font-semibold text-gray-900">Filter Transactions</h3>
-                        {hasActiveFilters && (
-                          <button
-                            onClick={clearFilters}
-                            className="text-sm text-primary hover:text-primary/80 flex items-center gap-1 font-semibold"
-                          >
-                            <X size={16} />
-                            Clear All
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-4 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                          <select
-                            value={filters.type}
-                            onChange={(e) => setFilters({ ...filters, type: e.target.value as 'all' | 'income' | 'expense' })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          >
-                            <option value="all">All Types</option>
-                            <option value="income">Income</option>
-                            <option value="expense">Expense</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                          <select
-                            value={filters.category}
-                            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          >
-                            <option value="all">All Categories</option>
-                            {uniqueCategories.map(category => (
-                              <option key={category} value={category}>{category}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                          <input
-                            type="date"
-                            value={filters.startDate}
-                            onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                          <input
-                            type="date"
-                            value={filters.endDate}
-                            onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-4 text-sm text-gray-600">
-                        Showing <span className="font-semibold text-gray-900">{filteredTransactions.length}</span> of <span className="font-semibold text-gray-900">{transactions.length}</span> transactions
-                      </div>
-                    </div>
-                  )}
-
-                  {showAddTransaction && (
-                    <div className="p-6 border-b border-gray-200 bg-gradient-to-br from-primary/5 to-white">
-                      <form onSubmit={handleAddTransaction} className="grid grid-cols-2 gap-4">
-                        <select
-                          value={newTransaction.type}
-                          onChange={(e) => setNewTransaction({ ...newTransaction, type: e.target.value as 'income' | 'expense' })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                        >
-                          <option value="income">Income</option>
-                          <option value="expense">Expense</option>
-                        </select>
-                        <input
-                          type="text"
-                          placeholder="Category"
-                          value={newTransaction.category}
-                          onChange={(e) => setNewTransaction({ ...newTransaction, category: e.target.value })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                        />
-                        <input
-                          type="text"
-                          placeholder="Description"
-                          value={newTransaction.description}
-                          onChange={(e) => setNewTransaction({ ...newTransaction, description: e.target.value })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent col-span-2"
-                          required
-                        />
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="Amount"
-                          value={newTransaction.amount}
-                          onChange={(e) => setNewTransaction({ ...newTransaction, amount: e.target.value })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                        />
-                        <input
-                          type="date"
-                          value={newTransaction.transaction_date}
-                          onChange={(e) => setNewTransaction({ ...newTransaction, transaction_date: e.target.value })}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                        />
-                        <button type="submit" className="col-span-2 bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-3 rounded-xl border border-accent/50 hover:shadow-accent/20 hover:shadow-lg transition-all font-semibold">
-                          Save Transaction
-                        </button>
-                      </form>
-                    </div>
-                  )}
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full table-auto">
-                      <thead>
-                        <tr className="bg-primary/20 border-b-2 border-primary/30">
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Date</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Type</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Category</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Description</th>
-                          <th className="px-3 py-2 text-left text-xs font-bold text-accent uppercase whitespace-nowrap">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-700/50 bg-gray-800">
-                        {filteredTransactions.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="px-3 py-8 text-center text-gray-400">
-                              No transactions found matching your filters.
-                            </td>
-                          </tr>
-                        ) : (
-                          filteredTransactions.map((transaction) => (
-                          <tr key={transaction.id} className="hover:bg-gray-700/30 transition-colors">
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">
-                              {new Date(transaction.transaction_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                            </td>
-                            <td className="px-3 py-2 text-xs whitespace-nowrap">
-                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                transaction.type === 'income' ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-primary/20 text-primary border border-primary/30'
-                              }`}>
-                                {transaction.type}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{transaction.category}</td>
-                            <td className="px-3 py-2 text-xs text-white whitespace-nowrap">{transaction.description}</td>
-                            <td className={`px-3 py-2 text-xs font-semibold whitespace-nowrap ${
-                              transaction.type === 'income' ? 'text-accent' : 'text-primary'
-                            }`}>
-                              {transaction.type === 'income' ? '+' : '-'}{transaction.amount}
-                            </td>
-                          </tr>
-                        )))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </>
+            <ReceptionistInventory embedded />
           )}
 
           {/* Check-In/Check-Out Tab */}
@@ -2560,7 +1997,7 @@ export default function ReceptionistDashboard() {
                                 </div>
                                 <div className="min-w-0">
                                   <p className="text-xs font-semibold text-gray-900 truncate max-w-[160px]">{guest.guest_name || guest.user_email}</p>
-                                  <p className="text-[10px] text-gray-400">#{guest.booking_id} · {guest.booking_type}</p>
+                                  <p className="text-[10px] text-gray-400">#{guest.booking_id} Â· {guest.booking_type}</p>
                                 </div>
                               </div>
                             </td>
@@ -2709,7 +2146,7 @@ export default function ReceptionistDashboard() {
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-black">{stay.nights_stayed || '-'}</td>
                         <td className="px-4 py-3 text-sm font-bold text-green-600">
-                          {stay.total_spent ? `₱${parseFloat(stay.total_spent).toLocaleString()}` : '-'}
+                          {stay.total_spent ? `â‚±${parseFloat(stay.total_spent).toLocaleString()}` : '-'}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {stay.actual_check_out ? (
