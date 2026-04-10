@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { 
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import AdminSiteSettings from "./AdminSiteSettings";
 import AdminInquiries from "./AdminInquiries";
+import ReceptionistInventory from "./ReceptionistInventory";
 
 interface DashboardStats {
   totalBookings: number;
@@ -244,7 +245,7 @@ const DEFAULT_ROOM_FORM: RoomFormState = {
   room_type: 'Standard Room (Aircon)',
   room_numbers: '',
   capacity: '2',
-  price_per_night: '₱1600',
+  price_per_night: 'â‚±1600',
   amenities: '',
   description: '',
   special_requests: '',
@@ -667,7 +668,7 @@ export default function AdminDashboard() {
             booking.room_name || booking.amenity_name || 'Day Pass',
             booking.created_at ? formatDate(booking.created_at) : '-',
             booking.status || '-',
-            booking.total_amount || '₱0.00'
+            booking.total_amount || 'â‚±0.00'
           ])
         ]);
         break;
@@ -1251,7 +1252,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Total Revenue</p>
-                    <p className="text-3xl font-display font-bold text-green-600 mt-1">₱{parseFloat(stats.totalRevenue).toLocaleString()}</p>
+                    <p className="text-3xl font-display font-bold text-green-600 mt-1">â‚±{parseFloat(stats.totalRevenue).toLocaleString()}</p>
                     <p className="text-xs text-gray-500 mt-1">Approved bookings</p>
                   </div>
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
@@ -1384,7 +1385,7 @@ export default function AdminDashboard() {
                     disabled={activityRefreshing}
                     className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors font-sans text-sm disabled:opacity-50"
                   >
-                    {activityRefreshing ? 'Loading…' : 'Refresh'}
+                    {activityRefreshing ? 'Loadingâ€¦' : 'Refresh'}
                   </button>
                 </div>
               </div>
@@ -1691,7 +1692,7 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Revenue</p>
-                            <p className="text-xl font-bold text-primary">₱{parseFloat(reportData.summary.totalRevenue).toLocaleString()}</p>
+                            <p className="text-xl font-bold text-primary">â‚±{parseFloat(reportData.summary.totalRevenue).toLocaleString()}</p>
                           </div>
                         </>
                       )}
@@ -1699,7 +1700,7 @@ export default function AdminDashboard() {
                         <>
                           <div>
                             <p className="text-sm text-gray-600">Grand Total</p>
-                            <p className="text-xl font-bold text-green-600">₱{parseFloat(reportData.summary.grandTotal).toLocaleString()}</p>
+                            <p className="text-xl font-bold text-green-600">â‚±{parseFloat(reportData.summary.grandTotal).toLocaleString()}</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Total Bookings</p>
@@ -1721,11 +1722,11 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Total Spent</p>
-                            <p className="text-xl font-bold text-green-600">₱{parseFloat(reportData.summary.totalSpent).toLocaleString()}</p>
+                            <p className="text-xl font-bold text-green-600">â‚±{parseFloat(reportData.summary.totalSpent).toLocaleString()}</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Avg per Guest</p>
-                            <p className="text-xl font-bold text-gray-900">₱{parseFloat(reportData.summary.avgSpentPerGuest).toLocaleString()}</p>
+                            <p className="text-xl font-bold text-gray-900">â‚±{parseFloat(reportData.summary.avgSpentPerGuest).toLocaleString()}</p>
                           </div>
                         </>
                       )}
@@ -1760,7 +1761,7 @@ export default function AdminDashboard() {
                                 <td className="px-4 py-3 text-sm text-gray-700">{booking.room_name || booking.amenity_name || 'Day Pass'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{formatDate(booking.created_at)}</td>
                                 <td className="px-4 py-3 text-sm capitalize text-gray-700">{booking.status || '-'}</td>
-                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{booking.total_amount || '₱0.00'}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{booking.total_amount || 'â‚±0.00'}</td>
                               </tr>
                             )) : (
                               <tr>
@@ -1798,10 +1799,10 @@ export default function AdminDashboard() {
                                 <td className="px-4 py-3 text-sm text-gray-700">{row.amenityBookings || 0}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{row.dayPassBookings || 0}</td>
                                 <td className="px-4 py-3 text-sm font-semibold text-gray-900">{row.totalBookings || 0}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">₱{Number(row.roomRevenue || 0).toLocaleString()}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">₱{Number(row.amenityRevenue || 0).toLocaleString()}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">₱{Number(row.dayPassRevenue || 0).toLocaleString()}</td>
-                                <td className="px-4 py-3 text-sm font-semibold text-green-700">₱{Number(row.totalRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">â‚±{Number(row.roomRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">â‚±{Number(row.amenityRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">â‚±{Number(row.dayPassRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-green-700">â‚±{Number(row.totalRevenue || 0).toLocaleString()}</td>
                               </tr>
                             )) : (
                               <tr>
@@ -1902,7 +1903,7 @@ export default function AdminDashboard() {
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.email || '-'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.phone || '-'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.total_bookings || 0}</td>
-                                <td className="px-4 py-3 text-sm font-semibold text-green-700">₱{Number(guest.total_spent || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-green-700">â‚±{Number(guest.total_spent || 0).toLocaleString()}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.first_booking_date ? formatDate(guest.first_booking_date) : '-'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.last_booking_date ? formatDate(guest.last_booking_date) : '-'}</td>
                               </tr>
@@ -2084,7 +2085,7 @@ export default function AdminDashboard() {
                           type="text"
                           value={roomForm.price_per_night}
                           onChange={(e) => setRoomForm({ ...roomForm, price_per_night: e.target.value })}
-                          placeholder="e.g. ₱1600"
+                          placeholder="e.g. â‚±1600"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                         />
                       </div>
@@ -2206,7 +2207,7 @@ export default function AdminDashboard() {
                             type="text"
                             value={extraItemForm.price}
                             onChange={(e) => setExtraItemForm({ ...extraItemForm, price: e.target.value })}
-                            placeholder="e.g. ₱150"
+                            placeholder="e.g. â‚±150"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                           />
                         </div>
@@ -2425,374 +2426,7 @@ export default function AdminDashboard() {
 
         {/* Inventory Tab */}
         {activeTab === 'inventory' && (
-          <div className="space-y-6">
-            {/* Sub-tab switcher */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setInventorySubTab('items')}
-                className={`px-5 py-2 rounded-xl font-semibold text-sm transition-all ${inventorySubTab === 'items' ? 'bg-primary text-white shadow' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-              >
-                Inventory Items
-              </button>
-              <button
-                onClick={() => setInventorySubTab('transactions')}
-                className={`px-5 py-2 rounded-xl font-semibold text-sm transition-all ${inventorySubTab === 'transactions' ? 'bg-primary text-white shadow' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-              >
-                Financial Transactions
-              </button>
-              <button
-                onClick={() => setInventorySubTab('stock-log')}
-                className={`px-5 py-2 rounded-xl font-semibold text-sm transition-all ${inventorySubTab === 'stock-log' ? 'bg-primary text-white shadow' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-              >
-                Stock Log
-              </button>
-            </div>
-
-            {inventorySubTab === 'items' && (() => {
-              const filteredInventory = inventory.filter(item =>
-                inventorySearch === '' ||
-                item.item_name.toLowerCase().includes(inventorySearch.toLowerCase()) ||
-                item.category.toLowerCase().includes(inventorySearch.toLowerCase()) ||
-                item.unit.toLowerCase().includes(inventorySearch.toLowerCase())
-              );
-              const itemsPerPage = 10;
-              const inventoryTotalPages = Math.max(1, Math.ceil(filteredInventory.length / itemsPerPage));
-              const safeInventoryPage = Math.min(inventoryPage, inventoryTotalPages);
-              const pagedInventory = filteredInventory.slice(
-                (safeInventoryPage - 1) * itemsPerPage,
-                safeInventoryPage * itemsPerPage
-              );
-              return (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-6 py-4 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-900 shrink-0">Inventory Items</h3>
-                    <div className="flex-1 relative">
-                      <input
-                        value={inventorySearch}
-                        onChange={e => setInventorySearch(e.target.value)}
-                        placeholder="Search by name, category, unit..."
-                        className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                      <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    </div>
-                    <button onClick={fetchInventory} className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors shrink-0">
-                      <RefreshCw size={14} className={inventoryLoading ? 'animate-spin' : ''} />
-                      Refresh
-                    </button>
-                  </div>
-                  {inventoryLoading ? (
-                    <div className="p-8 text-center text-gray-400">Loading...</div>
-                  ) : filteredInventory.length === 0 ? (
-                    <div className="p-8 text-center text-gray-400">{inventorySearch ? 'No items match your search.' : 'No inventory items found.'}</div>
-                  ) : (
-                    <>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                              <th className="text-left px-4 py-3 font-semibold text-gray-700">Item Name</th>
-                              <th className="text-left px-4 py-3 font-semibold text-gray-700">Category</th>
-                              <th className="text-right px-4 py-3 font-semibold text-gray-700">Quantity</th>
-                              <th className="text-left px-4 py-3 font-semibold text-gray-700">Unit</th>
-                              <th className="text-right px-4 py-3 font-semibold text-gray-700">Unit Price</th>
-                              <th className="text-left px-4 py-3 font-semibold text-gray-700">Last Updated</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-50">
-                            {pagedInventory.map(item => (
-                              <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-4 py-3 font-medium text-gray-900">{item.item_name}</td>
-                                <td className="px-4 py-3 text-gray-600">{item.category}</td>
-                                <td className={`px-4 py-3 text-right font-semibold ${item.quantity <= 5 ? 'text-red-600' : 'text-gray-900'}`}>{item.quantity}</td>
-                                <td className="px-4 py-3 text-gray-600">{item.unit}</td>
-                                <td className="px-4 py-3 text-right text-gray-900">{item.unit_price}</td>
-                                <td className="px-4 py-3 text-gray-500">{item.last_updated ? new Date(item.last_updated).toLocaleDateString() : '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
-                        <p className="text-xs text-gray-600">
-                          Showing {(safeInventoryPage - 1) * itemsPerPage + 1} to {Math.min(safeInventoryPage * itemsPerPage, filteredInventory.length)} of {filteredInventory.length} items
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setInventoryPage(prev => Math.max(1, prev - 1))}
-                            disabled={safeInventoryPage === 1}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-                          >
-                            Previous
-                          </button>
-                          <span className="text-xs text-gray-600 font-medium">Page {safeInventoryPage} of {inventoryTotalPages}</span>
-                          <button
-                            onClick={() => setInventoryPage(prev => Math.min(inventoryTotalPages, prev + 1))}
-                            disabled={safeInventoryPage === inventoryTotalPages}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })()}
-
-            {inventorySubTab === 'transactions' && (() => {
-              const parseAmount = (amt: string) => parseFloat(amt.replace(/[₱,\s]/g, '')) || 0;
-              const filteredTx = inventoryTransactions.filter(tx => {
-                const matchesSearch = transactionSearch === '' ||
-                  tx.category.toLowerCase().includes(transactionSearch.toLowerCase()) ||
-                  (tx.description || '').toLowerCase().includes(transactionSearch.toLowerCase()) ||
-                  tx.amount.toLowerCase().includes(transactionSearch.toLowerCase());
-                const matchesType = transactionTypeFilter === '' || tx.type === transactionTypeFilter;
-                return matchesSearch && matchesType;
-              });
-              const txPerPage = 10;
-              const transactionTotalPages = Math.max(1, Math.ceil(filteredTx.length / txPerPage));
-              const safeTransactionPage = Math.min(transactionPage, transactionTotalPages);
-              const pagedTx = filteredTx.slice(
-                (safeTransactionPage - 1) * txPerPage,
-                safeTransactionPage * txPerPage
-              );
-              const totalIncome = filteredTx.filter(t => t.type === 'income').reduce((s, t) => s + parseAmount(t.amount), 0);
-              const totalExpense = filteredTx.filter(t => t.type === 'expense').reduce((s, t) => s + parseAmount(t.amount), 0);
-              const netBalance = totalIncome - totalExpense;
-              return (
-                <div className="space-y-4">
-                  {/* Summary cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-xl border border-green-100 shadow-sm p-4 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                        <TrendingUp size={18} className="text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium">Total Income</p>
-                        <p className="text-lg font-bold text-green-700">₱{totalIncome.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
-                      </div>
-                    </div>
-                    <div className="bg-white rounded-xl border border-red-100 shadow-sm p-4 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                        <DollarSign size={18} className="text-red-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium">Total Expenses</p>
-                        <p className="text-lg font-bold text-red-700">₱{totalExpense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
-                      </div>
-                    </div>
-                    <div className={`bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 ${netBalance >= 0 ? 'border border-blue-100' : 'border border-orange-100'}`}>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${netBalance >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}>
-                        <BarChart3 size={18} className={netBalance >= 0 ? 'text-blue-600' : 'text-orange-600'} />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium">Net Balance</p>
-                        <p className={`text-lg font-bold ${netBalance >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
-                          {netBalance >= 0 ? '+' : '-'}₱{Math.abs(netBalance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Toolbar: search + filter + actions */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="flex-1 relative">
-                      <input
-                        value={transactionSearch}
-                        onChange={e => setTransactionSearch(e.target.value)}
-                        placeholder="Search by category, description..."
-                        className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                      <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    </div>
-                    <select
-                      value={transactionTypeFilter}
-                      onChange={e => setTransactionTypeFilter(e.target.value as '' | 'income' | 'expense')}
-                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    >
-                      <option value="">All Types</option>
-                      <option value="income">Income Only</option>
-                      <option value="expense">Expense Only</option>
-                    </select>
-                    <button onClick={fetchInventoryTransactions} className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors shrink-0">
-                      <RefreshCw size={14} className={inventoryLoading ? 'animate-spin' : ''} />
-                      Refresh
-                    </button>
-                    <button
-                      onClick={() => setShowAddTransaction(!showAddTransaction)}
-                      className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm shrink-0"
-                    >
-                      <Plus size={16} />
-                      Add Transaction
-                    </button>
-                  </div>
-
-                  {showAddTransaction && (
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                      <h4 className="font-semibold text-gray-900 mb-4">New Transaction</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                          <select value={newTransaction.type} onChange={e => setNewTransaction({...newTransaction, type: e.target.value as 'income' | 'expense'})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                            <option value="income">Income</option>
-                            <option value="expense">Expense</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                          <input value={newTransaction.category} onChange={e => setNewTransaction({...newTransaction, category: e.target.value})} placeholder="e.g. Food, Utilities" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
-                          <input type="number" value={newTransaction.amount} onChange={e => setNewTransaction({...newTransaction, amount: e.target.value})} placeholder="0.00" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                          <input type="date" value={newTransaction.transaction_date} onChange={e => setNewTransaction({...newTransaction, transaction_date: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                        </div>
-                        <div className="sm:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                          <input value={newTransaction.description} onChange={e => setNewTransaction({...newTransaction, description: e.target.value})} placeholder="Optional description" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                        </div>
-                      </div>
-                      <div className="flex gap-3 mt-4">
-                        <button onClick={handleAddTransaction} disabled={transactionSaving} className="bg-primary text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors">
-                          {transactionSaving ? 'Saving...' : 'Save Transaction'}
-                        </button>
-                        <button onClick={() => setShowAddTransaction(false)} className="bg-gray-100 text-gray-700 px-5 py-2 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors">
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                    {inventoryLoading ? (
-                      <div className="p-8 text-center text-gray-400">Loading...</div>
-                    ) : filteredTx.length === 0 ? (
-                      <div className="p-8 text-center text-gray-400">{transactionSearch || transactionTypeFilter ? 'No transactions match your search.' : 'No transactions found.'}</div>
-                    ) : (
-                      <>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead className="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Date</th>
-                                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Type</th>
-                                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Category</th>
-                                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Description</th>
-                                  <th className="text-right px-4 py-3 font-semibold text-gray-700">Amount</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-50">
-                                {pagedTx.map(tx => (
-                                  <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-4 py-3 text-gray-600">{new Date(tx.transaction_date).toLocaleDateString()}</td>
-                                    <td className="px-4 py-3">
-                                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${tx.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {tx.type === 'income' ? '+ Income' : '- Expense'}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-700">{tx.category}</td>
-                                    <td className="px-4 py-3 text-gray-600">{tx.description || '—'}</td>
-                                    <td className={`px-4 py-3 text-right font-semibold ${tx.type === 'income' ? 'text-green-700' : 'text-red-700'}`}>{tx.amount}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                              <tfoot className="border-t-2 border-gray-200 bg-gray-50">
-                                <tr>
-                                  <td colSpan={4} className="px-4 py-3 font-semibold text-gray-700 text-right">Totals (filtered):</td>
-                                  <td className="px-4 py-3 text-right">
-                                    <div className="text-green-700 font-bold text-xs">+₱{totalIncome.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
-                                    <div className="text-red-700 font-bold text-xs">-₱{totalExpense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
-                                    <div className={`font-bold text-sm border-t border-gray-300 mt-1 pt-1 ${netBalance >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
-                                      {netBalance >= 0 ? '+' : '-'}₱{Math.abs(netBalance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-                                    </div>
-                                  </td>
-                                </tr>
-                              </tfoot>
-                            </table>
-                          </div>
-                          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
-                            <p className="text-xs text-gray-600">
-                              Showing {(safeTransactionPage - 1) * txPerPage + 1} to {Math.min(safeTransactionPage * txPerPage, filteredTx.length)} of {filteredTx.length} transactions
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => setTransactionPage(prev => Math.max(1, prev - 1))}
-                                disabled={safeTransactionPage === 1}
-                                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-                              >
-                                Previous
-                              </button>
-                              <span className="text-xs text-gray-600 font-medium">Page {safeTransactionPage} of {transactionTotalPages}</span>
-                              <button
-                                onClick={() => setTransactionPage(prev => Math.min(transactionTotalPages, prev + 1))}
-                                disabled={safeTransactionPage === transactionTotalPages}
-                                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-                              >
-                                Next
-                              </button>
-                            </div>
-                          </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {inventorySubTab === 'stock-log' && (
-              <div className="space-y-4">
-                <div className="bg-amber-50 rounded-2xl border border-amber-100 shadow-sm p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Stock Receiving & Issuance Log</h3>
-                  <p className="text-sm text-gray-500 mb-4">All stock movements — deliveries received and items issued to staff.</p>
-                  
-                  {stockTransactions.length === 0 ? (
-                    <p className="text-center text-gray-400 py-8">No stock transactions recorded yet.</p>
-                  ) : (
-                    <div className="overflow-x-auto rounded-xl border border-gray-200">
-                      <table className="min-w-full text-sm">
-                        <thead>
-                          <tr className="bg-gray-800 text-white">
-                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Date</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Type</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Item</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Category</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Qty</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Supplier</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Performed By</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold uppercase">Notes</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-100">
-                          {stockTransactions.map((tx) => (
-                            <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
-                              <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
-                                {new Date(tx.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${tx.type === 'received' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                  {tx.type === 'received' ? '📦 Received' : '📤 Issued'}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{tx.item_name}</td>
-                              <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tx.category}</td>
-                              <td className="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap">{tx.quantity} {tx.unit}</td>
-                              <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tx.supplier || '—'}</td>
-                              <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tx.performed_by}</td>
-                              <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{tx.notes || '—'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <ReceptionistInventory embedded />
         )}
 
         {/* Audit Trail Tab */}
@@ -2861,7 +2495,7 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-4 py-3 text-gray-700">{log.entity_type} #{log.entity_id}</td>
                           <td className="px-4 py-3 text-gray-600">{log.details}</td>
-                          <td className="px-4 py-3 text-gray-500 font-mono text-xs">{log.ip_address || '—'}</td>
+                          <td className="px-4 py-3 text-gray-500 font-mono text-xs">{log.ip_address || 'â€”'}</td>
                         </tr>
                       ))}
                     </tbody>

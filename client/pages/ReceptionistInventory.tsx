@@ -53,7 +53,7 @@ interface InventoryStats {
 
 const CATEGORIES = ['Housekeeping', 'Guest Amenities', 'Cleaning', 'Kitchen', 'Maintenance', 'Pool', 'Office', 'Other'];
 
-export default function ReceptionistInventory() {
+export default function ReceptionistInventory({ embedded = false }: { embedded?: boolean }) {
   const [activeTab, setActiveTab] = useState<'inventory' | 'stock-log' | 'transactions'>('inventory');
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>([]);
@@ -440,8 +440,9 @@ export default function ReceptionistInventory() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={embedded ? '' : 'min-h-screen bg-gray-50'}>
       {/* Header */}
+      {!embedded && (
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -452,9 +453,10 @@ export default function ReceptionistInventory() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <div className={embedded ? 'mt-0' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6'}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg shadow p-5">
             <div className="flex items-center justify-between">
