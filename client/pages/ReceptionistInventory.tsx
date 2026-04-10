@@ -326,7 +326,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
       category: item.category,
       quantity: String(item.quantity),
       unit: item.unit,
-      unit_price: String(parseFloat(String(item.unit_price).replace(/[₱,]/g, ''))),
+      unit_price: String(parseFloat(String(item.unit_price).replace(/[â‚±,]/g, ''))),
       min_stock: String(item.min_stock || 0),
       supplier: item.supplier || '',
       expiry_date: item.expiry_date ? item.expiry_date.split('T')[0] : ''
@@ -369,11 +369,11 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
 
   const calculateTotals = () => {
     const income = filteredFinancialTransactions.filter(t => t.type === 'income').reduce((sum, t) => {
-      const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+      const amount = parseFloat(t.amount.replace(/[â‚±,]/g, ''));
       return sum + (isNaN(amount) ? 0 : amount);
     }, 0);
     const expenses = filteredFinancialTransactions.filter(t => t.type === 'expense').reduce((sum, t) => {
-      const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+      const amount = parseFloat(t.amount.replace(/[â‚±,]/g, ''));
       return sum + (isNaN(amount) ? 0 : amount);
     }, 0);
     return { income, expenses, profit: income - expenses };
@@ -394,7 +394,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
   }, [newItem.quantity, newItem.unit_price]);
 
   const formatPrice = (price: string) => {
-    const numPrice = parseFloat(String(price).replace(/[₱,]/g, ''));
+    const numPrice = parseFloat(String(price).replace(/[â‚±,]/g, ''));
     if (isNaN(numPrice)) return '0';
     return numPrice.toLocaleString();
   };
@@ -446,8 +446,8 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/receptionist/dashboard')} className="text-blue-600 hover:text-blue-700">
-              ← Back to Dashboard
+            <button onClick={() => navigate('/receptionist/dashboard')} className="text-primary hover:text-primary/80">
+              â† Back to Dashboard
             </button>
             <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
           </div>
@@ -465,7 +465,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                 <p className="text-2xl font-bold text-gray-900">{stats?.total_items || inventory.length}</p>
                 <p className="text-xs text-gray-500">{stats?.total_categories || 0} categories</p>
               </div>
-              <Package className="text-blue-600" size={32} />
+              <Package className="text-primary" size={32} />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-5">
@@ -496,23 +496,23 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Monthly Cost</p>
-                <p className="text-2xl font-bold text-blue-600">₱{(stats?.monthly_cost || 0).toLocaleString()}</p>
+                <p className="text-2xl font-bold text-primary">â‚±{(stats?.monthly_cost || 0).toLocaleString()}</p>
                 <p className="text-xs text-gray-500">received items value</p>
               </div>
-              <BarChart3 className="text-blue-600" size={32} />
+              <BarChart3 className="text-primary" size={32} />
             </div>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <div className={embedded ? 'mt-4' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6'}>
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex gap-8">
             <button
               onClick={() => setActiveTab('inventory')}
               className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'inventory' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === 'inventory' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               <Package size={20} />
@@ -521,7 +521,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             <button
               onClick={() => setActiveTab('stock-log')}
               className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'stock-log' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === 'stock-log' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               <ArrowDownToLine size={20} />
@@ -530,7 +530,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             <button
               onClick={() => setActiveTab('transactions')}
               className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'transactions' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === 'transactions' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               <DollarSign size={20} />
@@ -541,7 +541,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12">
+      <div className={embedded ? 'mt-4 pb-6' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12'}>
 
         {/* =========== INVENTORY ITEMS TAB =========== */}
         {activeTab === 'inventory' && (
@@ -554,7 +554,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   placeholder="Search items..."
                   value={inventorySearchTerm}
                   onChange={(e) => { setInventorySearchTerm(e.target.value); setInventoryPage(1); }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
                 <select
                   value={categoryFilter}
@@ -570,12 +570,12 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
                 >
                   <option value="all">All Stock</option>
-                  <option value="low">⚠️ Low Stock</option>
-                  <option value="expiring">📅 Expiring Soon</option>
+                  <option value="low">âš ï¸ Low Stock</option>
+                  <option value="expiring">ðŸ“… Expiring Soon</option>
                 </select>
                 <button
                   onClick={() => setShowAddItem(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2"
                 >
                   <Plus size={20} />
                   Add Item
@@ -585,7 +585,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
 
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-amber-50 border-b-2 border-amber-200">
+                <thead className="bg-primary/5 border-b-2 border-primary/20">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">ID</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Item Name</th>
@@ -608,15 +608,15 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                       <td className="px-4 py-3 text-sm font-semibold text-black">{item.item_name}</td>
                       <td className="px-4 py-3 text-sm text-black">{item.category}</td>
                       <td className="px-4 py-3 text-sm text-black font-semibold">{item.quantity} {item.unit}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{item.min_stock > 0 ? `${item.min_stock} ${item.unit}` : '—'}</td>
-                      <td className="px-4 py-3 text-sm text-black">₱{formatPrice(String(item.unit_price))}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{item.supplier || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{item.min_stock > 0 ? `${item.min_stock} ${item.unit}` : 'â€”'}</td>
+                      <td className="px-4 py-3 text-sm text-black">â‚±{formatPrice(String(item.unit_price))}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{item.supplier || 'â€”'}</td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {item.expiry_date ? (
                           <span className={isExpiringSoon(item) ? 'text-orange-600 font-semibold' : ''}>
                             {new Date(item.expiry_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                           </span>
-                        ) : '—'}
+                        ) : 'â€”'}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         {isLowStock(item) && (
@@ -636,7 +636,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                             <ArrowDownToLine size={16} />
                           </button>
                           <button onClick={() => openIssueModal(item)} title="Issue Stock"
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                            className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors">
                             <ArrowUpFromLine size={16} />
                           </button>
                           <button onClick={() => openEditModal(item)} title="Edit Item"
@@ -668,7 +668,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   </button>
                   {Array.from({ length: totalInventoryPages }, (_, i) => i + 1).map(p => (
                     <button key={p} onClick={() => setInventoryPage(p)}
-                      className={`px-3 py-1 rounded-lg text-sm font-medium ${p === inventoryPage ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-100'}`}>
+                      className={`px-3 py-1 rounded-lg text-sm font-medium ${p === inventoryPage ? 'bg-primary text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-100'}`}>
                       {p}
                     </button>
                   ))}
@@ -687,11 +687,11 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">Stock Receiving & Issuance Log</h2>
-              <p className="text-sm text-gray-500 mt-1">All stock movements — deliveries received and items issued to staff.</p>
+              <p className="text-sm text-gray-500 mt-1">All stock movements â€” deliveries received and items issued to staff.</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-amber-50 border-b-2 border-amber-200">
+                <thead className="bg-primary/5 border-b-2 border-primary/20">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Date</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Type</th>
@@ -713,17 +713,17 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          t.type === 'received' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                          t.type === 'received' ? 'bg-green-100 text-green-800' : 'bg-primary/10 text-primary'
                         }`}>
-                          {t.type === 'received' ? '📦 Received' : '📤 Issued'}
+                          {t.type === 'received' ? 'ðŸ“¦ Received' : 'ðŸ“¤ Issued'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-black">{t.item_name}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{t.category}</td>
                       <td className="px-6 py-4 text-sm font-semibold text-black">{t.quantity} {t.unit}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{t.supplier || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{t.supplier || 'â€”'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{t.performed_by}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{t.notes || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{t.notes || 'â€”'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -741,7 +741,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Total Income</p>
-                    <p className="text-2xl font-bold text-green-600">₱{totals.income.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-green-600">â‚±{totals.income.toLocaleString()}</p>
                   </div>
                   <TrendingUp className="text-green-600" size={32} />
                 </div>
@@ -750,7 +750,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Total Expenses</p>
-                    <p className="text-2xl font-bold text-red-600">₱{totals.expenses.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-red-600">â‚±{totals.expenses.toLocaleString()}</p>
                   </div>
                   <TrendingDown className="text-red-600" size={32} />
                 </div>
@@ -759,11 +759,11 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Net Profit</p>
-                    <p className={`text-2xl font-bold ${totals.profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      ₱{totals.profit.toLocaleString()}
+                    <p className={`text-2xl font-bold ${totals.profit >= 0 ? 'text-primary' : 'text-red-600'}`}>
+                      â‚±{totals.profit.toLocaleString()}
                     </p>
                   </div>
-                  <DollarSign className="text-blue-600" size={32} />
+                  <DollarSign className="text-primary" size={32} />
                 </div>
               </div>
             </div>
@@ -777,12 +777,12 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                     placeholder="Search transactions..."
                     value={transactionSearchTerm}
                     onChange={(e) => setTransactionSearchTerm(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                   <button
                     onClick={() => setShowFilters(!showFilters)}
                     className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                      showFilters || hasActiveFilters ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      showFilters || hasActiveFilters ? 'bg-primary text-white hover:bg-primary/90' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     <Filter size={20} />
@@ -790,7 +790,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   </button>
                   <button
                     onClick={() => setShowAddTransaction(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2"
                   >
                     <Plus size={20} />
                     Add Transaction
@@ -803,7 +803,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="font-semibold text-gray-900">Filter Transactions</h3>
                     {hasActiveFilters && (
-                      <button onClick={clearFilters} className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                      <button onClick={clearFilters} className="text-sm text-primary hover:text-primary/80 flex items-center gap-1">
                         <X size={16} /> Clear All
                       </button>
                     )}
@@ -845,7 +845,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
 
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-amber-50 border-b-2 border-amber-200">
+                  <thead className="bg-primary/5 border-b-2 border-primary/20">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Date</th>
                       <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Type</th>
@@ -889,7 +889,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
         <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
-              <Plus className="text-blue-600" size={24} /> Add New Item
+              <Plus className="text-primary" size={24} /> Add New Item
             </DialogTitle>
             <DialogDescription className="text-gray-600">Fill in the details for the new inventory item.</DialogDescription>
           </DialogHeader>
@@ -899,13 +899,13 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                 <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
                 <input type="text" placeholder="Enter item name" value={newItem.item_name}
                   onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                   <select value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required>
                     <option value="">Select category</option>
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -914,7 +914,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   <label className="block text-sm font-medium text-gray-700 mb-1">Unit *</label>
                   <input type="text" placeholder="pcs, kg, etc." value={newItem.unit}
                     onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -922,19 +922,19 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
                   <input type="number" placeholder="0" value={newItem.quantity}
                     onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (₱) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (â‚±) *</label>
                   <input type="number" step="0.01" placeholder="0.00" value={newItem.unit_price}
                     onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">PAR Level</label>
                   <input type="number" placeholder="Min stock" value={newItem.min_stock}
                     onChange={(e) => setNewItem({ ...newItem, min_stock: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -942,28 +942,28 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
                   <input type="text" placeholder="Supplier name" value={newItem.supplier}
                     onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
                   <input type="date" value={newItem.expiry_date}
                     onChange={(e) => setNewItem({ ...newItem, expiry_date: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
               </div>
             </div>
             {(newItem.quantity && newItem.unit_price) && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">Calculated Total Value:</span>
-                  <span className="text-2xl font-bold text-blue-600">₱{calculatedTotal.toLocaleString()}</span>
+                  <span className="text-2xl font-bold text-primary">â‚±{calculatedTotal.toLocaleString()}</span>
                 </div>
               </div>
             )}
             <DialogFooter className="gap-2">
               <button type="button" onClick={() => { setShowAddItem(false); setNewItem(emptyNewItem); }}
                 className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
-              <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Save Item</button>
+              <button type="submit" className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 font-semibold">Save Item</button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -974,7 +974,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
         <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
-              <Edit className="text-blue-600" size={24} /> Edit Item
+              <Edit className="text-primary" size={24} /> Edit Item
             </DialogTitle>
             <DialogDescription className="text-gray-600">Update item details. Quantity changes should use Receive/Issue Stock.</DialogDescription>
           </DialogHeader>
@@ -984,13 +984,13 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                 <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
                 <input type="text" value={editItem.item_name}
                   onChange={(e) => setEditItem({ ...editItem, item_name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                   <select value={editItem.category} onChange={(e) => setEditItem({ ...editItem, category: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required>
                     <option value="">Select category</option>
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -999,21 +999,21 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   <label className="block text-sm font-medium text-gray-700 mb-1">Unit *</label>
                   <input type="text" value={editItem.unit}
                     onChange={(e) => setEditItem({ ...editItem, unit: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (₱) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (â‚±) *</label>
                   <input type="number" step="0.01" value={editItem.unit_price}
                     onChange={(e) => setEditItem({ ...editItem, unit_price: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">PAR Level (Min Stock)</label>
                   <input type="number" value={editItem.min_stock}
                     onChange={(e) => setEditItem({ ...editItem, min_stock: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -1021,20 +1021,20 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
                   <input type="text" placeholder="Supplier name" value={editItem.supplier}
                     onChange={(e) => setEditItem({ ...editItem, supplier: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
                   <input type="date" value={editItem.expiry_date}
                     onChange={(e) => setEditItem({ ...editItem, expiry_date: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
               </div>
             </div>
             <DialogFooter className="gap-2">
               <button type="button" onClick={() => setShowEditItem(false)}
                 className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
-              <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Save Changes</button>
+              <button type="submit" className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 font-semibold">Save Changes</button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1100,7 +1100,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
         <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
-              <ArrowUpFromLine className="text-blue-600" size={24} /> Issue Stock
+              <ArrowUpFromLine className="text-primary" size={24} /> Issue Stock
             </DialogTitle>
             <DialogDescription className="text-gray-600">
               Issue stock for <strong>{selectedItem?.item_name}</strong> (Available: {selectedItem?.quantity} {selectedItem?.unit})
@@ -1111,18 +1111,18 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
               <label className="block text-sm font-medium text-gray-700 mb-1">Quantity to Issue *</label>
               <input type="number" min="1" max={selectedItem?.quantity} placeholder="How many to issue?" value={issueForm.quantity}
                 onChange={(e) => setIssueForm({ ...issueForm, quantity: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Notes / Reason</label>
               <input type="text" placeholder="e.g., For Room 101 cleaning" value={issueForm.notes}
                 onChange={(e) => setIssueForm({ ...issueForm, notes: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" />
             </div>
             <DialogFooter className="gap-2">
               <button type="button" onClick={() => setShowIssueStock(false)}
                 className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
-              <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Issue Stock</button>
+              <button type="submit" className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 font-semibold">Issue Stock</button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1133,7 +1133,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
         <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
-              <DollarSign className="text-blue-600" size={24} /> Add Transaction
+              <DollarSign className="text-primary" size={24} /> Add Transaction
             </DialogTitle>
             <DialogDescription className="text-gray-600">Record a financial transaction.</DialogDescription>
           </DialogHeader>
@@ -1162,7 +1162,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₱) *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount (â‚±) *</label>
                 <input type="number" step="0.01" placeholder="0.00" value={newTransaction.amount}
                   onChange={(e) => setNewTransaction({ ...newTransaction, amount: e.target.value })}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900" required />
