@@ -326,7 +326,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
       category: item.category,
       quantity: String(item.quantity),
       unit: item.unit,
-      unit_price: String(parseFloat(String(item.unit_price).replace(/[â‚±,]/g, ''))),
+      unit_price: String(parseFloat(String(item.unit_price).replace(/[\u20b1,]/g, ''))),
       min_stock: String(item.min_stock || 0),
       supplier: item.supplier || '',
       expiry_date: item.expiry_date ? item.expiry_date.split('T')[0] : ''
@@ -369,11 +369,11 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
 
   const calculateTotals = () => {
     const income = filteredFinancialTransactions.filter(t => t.type === 'income').reduce((sum, t) => {
-      const amount = parseFloat(t.amount.replace(/[â‚±,]/g, ''));
+      const amount = parseFloat(t.amount.replace(/[\u20b1,]/g, ''));
       return sum + (isNaN(amount) ? 0 : amount);
     }, 0);
     const expenses = filteredFinancialTransactions.filter(t => t.type === 'expense').reduce((sum, t) => {
-      const amount = parseFloat(t.amount.replace(/[â‚±,]/g, ''));
+      const amount = parseFloat(t.amount.replace(/[\u20b1,]/g, ''));
       return sum + (isNaN(amount) ? 0 : amount);
     }, 0);
     return { income, expenses, profit: income - expenses };
@@ -394,7 +394,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
   }, [newItem.quantity, newItem.unit_price]);
 
   const formatPrice = (price: string) => {
-    const numPrice = parseFloat(String(price).replace(/[â‚±,]/g, ''));
+    const numPrice = parseFloat(String(price).replace(/[\u20b1,]/g, ''));
     if (isNaN(numPrice)) return '0';
     return numPrice.toLocaleString();
   };
@@ -496,7 +496,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Monthly Cost</p>
-                <p className="text-2xl font-bold text-primary">â‚±{(stats?.monthly_cost || 0).toLocaleString()}</p>
+                <p className="text-2xl font-bold text-primary">{"\u20b1"}{(stats?.monthly_cost || 0).toLocaleString()}</p>
                 <p className="text-xs text-gray-500">received items value</p>
               </div>
               <BarChart3 className="text-primary" size={32} />
@@ -609,7 +609,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                       <td className="px-4 py-3 text-sm text-black">{item.category}</td>
                       <td className="px-4 py-3 text-sm text-black font-semibold">{item.quantity} {item.unit}</td>
                       <td className="px-4 py-3 text-sm text-gray-600">{item.min_stock > 0 ? `${item.min_stock} ${item.unit}` : 'â€”'}</td>
-                      <td className="px-4 py-3 text-sm text-black">â‚±{formatPrice(String(item.unit_price))}</td>
+                      <td className="px-4 py-3 text-sm text-black">{"\u20b1"}{formatPrice(String(item.unit_price))}</td>
                       <td className="px-4 py-3 text-sm text-gray-600">{item.supplier || 'â€”'}</td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {item.expiry_date ? (
@@ -741,7 +741,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Total Income</p>
-                    <p className="text-2xl font-bold text-green-600">â‚±{totals.income.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-green-600">{"\u20b1"}{totals.income.toLocaleString()}</p>
                   </div>
                   <TrendingUp className="text-green-600" size={32} />
                 </div>
@@ -750,7 +750,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Total Expenses</p>
-                    <p className="text-2xl font-bold text-red-600">â‚±{totals.expenses.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-red-600">{"\u20b1"}{totals.expenses.toLocaleString()}</p>
                   </div>
                   <TrendingDown className="text-red-600" size={32} />
                 </div>
@@ -760,7 +760,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   <div>
                     <p className="text-sm text-gray-600">Net Profit</p>
                     <p className={`text-2xl font-bold ${totals.profit >= 0 ? 'text-primary' : 'text-red-600'}`}>
-                      â‚±{totals.profit.toLocaleString()}
+                      {"\u20b1"}{totals.profit.toLocaleString()}
                     </p>
                   </div>
                   <DollarSign className="text-primary" size={32} />
@@ -925,7 +925,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (â‚±) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price ({"\u20b1"}) *</label>
                   <input type="number" step="0.01" placeholder="0.00" value={newItem.unit_price}
                     onChange={(e) => setNewItem({ ...newItem, unit_price: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
@@ -956,7 +956,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">Calculated Total Value:</span>
-                  <span className="text-2xl font-bold text-primary">â‚±{calculatedTotal.toLocaleString()}</span>
+                  <span className="text-2xl font-bold text-primary">{"\u20b1"}{calculatedTotal.toLocaleString()}</span>
                 </div>
               </div>
             )}
@@ -1004,7 +1004,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (â‚±) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price ({"\u20b1"}) *</label>
                   <input type="number" step="0.01" value={editItem.unit_price}
                     onChange={(e) => setEditItem({ ...editItem, unit_price: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent" required />
@@ -1162,7 +1162,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount (â‚±) *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount ({"\u20b1"}) *</label>
                 <input type="number" step="0.01" placeholder="0.00" value={newTransaction.amount}
                   onChange={(e) => setNewTransaction({ ...newTransaction, amount: e.target.value })}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900" required />
