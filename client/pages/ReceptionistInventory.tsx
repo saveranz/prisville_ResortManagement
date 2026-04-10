@@ -548,7 +548,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200 flex flex-wrap justify-between items-center gap-3">
               <h2 className="text-lg font-semibold text-gray-900">Inventory Items</h2>
-              <div className="flex gap-2 items-center flex-wrap">
+              <div className="flex gap-2 items-center flex-nowrap overflow-x-auto whitespace-nowrap min-w-0">
                 <input
                   type="text"
                   placeholder="Search items..."
