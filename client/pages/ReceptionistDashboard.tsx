@@ -2181,19 +2181,20 @@ export default function ReceptionistDashboard() {
                 )}
               </div>
             </div>
-            // --- Stay History Search State and Filtering ---
-            const [stayHistorySearch, setStayHistorySearch] = useState('');
-            const filteredStayHistory = useMemo(() => {
-              if (!stayHistorySearch) return stayHistory;
-              const s = stayHistorySearch.toLowerCase();
-              return stayHistory.filter((stay: StayHistory) =>
-                (stay.guest_name && stay.guest_name.toLowerCase().includes(s)) ||
-                (stay.user_email && stay.user_email.toLowerCase().includes(s)) ||
-                (stay.room_name && stay.room_name.toLowerCase().includes(s)) ||
-                (stay.amenity_name && stay.amenity_name.toLowerCase().includes(s)) ||
-                (stay.booking_type && stay.booking_type.toLowerCase().includes(s))
-              );
-            }, [stayHistory, stayHistorySearch]);
+
+          // --- Stay History Search State and Filtering ---
+          const [stayHistorySearch, setStayHistorySearch] = useState('');
+          const filteredStayHistory = useMemo(() => {
+            if (!stayHistorySearch) return stayHistory;
+            const s = stayHistorySearch.toLowerCase();
+            return stayHistory.filter((stay: StayHistory) =>
+              (stay.guest_name && stay.guest_name.toLowerCase().includes(s)) ||
+              (stay.user_email && stay.user_email.toLowerCase().includes(s)) ||
+              (stay.room_name && stay.room_name.toLowerCase().includes(s)) ||
+              (stay.amenity_name && stay.amenity_name.toLowerCase().includes(s)) ||
+              (stay.booking_type && stay.booking_type.toLowerCase().includes(s))
+            );
+          }, [stayHistory, stayHistorySearch]);
           )}
 
           {/* Booking Issues Tab */}
