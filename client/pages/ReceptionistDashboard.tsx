@@ -1879,7 +1879,7 @@ export default function ReceptionistDashboard() {
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Stay Period</th>
-                          <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guests</th>
+                          <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Guests</th>
                           <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amount</th>
                           <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
                         </tr>
