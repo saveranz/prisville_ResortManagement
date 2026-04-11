@@ -1,4 +1,10 @@
-﻿import { useState, useEffect, useMemo } from "react";
+﻿// Utility to format peso values
+function formatPeso(value: string | number) {
+  const num = Number(value);
+  if (isNaN(num)) return '-';
+  return "\u20b1" + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -2106,6 +2112,15 @@ export default function ReceptionistDashboard() {
               <div className="p-6 border-b border-gray-200">
                 <h3 className="text-lg font-display font-bold text-gray-900">Check-In / Check-Out History</h3>
                 <p className="text-sm text-gray-600 mt-1">Complete record of all guest check-ins and check-outs</p>
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Search guest, room, or type..."
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-64"
+                    value={stayHistorySearch || ''}
+                    onChange={e => setStayHistorySearch(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -2122,7 +2137,7 @@ export default function ReceptionistDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {stayHistory.map((stay: StayHistory) => (
+                    {filteredStayHistory.map((stay: StayHistory) => (
                       <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3">
                           <div className="min-w-0">
@@ -2146,7 +2161,7 @@ export default function ReceptionistDashboard() {
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-black">{stay.nights_stayed || '-'}</td>
                         <td className="px-4 py-3 text-sm font-bold text-green-600">
-                          {stay.total_spent ? `â‚±${parseFloat(stay.total_spent).toLocaleString()}` : '-'}
+                          {formatPeso(stay.total_spent)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {stay.actual_check_out ? (
@@ -2159,13 +2174,26 @@ export default function ReceptionistDashboard() {
                     ))}
                   </tbody>
                 </table>
-                {stayHistory.length === 0 && (
+                {filteredStayHistory.length === 0 && (
                   <div className="text-center py-12 text-gray-500">
                     <p>No check-in/check-out history records</p>
                   </div>
                 )}
               </div>
             </div>
+            // --- Stay History Search State and Filtering ---
+            const [stayHistorySearch, setStayHistorySearch] = useState('');
+            const filteredStayHistory = useMemo(() => {
+              if (!stayHistorySearch) return stayHistory;
+              const s = stayHistorySearch.toLowerCase();
+              return stayHistory.filter((stay: StayHistory) =>
+                (stay.guest_name && stay.guest_name.toLowerCase().includes(s)) ||
+                (stay.user_email && stay.user_email.toLowerCase().includes(s)) ||
+                (stay.room_name && stay.room_name.toLowerCase().includes(s)) ||
+                (stay.amenity_name && stay.amenity_name.toLowerCase().includes(s)) ||
+                (stay.booking_type && stay.booking_type.toLowerCase().includes(s))
+              );
+            }, [stayHistory, stayHistorySearch]);
           )}
 
           {/* Booking Issues Tab */}
