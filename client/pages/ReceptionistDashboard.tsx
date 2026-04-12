@@ -1156,7 +1156,7 @@ export default function ReceptionistDashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-50">
       {/* Mobile Menu Backdrop */}
       {mobileMenuOpen && (
         <div 
@@ -1168,7 +1168,7 @@ export default function ReceptionistDashboard() {
       {/* Sidebar */}
       <div className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-64 bg-white shadow-xl flex flex-col border-r border-primary/20
+        w-4/5 max-w-xs lg:w-64 bg-white shadow-xl flex flex-col border-r border-primary/20
         transform transition-transform duration-300 ease-in-out
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
@@ -1184,7 +1184,7 @@ export default function ReceptionistDashboard() {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-2 sm:p-4 space-y-2 overflow-y-auto">
           <button
             onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
@@ -1343,9 +1343,9 @@ export default function ReceptionistDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto min-w-0">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 shadow-sm">
+        <div className="bg-white border-b border-gray-200 px-2 sm:px-4 lg:px-8 py-3 sm:py-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             {/* Mobile Menu Button */}
             <button
@@ -1406,11 +1406,11 @@ export default function ReceptionistDashboard() {
         </div>
 
         {/* Content Area */}
-        <div className="p-4 sm:p-6 lg:p-8 bg-gray-50">
+        <div className="p-2 sm:p-4 lg:p-8 bg-gray-50">
           {activeTab === 'overview' && (
             <>
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-8">
                 <div className="bg-white rounded-xl shadow-md border-l-4 border-primary p-6 hover:shadow-lg transition-all">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1477,7 +1477,7 @@ export default function ReceptionistDashboard() {
               </div>
 
               {/* Quick Actions */}
-              <div className="grid grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
                 <div className="bg-white rounded-2xl shadow-md border-l-4 border-primary p-6 hover:shadow-lg transition-all">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-display font-semibold text-gray-900 tracking-tight">Room Bookings</h3>
@@ -1528,7 +1528,7 @@ export default function ReceptionistDashboard() {
               </div>
 
               {/* Recent Bookings */}
-              <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 hover:shadow-lg transition-all">
+              <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition-all">
                 <h3 className="text-xl font-display font-bold text-gray-900 mb-5 flex items-center gap-2 tracking-tight">
                   <div className="w-8 h-8 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center">
                     <Clock className="text-accent" size={20} />
@@ -1541,16 +1541,16 @@ export default function ReceptionistDashboard() {
           )}
           
           {activeTab === 'rooms' && (
-            <div className="bg-white rounded-2xl shadow-md border border-gray-200">
+            <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-x-auto">
               {/* Title Header */}
-              <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+              <div className="px-3 pt-4 pb-2 sm:px-6 sm:pt-6 sm:pb-4 border-b border-gray-100">
                 <h3 className="text-xl font-bold text-gray-900">Room Booking Reservations</h3>
                 <p className="text-sm text-gray-600 mt-1">Manage and review all room booking requests</p>
               </div>
               
               {/* Search and Filter UI */}
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex flex-col sm:flex-row gap-4">
+              <div className="p-3 sm:p-6 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
                     <input
@@ -1561,7 +1561,7 @@ export default function ReceptionistDashboard() {
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
-                  <div className="w-full sm:w-48">
+                  <div className="w-full sm:w-48 mt-2 sm:mt-0">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                     <select
                       value={roomStatusFilter}
@@ -1575,7 +1575,7 @@ export default function ReceptionistDashboard() {
                     </select>
                   </div>
                   {(roomSearchTerm || roomStatusFilter !== 'all') && (
-                    <div className="flex items-end">
+                    <div className="flex items-end mt-2 sm:mt-0">
                       <button
                         onClick={() => {
                           setRoomSearchTerm('');
@@ -1589,7 +1589,7 @@ export default function ReceptionistDashboard() {
                     </div>
                   )}
                 </div>
-                <div className="mt-3 text-sm text-gray-600">
+                <div className="mt-2 text-xs sm:text-sm text-gray-600">
                   Showing <span className="font-semibold text-primary">{paginatedRoomBookings.length}</span> of {filteredRoomBookings.length} bookings
                   {filteredRoomBookings.length !== roomBookings.length && ` (filtered from ${roomBookings.length} total)`}
                 </div>
