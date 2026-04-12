@@ -61,7 +61,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [showAddItem, setShowAddItem] = useState(false);
   const [showEditItem, setShowEditItem] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [showReceiveStock, setShowReceiveStock] = useState(false);
   const [showIssueStock, setShowIssueStock] = useState(false);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
@@ -220,7 +220,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
     }
   };
 
-  const handleDeleteItem = async () => {
+  const handleArchiveItem = async () => {
     if (!selectedItem) return;
     try {
       const response = await fetch('/api/inventory', {
@@ -231,16 +231,16 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
       });
       const data = await response.json();
       if (data.success) {
-        setShowDeleteConfirm(false);
+        setShowArchiveConfirm(false);
         setSelectedItem(null);
         fetchInventory();
         fetchStats();
       } else {
-        alert(data.message || 'Failed to delete item');
+        alert(data.message || 'Failed to archive item');
       }
     } catch (error) {
-      console.error('Error deleting item:', error);
-      alert('Failed to delete item');
+      console.error('Error archiving item:', error);
+      alert('Failed to archive item');
     }
   };
 
@@ -643,8 +643,8 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                             className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                             <Edit size={16} />
                           </button>
-                          <button onClick={() => { setSelectedItem(item); setShowDeleteConfirm(true); }} title="Delete Item"
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          <button onClick={() => { setSelectedItem(item); setShowArchiveConfirm(true); }} title="Archive Item"
+                            className="p-1.5 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -1040,18 +1040,18 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      {/* Archive Confirmation */}
+      <AlertDialog open={showArchiveConfirm} onOpenChange={setShowArchiveConfirm}>
         <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Item</AlertDialogTitle>
+            <AlertDialogTitle>Archive Item</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{selectedItem?.item_name}</strong>? This will also delete all stock transaction history for this item. This action cannot be undone.
+              Are you sure you want to archive <strong>{selectedItem?.item_name}</strong>? This will hide the item from the inventory for non-admins, but keep all stock transaction history. You can restore it later if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedItem(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteItem} className="bg-red-600 text-white hover:bg-red-700">Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleArchiveItem} className="bg-yellow-600 text-white hover:bg-yellow-700">Archive</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

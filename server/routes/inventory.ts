@@ -5,10 +5,14 @@ import { ResultSetHeader, RowDataPacket } from "mysql2";
 // Get all inventory items
 export const getInventoryItems: RequestHandler = async (req, res) => {
   try {
-    const [items] = await db.query<RowDataPacket[]>(
-      `SELECT * FROM inventory_items ORDER BY id DESC`
-    );
-
+    // Optionally filter archived items
+    const showArchived = req.query.showArchived === '1' || req.query.showArchived === 'true';
+    let query = 'SELECT * FROM inventory_items';
+    if (!showArchived) {
+      query += ' WHERE archived = 0';
+    }
+    query += ' ORDER BY id DESC';
+    const [items] = await db.query<RowDataPacket[]>(query);
     return res.json({ success: true, items });
   } catch (error) {
     console.error("Error fetching inventory items:", error);
@@ -25,7 +29,7 @@ export const getInventoryStats: RequestHandler = async (req, res) => {
         SUM(CASE WHEN quantity <= min_stock AND min_stock > 0 THEN 1 ELSE 0 END) as low_stock_count,
         SUM(CASE WHEN expiry_date IS NOT NULL AND expiry_date <= DATE_ADD(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as expiring_soon_count,
         COUNT(DISTINCT category) as total_categories
-       FROM inventory_items`
+       FROM inventory_items WHERE archived = 0`
     );
 
     // Get top used items (most issued in last 30 days)
@@ -71,8 +75,8 @@ export const addInventoryItem: RequestHandler = async (req, res) => {
     }
 
     const [result] = await db.query<ResultSetHeader>(
-      `INSERT INTO inventory_items (item_name, category, quantity, unit, unit_price, min_stock, supplier, expiry_date) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO inventory_items (item_name, category, quantity, unit, unit_price, min_stock, supplier, expiry_date, archived) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)`,
       [item_name, category, parseInt(quantity), unit, `₱${parseFloat(unit_price)}`, parseInt(min_stock) || 0, supplier || null, expiry_date || null]
     );
 
@@ -120,8 +124,9 @@ export const deleteInventoryItem: RequestHandler = async (req, res) => {
       return res.json({ success: false, message: "Item ID is required" });
     }
 
-    await db.query(`DELETE FROM inventory_items WHERE id = ?`, [itemId]);
-    return res.json({ success: true, message: "Item deleted successfully" });
+    // Archive instead of delete
+    await db.query(`UPDATE inventory_items SET archived = 1, last_updated = NOW() WHERE id = ?`, [itemId]);
+    return res.json({ success: true, message: "Item archived successfully" });
   } catch (error) {
     console.error("Error deleting inventory item:", error);
     return res.status(500).json({ success: false, message: "Failed to delete item" });

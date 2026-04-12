@@ -512,7 +512,8 @@ export default function AdminDashboard() {
   const fetchInventory = async () => {
     setInventoryLoading(true);
     try {
-      const res = await fetch('/api/inventory', { credentials: 'include' });
+      // Admin should see all items, including archived
+      const res = await fetch('/api/inventory?showArchived=1', { credentials: 'include' });
       const data = await res.json();
       if (data.success) setInventory(data.items || []);
     } catch (error) {
