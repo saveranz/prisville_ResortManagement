@@ -500,54 +500,14 @@ export default function Index() {
               >
                 Book Now
               </button>
-                  {/* Book Now Modal */}
-                  <BookNowModal
-                    isOpen={isBookNowModalOpen}
-                    onClose={() => setIsBookNowModalOpen(false)}
-                    onBookDayPass={handleBookDayPass}
-                    onBookRoom={handleBookRoom}
-                    onBookAmenity={handleBookAmenity}
-                  />
-                  {/* Day Pass Section */}
-                  <section id="day-pass" className="relative py-16 sm:py-20 md:py-32 px-4 md:px-8 lg:px-12 bg-yellow-50 overflow-hidden">
-                    <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-10 md:gap-16">
-                      {/* Left: Info */}
-                      <div className="flex-1 animate-slideInLeft">
-                        <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-yellow-900 mb-4">Day Pass Booking</h2>
-                        <p className="text-yellow-800 text-base md:text-lg mb-6">Enjoy full access to all resort facilities, pools, and common areas from <b>6AM to 11PM</b> with our affordable day pass. Perfect for families, friends, and groups!</p>
-                        <ul className="list-disc pl-6 text-yellow-900 mb-6">
-                          <li>Unlimited pool access</li>
-                          <li>Use of common areas and amenities</li>
-                          <li>Free parking</li>
-                          <li>Discounts on select amenities</li>
-                        </ul>
-                        <button
-                          className="px-8 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg shadow transition"
-                          onClick={() => setIsDayPassModalOpen(true)}
-                        >
-                          Book Day Pass
-                        </button>
-                      </div>
-                      {/* Right: Image */}
-                      <div className="flex-1 animate-slideInRight">
-                        <img src="/daypass-pool.jpg" alt="Day Pass Pool" className="rounded-2xl shadow-2xl w-full max-w-md mx-auto" />
-                      </div>
-                    </div>
-                  </section>
-            </div>
-
-            {/* Right Image */}
-            <div className="relative animate-slideInRight mt-8 lg:mt-0" style={{ animationDelay: '0.2s' }}>
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <img
-                    src="/backgroundimage.png"
-                  alt="Prisville Triangle Resort Pool"
-                  className="w-full h-auto object-cover"
-                  loading="lazy"
-                />
-              </div>
-              {/* Decorative Element */}
-              <div className="absolute -bottom-6 -right-6 w-32 sm:w-48 h-32 sm:h-48 bg-yellow-600/20 rounded-2xl -z-10 animate-float"></div>
+              {/* Book Now Modal */}
+              <BookNowModal
+                isOpen={isBookNowModalOpen}
+                onClose={() => setIsBookNowModalOpen(false)}
+                onBookDayPass={handleBookDayPass}
+                onBookRoom={handleBookRoom}
+                onBookAmenity={handleBookAmenity}
+              />
             </div>
           </div>
         </div>
