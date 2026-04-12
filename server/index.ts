@@ -24,6 +24,7 @@ import { getDashboardStats, getAllUsers, updateUserRole, getGuestActivity, getRo
 import { generateBookingReport, generateRevenueReport, generateOccupancyReport, generateGuestReport } from "./routes/reports";
 import { getAllRooms, getAllAmenities, getDayPassStats, getRoomAvailabilityCalendar, createRoom, updateRoom, deleteRoom, getRoomExtraItems, addRoomExtraItem, updateRoomExtraItem, deleteRoomExtraItem } from "./routes/facilities";
 import { getAllSettings, updateSetting, updateMultipleSettings, resetSettings } from "./routes/siteSettings";
+import { getPaymentSettings, updatePaymentSettings } from "./routes/paymentSettings";
 import { getAllFAQs, getAdminFAQs, createFAQ, updateFAQ, deleteFAQ, submitInquiry, getAllInquiries, getInquiryStats, updateInquiryStatus, respondToInquiry } from "./routes/faq";
 import { migrateAuditLogs, getAuditLogs } from "./routes/auditLog";
 import { requireAuth, requireAdmin, requireStaff, requireReceptionist } from "./middleware/auth";
@@ -307,6 +308,10 @@ export function createServer() {
   app.put("/api/site-settings/:settingKey", requireAdmin, updateSetting);
   app.put("/api/site-settings", requireAdmin, updateMultipleSettings);
   app.post("/api/site-settings/reset", requireAdmin, resetSettings);
+
+  // Payment Settings routes
+  app.get("/api/payment-settings", getPaymentSettings);
+  app.put("/api/payment-settings", requireAdmin, updatePaymentSettings);
   
   // FAQ routes
   app.get("/api/faqs", getAllFAQs); // Public

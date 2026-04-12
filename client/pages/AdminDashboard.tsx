@@ -9,6 +9,7 @@ import {
   Plus, Pencil, Trash2, Lock, Unlock, Package, ShieldCheck, RefreshCw
 } from "lucide-react";
 import AdminSiteSettings from "./AdminSiteSettings";
+import { PaymentSettingsEditor } from "../components/PaymentSettingsEditor";
 import AdminInquiries from "./AdminInquiries";
 import ReceptionistInventory from "./ReceptionistInventory";
 
@@ -2417,7 +2418,13 @@ export default function AdminDashboard() {
 
         {/* Site Settings Tab */}
         {activeTab === 'settings' && (
-          <AdminSiteSettings />
+          <>
+            <AdminSiteSettings />
+            <div className="mt-8">
+              <h3 className="text-lg font-bold mb-2">Reservation Payment Settings</h3>
+              <PaymentSettingsEditor isAdmin={true} />
+            </div>
+          </>
         )}
 
         {/* Inquiries & FAQ Tab */}

@@ -5,6 +5,7 @@ import { HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import BookingWidget from "@/components/BookingWidget";
+import { PaymentSettingsDisplay } from "@/components/PaymentSettingsDisplay";
 import RoomDetailModal from "@/components/RoomDetailModal";
 import AmenityDetailModal from "@/components/AmenityDetailModal";
 import DayPassDetailModal from "@/components/DayPassDetailModal";
@@ -278,7 +279,7 @@ export default function Index() {
             backgroundAttachment: "fixed",
             backgroundPosition: "center",
           }}
-        />
+        ></div>
 
         {/* Content Overlay */}
         <div className="relative z-10 h-full flex flex-col items-center justify-center pt-24 sm:pt-32 px-4">
@@ -298,11 +299,14 @@ export default function Index() {
               onSearch={handleSearch}
               onAvailabilityCheck={handleAvailabilityCheck}
             />
+            <div className="mt-6 flex justify-center">
+              <PaymentSettingsDisplay />
+            </div>
           </div>
         </div>
 
         {/* Bottom Gradient */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 sm:h-32 bg-gradient-to-t from-gray-900 to-transparent z-20" />
+        <div className="absolute bottom-0 left-0 right-0 h-24 sm:h-32 bg-gradient-to-t from-gray-900 to-transparent z-20"></div>
       </section>
 
       {/* Availability Calendar Section */}
