@@ -198,6 +198,8 @@ export default function ReceptionistDashboard() {
     startDate: '',
     endDate: ''
   });
+  // Stay history search state
+  const [stayHistorySearch, setStayHistorySearch] = useState('');
   const [transactionSearchTerm, setTransactionSearchTerm] = useState('');
   
   // Booking filters and search
@@ -221,7 +223,22 @@ export default function ReceptionistDashboard() {
   const inventoryItemsPerPage = 20;
   const [inventorySearchTerm, setInventorySearchTerm] = useState('');
   
+
   const navigate = useNavigate();
+
+  // Filtered stay history for search (must be after all useState)
+  const filteredStayHistory = useMemo(() => {
+    if (!stayHistorySearch.trim()) return stayHistory;
+    const search = stayHistorySearch.toLowerCase();
+    return stayHistory.filter(stay =>
+      (stay.guest_name && stay.guest_name.toLowerCase().includes(search)) ||
+      (stay.user_email && stay.user_email.toLowerCase().includes(search)) ||
+      (stay.room_name && stay.room_name.toLowerCase().includes(search)) ||
+      (stay.amenity_name && stay.amenity_name.toLowerCase().includes(search)) ||
+      (stay.booking_type && stay.booking_type.toLowerCase().includes(search)) ||
+      (stay.room_numbers && stay.room_numbers.toLowerCase().includes(search))
+    );
+  }, [stayHistory, stayHistorySearch]);
 
   // Helper function to format dates
   const formatDate = (dateString: string | undefined) => {
@@ -1489,7 +1506,7 @@ export default function ReceptionistDashboard() {
                     onClick={() => setActiveTab('amenities')}
                     className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all shadow-lg"
                   >
-                    View Details â†’
+                    View Details →
                   </button>
                 </div>
 

@@ -976,7 +976,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             <DialogFooter className="gap-2">
               <button type="button" onClick={() => { setShowAddItem(false); setNewItem(emptyNewItem); }}
                 className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
-              <button type="submit" className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 font-semibold">Save Item</button>
+              <button type="submit" className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold">Save Item</button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1135,7 +1135,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             <DialogFooter className="gap-2">
               <button type="button" onClick={() => setShowIssueStock(false)}
                 className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
-              <button type="submit" className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 font-semibold">Issue Stock</button>
+              <button type="submit" className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold">Issue Stock</button>
             </DialogFooter>
           </form>
         </DialogContent>
