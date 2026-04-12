@@ -570,16 +570,18 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
                 >
                   <option value="all">All Stock</option>
-                  <option value="low">âš ï¸ Low Stock</option>
-                  <option value="expiring">ðŸ“… Expiring Soon</option>
+                  <option value="low">⚠️ Low Stock</option>
+                  <option value="expiring">📅 Expiring Soon</option>
                 </select>
-                <button
-                  onClick={() => setShowAddItem(true)}
-                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2"
-                >
-                  <Plus size={20} />
-                  Add Item
-                </button>
+                {!embedded && (
+                  <button
+                    onClick={() => setShowAddItem(true)}
+                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2"
+                  >
+                    <Plus size={20} />
+                    Add Item
+                  </button>
+                )}
               </div>
             </div>
 
