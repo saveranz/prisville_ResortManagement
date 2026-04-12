@@ -621,15 +621,15 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                       <td className="px-4 py-3 text-sm font-semibold text-black">{item.item_name}</td>
                       <td className="px-4 py-3 text-sm text-black">{item.category}</td>
                       <td className="px-4 py-3 text-sm text-black font-semibold">{item.quantity} {item.unit}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{item.min_stock > 0 ? `${item.min_stock} ${item.unit}` : 'â€”'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{item.min_stock > 0 ? `${item.min_stock} ${item.unit}` : '-'}</td>
                       <td className="px-4 py-3 text-sm text-black">{"\u20b1"}{formatPrice(String(item.unit_price))}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{item.supplier || 'â€”'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{item.supplier || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {item.expiry_date ? (
                           <span className={isExpiringSoon(item) ? 'text-orange-600 font-semibold' : ''}>
                             {new Date(item.expiry_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                           </span>
-                        ) : 'â€”'}
+                        ) : '-'}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         {isLowStock(item) && (
@@ -700,7 +700,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">Stock Receiving & Issuance Log</h2>
-              <p className="text-sm text-gray-500 mt-1">All stock movements â€” deliveries received and items issued to staff.</p>
+              <p className="text-sm text-gray-500 mt-1">All stock movements - deliveries received and items issued to staff.</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -734,9 +734,9 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                       <td className="px-6 py-4 text-sm font-semibold text-black">{t.item_name}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{t.category}</td>
                       <td className="px-6 py-4 text-sm font-semibold text-black">{t.quantity} {t.unit}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{t.supplier || 'â€”'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{t.supplier || '-'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{t.performed_by}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{t.notes || 'â€”'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{t.notes || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
