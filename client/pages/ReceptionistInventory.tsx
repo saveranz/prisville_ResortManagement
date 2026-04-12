@@ -546,9 +546,20 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
         {/* =========== INVENTORY ITEMS TAB =========== */}
         {activeTab === 'inventory' && (
           <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200 flex flex-wrap justify-between items-center gap-3">
-              <h2 className="text-lg font-semibold text-gray-900">Inventory Items</h2>
-              <div className="flex gap-2 items-center flex-nowrap overflow-x-auto whitespace-nowrap min-w-0">
+            <div className="p-6 border-b border-gray-200 flex flex-col gap-3">
+              <div className="flex flex-wrap justify-between items-center gap-3">
+                <h2 className="text-lg font-semibold text-gray-900">Inventory Items</h2>
+                {!embedded && (
+                  <button
+                    onClick={() => setShowAddItem(true)}
+                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2 min-w-[120px]"
+                  >
+                    <Plus size={20} />
+                    Add Item
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2 items-center flex-wrap overflow-x-auto whitespace-nowrap min-w-0">
                 <input
                   type="text"
                   placeholder="Search items..."
@@ -573,17 +584,20 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   <option value="low">⚠️ Low Stock</option>
                   <option value="expiring">📅 Expiring Soon</option>
                 </select>
-                {!embedded && (
-                  <button
-                    onClick={() => setShowAddItem(true)}
-                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2"
-                  >
-                    <Plus size={20} />
-                    Add Item
-                  </button>
-                )}
               </div>
             </div>
+            {/* Fallback Add Item button for extra visibility if main button is hidden */}
+            {!embedded && (
+              <div className="flex justify-end px-6 py-2">
+                <button
+                  onClick={() => setShowAddItem(true)}
+                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2 min-w-[120px]"
+                >
+                  <Plus size={20} />
+                  Add Item
+                </button>
+              </div>
+            )}
 
             <div className="overflow-x-auto">
               <table className="w-full">
