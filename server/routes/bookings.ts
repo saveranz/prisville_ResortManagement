@@ -273,7 +273,7 @@ export const getUserRoomBookings: RequestHandler = async (req, res) => {
 
     const [bookings] = await db.query<Booking[]>(
       `SELECT id, room_name, room_numbers, check_in, check_out, guests, contact_number, 
-      special_requests, total_amount, status, created_at 
+      special_requests, total_amount, status, created_at, actual_check_in, actual_check_out
       FROM room_bookings 
       WHERE user_id = ? 
       ORDER BY created_at DESC`,
