@@ -500,14 +500,7 @@ export default function Index() {
               >
                 Book Now
               </button>
-              {/* Book Now Modal */}
-              <BookNowModal
-                isOpen={isBookNowModalOpen}
-                onClose={() => setIsBookNowModalOpen(false)}
-                onBookDayPass={handleBookDayPass}
-                onBookRoom={handleBookRoom}
-                onBookAmenity={handleBookAmenity}
-              />
+              {/* Book Now Modal is now rendered at the root for proper centering and overlay */}
             </div>
           </div>
         </div>
@@ -980,6 +973,14 @@ export default function Index() {
         <HelpCircle size={22} className="group-hover:rotate-12 transition-transform flex-shrink-0" />
         <span className="text-sm font-semibold">Help</span>
       </button>
+      {/* Book Now Modal (always at root for proper overlay) */}
+      <BookNowModal
+        isOpen={isBookNowModalOpen}
+        onClose={() => setIsBookNowModalOpen(false)}
+        onBookDayPass={handleBookDayPass}
+        onBookRoom={handleBookRoom}
+        onBookAmenity={handleBookAmenity}
+      />
     </div>
   );
 }
