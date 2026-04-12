@@ -542,6 +542,16 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
 
       {/* Content */}
       <div className={embedded ? 'mt-4 pb-6' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12'}>
+        {/* Add Item Button - Top Right */}
+        <div className="flex justify-end items-center mb-4">
+          <button
+            onClick={() => setShowAddItem(true)}
+            className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 shadow-md"
+          >
+            <Plus size={20} />
+            Add Item
+          </button>
+        </div>
 
         {/* =========== INVENTORY ITEMS TAB =========== */}
         {activeTab === 'inventory' && (
