@@ -1,22 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import BookNowModal from "@/components/BookNowModal";
-  const [isBookNowModalOpen, setIsBookNowModalOpen] = useState(false);
-  // Handlers for Book Now modal
-  const handleBookDayPass = useCallback(() => {
-    setIsDayPassModalOpen(true);
-    // Optionally scroll to day pass section if you add one
-  }, []);
-  const handleBookRoom = useCallback(() => {
-    // Scroll to BookingWidget (hero section)
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-  const handleBookAmenity = useCallback(() => {
-    // Scroll to amenities section
-    const amenitiesSection = document.getElementById('amenities');
-    if (amenitiesSection) {
-      amenitiesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, []);
 import { useSearchParams } from "react-router-dom";
 import { HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +24,24 @@ interface RoomCatalogItem {
 }
 
 export default function Index() {
+  const [isBookNowModalOpen, setIsBookNowModalOpen] = useState(false);
+  const [isDayPassModalOpen, setIsDayPassModalOpen] = useState(false);
+  // Handlers for Book Now modal
+  const handleBookDayPass = useCallback(() => {
+    setIsDayPassModalOpen(true);
+    // Optionally scroll to day pass section if you add one
+  }, []);
+  const handleBookRoom = useCallback(() => {
+    // Scroll to BookingWidget (hero section)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+  const handleBookAmenity = useCallback(() => {
+    // Scroll to amenities section
+    const amenitiesSection = document.getElementById('amenities');
+    if (amenitiesSection) {
+      amenitiesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const [searchData, setSearchData] = useState<any>(null);
@@ -49,7 +50,6 @@ export default function Index() {
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [selectedAmenity, setSelectedAmenity] = useState<any>(null);
   const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
-  const [isDayPassModalOpen, setIsDayPassModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [recommendationsKey, setRecommendationsKey] = useState(0);
