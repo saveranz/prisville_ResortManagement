@@ -542,16 +542,6 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
 
       {/* Content */}
       <div className={embedded ? 'mt-4 pb-6' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12'}>
-        {/* Add Item Button - Top Right */}
-        <div className="flex justify-end items-center mb-4">
-          <button
-            onClick={() => setShowAddItem(true)}
-            className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 shadow-md"
-          >
-            <Plus size={20} />
-            Add Item
-          </button>
-        </div>
 
         {/* =========== INVENTORY ITEMS TAB =========== */}
         {activeTab === 'inventory' && (
@@ -559,13 +549,6 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             <div className="p-6 border-b border-gray-200 flex flex-col gap-3">
               <div className="flex flex-wrap justify-between items-center gap-3">
                 <h2 className="text-lg font-semibold text-gray-900">Inventory Items</h2>
-                <button
-                  onClick={() => setShowAddItem(true)}
-                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2 min-w-[120px]"
-                >
-                  <Plus size={20} />
-                  Add Item
-                </button>
               </div>
               <div className="flex gap-2 items-center flex-wrap overflow-x-auto whitespace-nowrap min-w-0">
                 <input
@@ -592,6 +575,14 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                   <option value="low">⚠️ Low Stock</option>
                   <option value="expiring">📅 Expiring Soon</option>
                 </select>
+                <button
+                  onClick={() => setShowAddItem(true)}
+                  className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 shadow-md"
+                  style={{ marginLeft: 'auto' }}
+                >
+                  <Plus size={20} />
+                  Add Item
+                </button>
               </div>
             </div>
             {/* Fallback Add Item button for extra visibility if main button is hidden */}
