@@ -645,19 +645,19 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                       <td className="px-4 py-3 text-sm">
                         <div className="flex gap-1">
                           <button onClick={() => openReceiveModal(item)} title="Receive Stock"
-                            className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                            className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
                             <ArrowDownToLine size={16} />
                           </button>
                           <button onClick={() => openIssueModal(item)} title="Issue Stock"
-                            className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                            className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
                             <ArrowUpFromLine size={16} />
                           </button>
                           <button onClick={() => openEditModal(item)} title="Edit Item"
-                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                            className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
                             <Edit size={16} />
                           </button>
                           <button onClick={() => { setSelectedItem(item); setShowArchiveConfirm(true); }} title="Archive Item"
-                            className="p-1.5 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">
+                            className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
                             <Archive size={16} />
                           </button>
                         </div>
