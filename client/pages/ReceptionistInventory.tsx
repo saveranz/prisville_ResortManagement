@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Plus, Minus, DollarSign, TrendingUp, TrendingDown, Filter, X, Edit, Trash2, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, CalendarClock, BarChart3 } from "lucide-react";
+import { Package, Plus, Minus, DollarSign, TrendingUp, TrendingDown, Filter, X, Edit, Archive, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, CalendarClock, BarChart3 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
@@ -549,15 +549,13 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
             <div className="p-6 border-b border-gray-200 flex flex-col gap-3">
               <div className="flex flex-wrap justify-between items-center gap-3">
                 <h2 className="text-lg font-semibold text-gray-900">Inventory Items</h2>
-                {!embedded && (
-                  <button
-                    onClick={() => setShowAddItem(true)}
-                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2 min-w-[120px]"
-                  >
-                    <Plus size={20} />
-                    Add Item
-                  </button>
-                )}
+                <button
+                  onClick={() => setShowAddItem(true)}
+                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2 min-w-[120px]"
+                >
+                  <Plus size={20} />
+                  Add Item
+                </button>
               </div>
               <div className="flex gap-2 items-center flex-wrap overflow-x-auto whitespace-nowrap min-w-0">
                 <input
@@ -587,17 +585,15 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
               </div>
             </div>
             {/* Fallback Add Item button for extra visibility if main button is hidden */}
-            {!embedded && (
-              <div className="flex justify-end px-6 py-2">
-                <button
-                  onClick={() => setShowAddItem(true)}
-                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2 min-w-[120px]"
-                >
-                  <Plus size={20} />
-                  Add Item
-                </button>
-              </div>
-            )}
+            <div className="flex justify-end px-6 py-2">
+              <button
+                onClick={() => setShowAddItem(true)}
+                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2 min-w-[120px]"
+              >
+                <Plus size={20} />
+                Add Item
+              </button>
+            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -661,7 +657,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
                           </button>
                           <button onClick={() => { setSelectedItem(item); setShowArchiveConfirm(true); }} title="Archive Item"
                             className="p-1.5 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">
-                            <Trash2 size={16} />
+                            <Archive size={16} />
                           </button>
                         </div>
                       </td>
