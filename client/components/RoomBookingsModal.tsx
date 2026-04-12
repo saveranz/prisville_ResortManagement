@@ -12,6 +12,8 @@ interface Booking {
   special_requests: string;
   total_amount: string;
   status: 'pending' | 'approved' | 'rejected';
+  actual_check_in?: string;
+  actual_check_out?: string;
   created_at: string;
 }
 
@@ -147,11 +149,17 @@ export default function RoomBookingsModal({ isOpen, onClose }: RoomBookingsModal
                         <p className="text-sm text-gray-600">{booking.room_numbers}</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        booking.actual_check_out ? 'bg-gray-200 text-gray-700' :
+                        booking.actual_check_in ? 'bg-green-100 text-green-700' :
                         booking.status === 'approved' ? 'bg-green-100 text-green-700' :
                         booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-red-100 text-red-700'
                       }`}>
-                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                        {booking.actual_check_out
+                          ? 'Completed'
+                          : booking.actual_check_in
+                            ? 'Checked In'
+                            : booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                       </span>
                     </div>
                     
@@ -159,13 +167,17 @@ export default function RoomBookingsModal({ isOpen, onClose }: RoomBookingsModal
                       <div>
                         <p className="text-gray-500">Check-in</p>
                         <p className="font-medium text-gray-900">
-                          {new Date(booking.check_in).toLocaleDateString()}
+                          {booking.actual_check_in
+                            ? `${new Date(booking.actual_check_in).toLocaleString()} (Actual)`
+                            : new Date(booking.check_in).toLocaleDateString()}
                         </p>
                       </div>
                       <div>
                         <p className="text-gray-500">Check-out</p>
                         <p className="font-medium text-gray-900">
-                          {new Date(booking.check_out).toLocaleDateString()}
+                          {booking.actual_check_out
+                            ? `${new Date(booking.actual_check_out).toLocaleString()} (Actual)`
+                            : new Date(booking.check_out).toLocaleDateString()}
                         </p>
                       </div>
                       <div>
@@ -175,6 +187,14 @@ export default function RoomBookingsModal({ isOpen, onClose }: RoomBookingsModal
                       <div>
                         <p className="text-gray-500">Contact</p>
                         <p className="font-medium text-gray-900">{booking.contact_number}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Room Numbers</p>
+                        <p className="font-medium text-gray-900">{booking.room_numbers}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Total Amount</p>
+                        <p className="font-medium text-gray-900">{booking.total_amount}</p>
                       </div>
                     </div>
 
