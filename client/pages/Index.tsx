@@ -299,9 +299,9 @@ export default function Index() {
               onSearch={handleSearch}
               onAvailabilityCheck={handleAvailabilityCheck}
             />
-            <div className="mt-6 flex justify-center">
+            {/* <div className="mt-6 flex justify-center">
               <PaymentSettingsDisplay />
-            </div>
+            </div> */}
           </div>
         </div>
 
