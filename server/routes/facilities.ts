@@ -141,8 +141,18 @@ export const createRoom: RequestHandler = async (req, res) => {
       message: 'Room created successfully',
       roomId: result.insertId
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error creating room:', error);
+    
+    // Handle duplicate room name error
+    if (error.code === 'ER_DUP_ENTRY') {
+      res.status(400).json({
+        success: false,
+        message: `A room with the name "${req.body.room_name}" already exists. Please use a different room name.`
+      });
+      return;
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to create room'
@@ -228,8 +238,18 @@ export const updateRoom: RequestHandler = async (req, res) => {
       success: true,
       message: 'Room updated successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error updating room:', error);
+    
+    // Handle duplicate room name error
+    if (error.code === 'ER_DUP_ENTRY') {
+      res.status(400).json({
+        success: false,
+        message: `A room with the name "${req.body.room_name}" already exists. Please use a different room name.`
+      });
+      return;
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to update room'
