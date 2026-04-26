@@ -828,10 +828,26 @@ export default function AdminDashboard() {
         return;
       }
 
+      const isNewRoom = !editingRoomId;
+      const newRoomId = data.roomId; // Backend returns roomId for new rooms
+
       setShowRoomForm(false);
       setEditingRoomId(null);
       setRoomForm(DEFAULT_ROOM_FORM);
       await fetchDashboardData();
+
+      // If this was a new room, ask if they want to add extra items
+      if (isNewRoom && newRoomId) {
+        const addExtraItems = window.confirm(
+          '✅ Room created successfully!\n\n' +
+          'Would you like to add extra items/special requests for this room now?\n' +
+          '(e.g., Extra Pillow, Extra Towel, Late Check-out, etc.)'
+        );
+        
+        if (addExtraItems) {
+          openExtraItemsModal(newRoomId);
+        }
+      }
     } catch (error) {
       console.error('Failed to save room:', error);
       alert('Failed to save room');
@@ -2129,6 +2145,9 @@ export default function AdminDashboard() {
                           placeholder="e.g. No smoking, No pets, Quiet hours after 10 PM"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          💡 <strong>Tip:</strong> After creating this room, you can add extra items (e.g., Extra Pillow, Extra Towel) that guests can add to their bookings.
+                        </p>
                       </div>
                     </div>
                   </div>
