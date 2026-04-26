@@ -281,6 +281,14 @@ export default function AdminDashboard() {
     title: string;
     message: string;
   }>({ type: 'info', title: '', message: '' });
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+    cancelText?: string;
+  }>({ title: '', message: '', onConfirm: () => {}, confirmText: 'OK', cancelText: 'Cancel' });
   
   // REMOVED - Operational data for receptionist only
   // const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
@@ -403,6 +411,12 @@ export default function AdminDashboard() {
   const showNotification = (type: 'success' | 'error' | 'warning' | 'info', title: string, message: string) => {
     setNotificationModal({ type, title, message });
     setShowNotificationModal(true);
+  };
+
+  // Helper function to show confirmation modal
+  const showConfirm = (title: string, message: string, onConfirm: () => void, confirmText = 'OK', cancelText = 'Cancel') => {
+    setConfirmModal({ title, message, onConfirm, confirmText, cancelText });
+    setShowConfirmModal(true);
   };
 
   const fetchDashboardData = async () => {
@@ -937,26 +951,31 @@ export default function AdminDashboard() {
   };
 
   const removeRoom = async (room: Room) => {
-    const confirmed = window.confirm(`Delete ${room.room_name}? This will hide it from guest/client booking options.`);
-    if (!confirmed) return;
+    showConfirm(
+      'Delete Room',
+      `Delete ${room.room_name}? This will hide it from guest/client booking options.`,
+      async () => {
+        try {
+          const response = await fetch(`/api/facilities/rooms/${room.id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+          const data = await response.json();
 
-    try {
-      const response = await fetch(`/api/facilities/rooms/${room.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      const data = await response.json();
+          if (!data.success) {
+            showNotification('error', 'Delete Failed', data.message || 'Failed to delete room');
+            return;
+          }
 
-      if (!data.success) {
-        showNotification('error', 'Delete Failed', data.message || 'Failed to delete room');
-        return;
-      }
-
-      await fetchDashboardData();
-    } catch (error) {
-      console.error('Failed to delete room:', error);
-      showNotification('error', 'Delete Failed', 'Failed to delete room');
-    }
+          await fetchDashboardData();
+        } catch (error) {
+          console.error('Failed to delete room:', error);
+          showNotification('error', 'Delete Failed', 'Failed to delete room');
+        }
+      },
+      'Delete',
+      'Cancel'
+    );
   };
 
   // User management functions
@@ -967,34 +986,46 @@ export default function AdminDashboard() {
       delete: 'Delete this user account permanently? This cannot be undone.'
     };
 
-    if (!window.confirm(confirmMessages[action])) return;
+    const titles = {
+      lock: 'Lock User Account',
+      unlock: 'Unlock User Account',
+      delete: 'Delete User Account'
+    };
 
-    setUserActionLoading({ ...userActionLoading, [userId]: true });
-    try {
-      const endpoint = action === 'delete' 
-        ? `/api/admin/users/${userId}`
-        : `/api/admin/users/${userId}/${action}`;
-      const method = action === 'delete' ? 'DELETE' : 'PUT';
+    showConfirm(
+      titles[action],
+      confirmMessages[action],
+      async () => {
+        setUserActionLoading({ ...userActionLoading, [userId]: true });
+        try {
+          const endpoint = action === 'delete' 
+            ? `/api/admin/users/${userId}`
+            : `/api/admin/users/${userId}/${action}`;
+          const method = action === 'delete' ? 'DELETE' : 'PUT';
 
-      const response = await fetch(endpoint, {
-        method,
-        credentials: 'include'
-      });
-      const data = await response.json();
+          const response = await fetch(endpoint, {
+            method,
+            credentials: 'include'
+          });
+          const data = await response.json();
 
-      if (!data.success) {
-        showNotification('error', 'Action Failed', data.message || `Failed to ${action} user`);
-        return;
-      }
+          if (!data.success) {
+            showNotification('error', 'Action Failed', data.message || `Failed to ${action} user`);
+            return;
+          }
 
-      await fetchDashboardData();
-      setUserActionConfirm(null);
-    } catch (error) {
-      console.error(`Failed to ${action} user:`, error);
-      showNotification('error', 'Action Failed', `Failed to ${action} user`);
-    } finally {
-      setUserActionLoading({ ...userActionLoading, [userId]: false });
-    }
+          await fetchDashboardData();
+          setUserActionConfirm(null);
+        } catch (error) {
+          console.error(`Failed to ${action} user:`, error);
+          showNotification('error', 'Action Failed', `Failed to ${action} user`);
+        } finally {
+          setUserActionLoading({ ...userActionLoading, [userId]: false });
+        }
+      },
+      action === 'delete' ? 'Delete' : action === 'lock' ? 'Lock' : 'Unlock',
+      'Cancel'
+    );
   };
 
     const fetchRoomExtraItems = async (roomId: number) => {
@@ -1089,36 +1120,47 @@ export default function AdminDashboard() {
     };
 
     const deleteTempExtraItem = (index: number) => {
-      const confirmed = window.confirm('Delete this extra item?');
-      if (!confirmed) return;
-      setTempExtraItems(tempExtraItems.filter((_, i) => i !== index));
-      if (editingTempItemIndex === index) {
-        setEditingTempItemIndex(null);
-        setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
-      }
+      showConfirm(
+        'Delete Extra Item',
+        'Delete this extra item?',
+        () => {
+          setTempExtraItems(tempExtraItems.filter((_, i) => i !== index));
+          if (editingTempItemIndex === index) {
+            setEditingTempItemIndex(null);
+            setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+          }
+        },
+        'Delete',
+        'Cancel'
+      );
     };
 
     const deleteExtraItem = async (roomId: number, itemId: number) => {
-      const confirmed = window.confirm('Delete this extra item?');
-      if (!confirmed) return;
+      showConfirm(
+        'Delete Extra Item',
+        'Delete this extra item?',
+        async () => {
+          try {
+            const response = await fetch(`/api/facilities/rooms/${roomId}/extra-items/${itemId}`, {
+              method: 'DELETE',
+              credentials: 'include'
+            });
+            const data = await response.json();
 
-      try {
-        const response = await fetch(`/api/facilities/rooms/${roomId}/extra-items/${itemId}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        });
-        const data = await response.json();
+            if (!data.success) {
+              showNotification('error', 'Delete Failed', data.message || 'Failed to delete item');
+              return;
+            }
 
-        if (!data.success) {
-          showNotification('error', 'Delete Failed', data.message || 'Failed to delete item');
-          return;
-        }
-
-        await fetchRoomExtraItems(roomId);
-      } catch (error) {
-        console.error('Failed to delete extra item:', error);
-        showNotification('error', 'Delete Failed', 'Failed to delete item');
-      }
+            await fetchRoomExtraItems(roomId);
+          } catch (error) {
+            console.error('Failed to delete extra item:', error);
+            showNotification('error', 'Delete Failed', 'Failed to delete item');
+          }
+        },
+        'Delete',
+        'Cancel'
+      );
     };
 
   const filteredRooms = rooms.filter((room) => {
@@ -2974,6 +3016,35 @@ export default function AdminDashboard() {
               >
                 OK
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scaleIn">
+            <div className="flex flex-col">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{confirmModal.title}</h3>
+              <p className="text-gray-600 mb-6">{confirmModal.message}</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-colors"
+                >
+                  {confirmModal.cancelText}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    confirmModal.onConfirm();
+                  }}
+                  className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold transition-colors"
+                >
+                  {confirmModal.confirmText}
+                </button>
+              </div>
             </div>
           </div>
         </div>
