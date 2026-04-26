@@ -2341,13 +2341,21 @@ export default function AdminDashboard() {
                               </div>
                               <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
-                                <input
-                                  type="text"
+                                <select
                                   value={extraItemForm.unit}
                                   onChange={(e) => setExtraItemForm({ ...extraItemForm, unit: e.target.value })}
-                                  placeholder="e.g. item, set"
                                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                />
+                                >
+                                  <option value="">Select unit...</option>
+                                  <option value="item">item</option>
+                                  <option value="piece">piece</option>
+                                  <option value="set">set</option>
+                                  <option value="pax">pax (per person)</option>
+                                  <option value="hour">hour</option>
+                                  <option value="day">day</option>
+                                  <option value="night">night</option>
+                                  <option value="service">service</option>
+                                </select>
                               </div>
                               <div className="md:col-span-2">
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Description (Optional)</label>
