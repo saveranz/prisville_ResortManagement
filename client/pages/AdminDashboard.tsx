@@ -1212,10 +1212,10 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-white"></div>
-          <p className="mt-4 text-white text-xl">Loading Admin Dashboard...</p>
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-600"></div>
+          <p className="mt-4 text-gray-700 text-lg font-medium">Loading Admin Dashboard...</p>
         </div>
       </div>
     );
