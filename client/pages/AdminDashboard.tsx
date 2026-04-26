@@ -275,6 +275,12 @@ export default function AdminDashboard() {
   const [roomFormShake, setRoomFormShake] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationModal, setNotificationModal] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+  }>({ type: 'info', title: '', message: '' });
   
   // REMOVED - Operational data for receptionist only
   // const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
@@ -391,6 +397,12 @@ export default function AdminDashboard() {
       // Redirect if auth check fails
       navigate('/');
     }
+  };
+
+  // Helper function to show notification modal
+  const showNotification = (type: 'success' | 'error' | 'warning' | 'info', title: string, message: string) => {
+    setNotificationModal({ type, title, message });
+    setShowNotificationModal(true);
   };
 
   const fetchDashboardData = async () => {
@@ -638,11 +650,11 @@ export default function AdminDashboard() {
       if (data.success) {
         setReportData(data.report);
       } else {
-        alert('Failed to generate report');
+        showNotification('error', 'Report Generation Failed', 'Failed to generate report');
       }
     } catch (error) {
       console.error('Failed to generate report:', error);
-      alert('Failed to generate report');
+      showNotification('error', 'Report Generation Failed', 'Failed to generate report');
     } finally {
       setGeneratingReport(false);
     }
@@ -936,14 +948,14 @@ export default function AdminDashboard() {
       const data = await response.json();
 
       if (!data.success) {
-        alert(data.message || 'Failed to delete room');
+        showNotification('error', 'Delete Failed', data.message || 'Failed to delete room');
         return;
       }
 
       await fetchDashboardData();
     } catch (error) {
       console.error('Failed to delete room:', error);
-      alert('Failed to delete room');
+      showNotification('error', 'Delete Failed', 'Failed to delete room');
     }
   };
 
@@ -971,7 +983,7 @@ export default function AdminDashboard() {
       const data = await response.json();
 
       if (!data.success) {
-        alert(data.message || `Failed to ${action} user`);
+        showNotification('error', 'Action Failed', data.message || `Failed to ${action} user`);
         return;
       }
 
@@ -979,7 +991,7 @@ export default function AdminDashboard() {
       setUserActionConfirm(null);
     } catch (error) {
       console.error(`Failed to ${action} user:`, error);
-      alert(`Failed to ${action} user`);
+      showNotification('error', 'Action Failed', `Failed to ${action} user`);
     } finally {
       setUserActionLoading({ ...userActionLoading, [userId]: false });
     }
@@ -1009,7 +1021,7 @@ export default function AdminDashboard() {
 
     const saveExtraItem = async (roomId: number | null) => {
       if (!extraItemForm.item_name.trim() || !extraItemForm.price.trim()) {
-        alert('Item name and price are required');
+        showNotification('warning', 'Missing Information', 'Item name and price are required');
         return;
       }
 
@@ -1061,7 +1073,7 @@ export default function AdminDashboard() {
 
         const data = await response.json();
         if (!data.success) {
-          alert(data.message || 'Failed to save item');
+          showNotification('error', 'Save Failed', data.message || 'Failed to save item');
           return;
         }
 
@@ -1070,7 +1082,7 @@ export default function AdminDashboard() {
         await fetchRoomExtraItems(roomId);
       } catch (error) {
         console.error('Failed to save extra item:', error);
-        alert('Failed to save item');
+        showNotification('error', 'Save Failed', 'Failed to save item');
       } finally {
         setExtraItemLoading(false);
       }
@@ -1098,14 +1110,14 @@ export default function AdminDashboard() {
         const data = await response.json();
 
         if (!data.success) {
-          alert(data.message || 'Failed to delete item');
+          showNotification('error', 'Delete Failed', data.message || 'Failed to delete item');
           return;
         }
 
         await fetchRoomExtraItems(roomId);
       } catch (error) {
         console.error('Failed to delete extra item:', error);
-        alert('Failed to delete item');
+        showNotification('error', 'Delete Failed', 'Failed to delete item');
       }
     };
 
@@ -2925,6 +2937,40 @@ export default function AdminDashboard() {
               <button
                 onClick={() => setShowSuccessModal(false)}
                 className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Modal */}
+      {showNotificationModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scaleIn">
+            <div className="flex flex-col items-center text-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+                notificationModal.type === 'success' ? 'bg-green-100' :
+                notificationModal.type === 'error' ? 'bg-red-100' :
+                notificationModal.type === 'warning' ? 'bg-yellow-100' :
+                'bg-blue-100'
+              }`}>
+                {notificationModal.type === 'success' && <CheckCircle className="w-10 h-10 text-green-600" />}
+                {notificationModal.type === 'error' && <XCircle className="w-10 h-10 text-red-600" />}
+                {notificationModal.type === 'warning' && <Clock className="w-10 h-10 text-yellow-600" />}
+                {notificationModal.type === 'info' && <FileText className="w-10 h-10 text-blue-600" />}
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{notificationModal.title}</h3>
+              <p className="text-gray-600 mb-6">{notificationModal.message}</p>
+              <button
+                onClick={() => setShowNotificationModal(false)}
+                className={`px-6 py-2.5 text-white rounded-lg font-semibold transition-colors ${
+                  notificationModal.type === 'success' ? 'bg-green-600 hover:bg-green-700' :
+                  notificationModal.type === 'error' ? 'bg-red-600 hover:bg-red-700' :
+                  notificationModal.type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700' :
+                  'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
                 OK
               </button>
