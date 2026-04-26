@@ -279,9 +279,11 @@ export default function AdminDashboard() {
   // const [amenityBookings, setAmenityBookings] = useState<AmenityBooking[]>([]);
   // const [dayPassBookings, setDayPassBookings] = useState<DayPassBooking[]>([]);
   const [roomExtraItems, setRoomExtraItems] = useState<ExtraItem[]>([]);
+  const [tempExtraItems, setTempExtraItems] = useState<Array<{item_name: string; price: string; unit: string; description: string}>>([]);
   const [showExtraItemsModal, setShowExtraItemsModal] = useState(false);
   const [extraItemForm, setExtraItemForm] = useState<ExtraItemFormState>(DEFAULT_EXTRA_ITEM_FORM);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [editingTempItemIndex, setEditingTempItemIndex] = useState<number | null>(null);
   const [extraItemLoading, setExtraItemLoading] = useState(false);
   
   const [viewingProof, setViewingProof] = useState<string | null>(null);
@@ -773,6 +775,12 @@ export default function AdminDashboard() {
   const openCreateRoomForm = () => {
     setEditingRoomId(null);
     setRoomForm(DEFAULT_ROOM_FORM);
+    setRoomFormErrors({});
+    setTempExtraItems([]);
+    setRoomExtraItems([]);
+    setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+    setEditingItemId(null);
+    setEditingTempItemIndex(null);
     setShowRoomForm(true);
   };
 
@@ -863,18 +871,42 @@ export default function AdminDashboard() {
       const isNewRoom = !editingRoomId;
       const newRoomId = data.roomId; // Backend returns roomId for new rooms
 
+      // If this was a new room and there are temporary extra items, save them
+      if (isNewRoom && newRoomId && tempExtraItems.length > 0) {
+        try {
+          // Save all temporary extra items to the newly created room
+          for (const item of tempExtraItems) {
+            await fetch(`/api/facilities/rooms/${newRoomId}/extra-items`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                item_name: item.item_name,
+                price: item.price,
+                unit: item.unit || null,
+                description: item.description || null
+              })
+            });
+          }
+        } catch (error) {
+          console.error('Failed to save extra items:', error);
+        }
+      }
+
       setShowRoomForm(false);
       setEditingRoomId(null);
       setRoomForm(DEFAULT_ROOM_FORM);
       setRoomFormErrors({});
       setRoomExtraItems([]);
+      setTempExtraItems([]);
       setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
       setEditingItemId(null);
+      setEditingTempItemIndex(null);
       await fetchDashboardData();
 
-      // If this was a new room, show success message and suggest editing to add extra items
-      if (isNewRoom && newRoomId) {
-        alert('✅ Room created successfully! You can now edit the room to add extra items for guests to select.');
+      // Show success message
+      if (isNewRoom) {
+        alert('✅ Room created successfully!' + (tempExtraItems.length > 0 ? ` ${tempExtraItems.length} extra item(s) added.` : ''));
       }
     } catch (error) {
       console.error('Failed to save room:', error);
@@ -969,12 +1001,39 @@ export default function AdminDashboard() {
       setShowExtraItemsModal(true);
     };
 
-    const saveExtraItem = async (roomId: number) => {
+    const saveExtraItem = async (roomId: number | null) => {
       if (!extraItemForm.item_name.trim() || !extraItemForm.price.trim()) {
         alert('Item name and price are required');
         return;
       }
 
+      // If no roomId (new room), save to temporary array
+      if (!roomId) {
+        if (editingTempItemIndex !== null) {
+          // Update existing temp item
+          const updated = [...tempExtraItems];
+          updated[editingTempItemIndex] = {
+            item_name: extraItemForm.item_name.trim(),
+            price: extraItemForm.price.trim(),
+            unit: extraItemForm.unit.trim() || '',
+            description: extraItemForm.description.trim() || ''
+          };
+          setTempExtraItems(updated);
+          setEditingTempItemIndex(null);
+        } else {
+          // Add new temp item
+          setTempExtraItems([...tempExtraItems, {
+            item_name: extraItemForm.item_name.trim(),
+            price: extraItemForm.price.trim(),
+            unit: extraItemForm.unit.trim() || '',
+            description: extraItemForm.description.trim() || ''
+          }]);
+        }
+        setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+        return;
+      }
+
+      // If roomId exists (editing room), save to database
       setExtraItemLoading(true);
       try {
         const endpoint = editingItemId 
@@ -1008,6 +1067,16 @@ export default function AdminDashboard() {
         alert('Failed to save item');
       } finally {
         setExtraItemLoading(false);
+      }
+    };
+
+    const deleteTempExtraItem = (index: number) => {
+      const confirmed = window.confirm('Delete this extra item?');
+      if (!confirmed) return;
+      setTempExtraItems(tempExtraItems.filter((_, i) => i !== index));
+      if (editingTempItemIndex === index) {
+        setEditingTempItemIndex(null);
+        setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
       }
     };
 
@@ -2241,77 +2310,80 @@ export default function AdminDashboard() {
                         />
                       </div>
 
-                      {/* Extra Items Management Section */}
-                      {editingRoomId && (
-                        <div className="md:col-span-2">
-                          <div className="border-t-2 border-gray-200 pt-4 mt-2">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3">📦 Extra Items / Add-ons</h4>
-                            <p className="text-xs text-gray-600 mb-4">Add items that guests can include in their booking (e.g., Extra Pillow, Extra Towel, Late Check-out)</p>
-                            
-                            {/* Add Item Form */}
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">Item Name *</label>
-                                  <input
-                                    type="text"
-                                    value={extraItemForm.item_name}
-                                    onChange={(e) => setExtraItemForm({ ...extraItemForm, item_name: e.target.value })}
-                                    placeholder="e.g. Extra Pillow"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">Price *</label>
-                                  <input
-                                    type="text"
-                                    value={extraItemForm.price}
-                                    onChange={(e) => setExtraItemForm({ ...extraItemForm, price: e.target.value })}
-                                    placeholder="e.g. ₱50"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
-                                  <input
-                                    type="text"
-                                    value={extraItemForm.unit}
-                                    onChange={(e) => setExtraItemForm({ ...extraItemForm, unit: e.target.value })}
-                                    placeholder="e.g. item, set"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                  />
-                                </div>
-                                <div className="md:col-span-2">
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">Description (Optional)</label>
-                                  <input
-                                    type="text"
-                                    value={extraItemForm.description}
-                                    onChange={(e) => setExtraItemForm({ ...extraItemForm, description: e.target.value })}
-                                    placeholder="Optional description"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                  />
-                                </div>
-                                <div className="flex items-end">
-                                  <button
-                                    type="button"
-                                    onClick={() => saveExtraItem(editingRoomId)}
-                                    disabled={extraItemLoading}
-                                    className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-semibold"
-                                  >
-                                    {extraItemLoading ? 'Saving...' : editingItemId ? 'Update Item' : 'Add Item'}
-                                  </button>
-                                </div>
+                      {/* Extra Items Management Section - Available for both new and edit */}
+                      <div className="md:col-span-2">
+                        <div className="border-t-2 border-gray-200 pt-4 mt-2">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">📦 Extra Items / Add-ons</h4>
+                          <p className="text-xs text-gray-600 mb-4">Add items that guests can include in their booking (e.g., Extra Pillow, Extra Towel, Late Check-out)</p>
+                          
+                          {/* Add Item Form */}
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Item Name *</label>
+                                <input
+                                  type="text"
+                                  value={extraItemForm.item_name}
+                                  onChange={(e) => setExtraItemForm({ ...extraItemForm, item_name: e.target.value })}
+                                  placeholder="e.g. Extra Pillow"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Price *</label>
+                                <input
+                                  type="text"
+                                  value={extraItemForm.price}
+                                  onChange={(e) => setExtraItemForm({ ...extraItemForm, price: e.target.value })}
+                                  placeholder="e.g. ₱50"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
+                                <input
+                                  type="text"
+                                  value={extraItemForm.unit}
+                                  onChange={(e) => setExtraItemForm({ ...extraItemForm, unit: e.target.value })}
+                                  placeholder="e.g. item, set"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Description (Optional)</label>
+                                <input
+                                  type="text"
+                                  value={extraItemForm.description}
+                                  onChange={(e) => setExtraItemForm({ ...extraItemForm, description: e.target.value })}
+                                  placeholder="Optional description"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                />
+                              </div>
+                              <div className="flex items-end">
+                                <button
+                                  type="button"
+                                  onClick={() => saveExtraItem(editingRoomId)}
+                                  disabled={extraItemLoading}
+                                  className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-semibold"
+                                >
+                                  {extraItemLoading ? 'Saving...' : (editingItemId !== null || editingTempItemIndex !== null) ? 'Update Item' : 'Add Item'}
+                                </button>
                               </div>
                             </div>
+                          </div>
 
-                            {/* Items List */}
-                            <div>
-                              <h5 className="text-xs font-semibold text-gray-700 mb-2">Available Items ({roomExtraItems.length})</h5>
-                              {roomExtraItems.length === 0 ? (
-                                <p className="text-xs text-gray-500 text-center py-3 bg-gray-50 rounded-lg">No extra items added yet</p>
-                              ) : (
-                                <div className="space-y-2 max-h-48 overflow-y-auto">
-                                  {roomExtraItems.map((item) => (
+                          {/* Items List */}
+                          <div>
+                            <h5 className="text-xs font-semibold text-gray-700 mb-2">
+                              Available Items ({editingRoomId ? roomExtraItems.length : tempExtraItems.length})
+                            </h5>
+                            {(editingRoomId ? roomExtraItems.length === 0 : tempExtraItems.length === 0) ? (
+                              <p className="text-xs text-gray-500 text-center py-3 bg-gray-50 rounded-lg">No extra items added yet</p>
+                            ) : (
+                              <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {editingRoomId ? (
+                                  // Show database items for existing rooms
+                                  roomExtraItems.map((item) => (
                                     <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                                       <div className="flex-1">
                                         <p className="text-sm font-medium text-gray-900">{item.item_name}</p>
@@ -2327,6 +2399,7 @@ export default function AdminDashboard() {
                                           type="button"
                                           onClick={() => {
                                             setEditingItemId(item.id);
+                                            setEditingTempItemIndex(null);
                                             setExtraItemForm({
                                               item_name: item.item_name,
                                               price: item.price,
@@ -2349,13 +2422,55 @@ export default function AdminDashboard() {
                                         </button>
                                       </div>
                                     </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                                  ))
+                                ) : (
+                                  // Show temporary items for new rooms
+                                  tempExtraItems.map((item, index) => (
+                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-900">{item.item_name}</p>
+                                        <p className="text-xs text-gray-600">
+                                          {item.price} {item.unit && `/ ${item.unit}`}
+                                        </p>
+                                        {item.description && (
+                                          <p className="text-xs text-gray-500 mt-1">{item.description}</p>
+                                        )}
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingTempItemIndex(index);
+                                            setEditingItemId(null);
+                                            setExtraItemForm({
+                                              item_name: item.item_name,
+                                              price: item.price,
+                                              unit: item.unit,
+                                              description: item.description
+                                            });
+                                          }}
+                                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                                          title="Edit item"
+                                        >
+                                          <Pencil size={14} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => deleteTempExtraItem(index)}
+                                          className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                                          title="Delete item"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
 
@@ -2367,8 +2482,10 @@ export default function AdminDashboard() {
                         setRoomForm(DEFAULT_ROOM_FORM);
                         setRoomFormErrors({});
                         setRoomExtraItems([]);
+                        setTempExtraItems([]);
                         setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
                         setEditingItemId(null);
+                        setEditingTempItemIndex(null);
                       }}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
                       disabled={roomFormLoading}
