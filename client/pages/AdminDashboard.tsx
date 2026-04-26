@@ -790,6 +790,8 @@ export default function AdminDashboard() {
       is_active: room.is_active
     });
     setShowRoomForm(true);
+    // Load extra items for this room
+    fetchRoomExtraItems(room.id);
   };
 
   const saveRoom = async () => {
@@ -865,19 +867,14 @@ export default function AdminDashboard() {
       setEditingRoomId(null);
       setRoomForm(DEFAULT_ROOM_FORM);
       setRoomFormErrors({});
+      setRoomExtraItems([]);
+      setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+      setEditingItemId(null);
       await fetchDashboardData();
 
-      // If this was a new room, ask if they want to add extra items
+      // If this was a new room, show success message and suggest editing to add extra items
       if (isNewRoom && newRoomId) {
-        const addExtraItems = window.confirm(
-          '✅ Room created successfully!\n\n' +
-          'Would you like to add extra items/special requests for this room now?\n' +
-          '(e.g., Extra Pillow, Extra Towel, Late Check-out, etc.)'
-        );
-        
-        if (addExtraItems) {
-          openExtraItemsModal(newRoomId);
-        }
+        alert('✅ Room created successfully! You can now edit the room to add extra items for guests to select.');
       }
     } catch (error) {
       console.error('Failed to save room:', error);
@@ -2243,19 +2240,122 @@ export default function AdminDashboard() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                         />
                       </div>
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Special Requests</label>
-                        <textarea
-                          rows={3}
-                          value={roomForm.special_requests}
-                          onChange={(e) => setRoomForm({ ...roomForm, special_requests: e.target.value })}
-                          placeholder="e.g. No smoking, No pets, Quiet hours after 10 PM"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          💡 <strong>Tip:</strong> After creating this room, you can add extra items (e.g., Extra Pillow, Extra Towel) that guests can add to their bookings.
-                        </p>
-                      </div>
+
+                      {/* Extra Items Management Section */}
+                      {editingRoomId && (
+                        <div className="md:col-span-2">
+                          <div className="border-t-2 border-gray-200 pt-4 mt-2">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-3">📦 Extra Items / Add-ons</h4>
+                            <p className="text-xs text-gray-600 mb-4">Add items that guests can include in their booking (e.g., Extra Pillow, Extra Towel, Late Check-out)</p>
+                            
+                            {/* Add Item Form */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">Item Name *</label>
+                                  <input
+                                    type="text"
+                                    value={extraItemForm.item_name}
+                                    onChange={(e) => setExtraItemForm({ ...extraItemForm, item_name: e.target.value })}
+                                    placeholder="e.g. Extra Pillow"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">Price *</label>
+                                  <input
+                                    type="text"
+                                    value={extraItemForm.price}
+                                    onChange={(e) => setExtraItemForm({ ...extraItemForm, price: e.target.value })}
+                                    placeholder="e.g. ₱50"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
+                                  <input
+                                    type="text"
+                                    value={extraItemForm.unit}
+                                    onChange={(e) => setExtraItemForm({ ...extraItemForm, unit: e.target.value })}
+                                    placeholder="e.g. item, set"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                  />
+                                </div>
+                                <div className="md:col-span-2">
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">Description (Optional)</label>
+                                  <input
+                                    type="text"
+                                    value={extraItemForm.description}
+                                    onChange={(e) => setExtraItemForm({ ...extraItemForm, description: e.target.value })}
+                                    placeholder="Optional description"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                  />
+                                </div>
+                                <div className="flex items-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => saveExtraItem(editingRoomId)}
+                                    disabled={extraItemLoading}
+                                    className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-semibold"
+                                  >
+                                    {extraItemLoading ? 'Saving...' : editingItemId ? 'Update Item' : 'Add Item'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Items List */}
+                            <div>
+                              <h5 className="text-xs font-semibold text-gray-700 mb-2">Available Items ({roomExtraItems.length})</h5>
+                              {roomExtraItems.length === 0 ? (
+                                <p className="text-xs text-gray-500 text-center py-3 bg-gray-50 rounded-lg">No extra items added yet</p>
+                              ) : (
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                  {roomExtraItems.map((item) => (
+                                    <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-900">{item.item_name}</p>
+                                        <p className="text-xs text-gray-600">
+                                          {item.price} {item.unit && `/ ${item.unit}`}
+                                        </p>
+                                        {item.description && (
+                                          <p className="text-xs text-gray-500 mt-1">{item.description}</p>
+                                        )}
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingItemId(item.id);
+                                            setExtraItemForm({
+                                              item_name: item.item_name,
+                                              price: item.price,
+                                              unit: item.unit || '',
+                                              description: item.description || ''
+                                            });
+                                          }}
+                                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                                          title="Edit item"
+                                        >
+                                          <Pencil size={14} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => deleteExtraItem(editingRoomId, item.id)}
+                                          className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                                          title="Delete item"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -2265,21 +2365,16 @@ export default function AdminDashboard() {
                         setShowRoomForm(false);
                         setEditingRoomId(null);
                         setRoomForm(DEFAULT_ROOM_FORM);
+                        setRoomFormErrors({});
+                        setRoomExtraItems([]);
+                        setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+                        setEditingItemId(null);
                       }}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
                       disabled={roomFormLoading}
                     >
                       Cancel
                     </button>
-                      {editingRoomId && (
-                        <button
-                          onClick={() => openExtraItemsModal(editingRoomId)}
-                          className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 font-semibold"
-                          disabled={roomFormLoading}
-                        >
-                          Manage Extra Items
-                        </button>
-                      )}
                     <button
                       onClick={saveRoom}
                       className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 border border-emerald-700 shadow-sm font-semibold"
