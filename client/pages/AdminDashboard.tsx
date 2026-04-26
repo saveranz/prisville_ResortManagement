@@ -271,6 +271,8 @@ export default function AdminDashboard() {
   const [roomFormLoading, setRoomFormLoading] = useState(false);
   const [editingRoomId, setEditingRoomId] = useState<number | null>(null);
   const [roomForm, setRoomForm] = useState<RoomFormState>(DEFAULT_ROOM_FORM);
+  const [roomFormErrors, setRoomFormErrors] = useState<{[key: string]: string}>({});
+  const [roomFormShake, setRoomFormShake] = useState(false);
   
   // REMOVED - Operational data for receptionist only
   // const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
@@ -791,16 +793,42 @@ export default function AdminDashboard() {
   };
 
   const saveRoom = async () => {
-    if (!roomForm.room_name.trim() || !roomForm.room_numbers.trim() || !roomForm.capacity.trim() || !roomForm.price_per_night.trim()) {
-      alert('Please complete all required room fields.');
+    // Clear previous errors
+    setRoomFormErrors({});
+    
+    // Validate required fields
+    const errors: {[key: string]: string} = {};
+    
+    if (!roomForm.room_name.trim()) {
+      errors.room_name = 'Room name is required';
+    }
+    
+    if (!roomForm.room_numbers.trim()) {
+      errors.room_numbers = 'Room numbers are required';
+    }
+    
+    if (!roomForm.capacity.trim()) {
+      errors.capacity = 'Capacity is required';
+    } else {
+      const capacityValue = parseInt(roomForm.capacity, 10);
+      if (Number.isNaN(capacityValue) || capacityValue <= 0) {
+        errors.capacity = 'Capacity must be a valid number greater than 0';
+      }
+    }
+    
+    if (!roomForm.price_per_night.trim()) {
+      errors.price_per_night = 'Price per night is required';
+    }
+
+    // If there are errors, show them and shake the modal
+    if (Object.keys(errors).length > 0) {
+      setRoomFormErrors(errors);
+      setRoomFormShake(true);
+      setTimeout(() => setRoomFormShake(false), 500);
       return;
     }
 
     const capacityValue = parseInt(roomForm.capacity, 10);
-    if (Number.isNaN(capacityValue) || capacityValue <= 0) {
-      alert('Capacity must be a valid number greater than 0.');
-      return;
-    }
 
     setRoomFormLoading(true);
     try {
@@ -824,7 +852,9 @@ export default function AdminDashboard() {
 
       const data = await response.json();
       if (!data.success) {
-        alert(data.message || 'Failed to save room');
+        setRoomFormErrors({ general: data.message || 'Failed to save room' });
+        setRoomFormShake(true);
+        setTimeout(() => setRoomFormShake(false), 500);
         return;
       }
 
@@ -834,6 +864,7 @@ export default function AdminDashboard() {
       setShowRoomForm(false);
       setEditingRoomId(null);
       setRoomForm(DEFAULT_ROOM_FORM);
+      setRoomFormErrors({});
       await fetchDashboardData();
 
       // If this was a new room, ask if they want to add extra items
@@ -850,7 +881,9 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Failed to save room:', error);
-      alert('Failed to save room');
+      setRoomFormErrors({ general: 'Failed to save room' });
+      setRoomFormShake(true);
+      setTimeout(() => setRoomFormShake(false), 500);
     } finally {
       setRoomFormLoading(false);
     }
@@ -2035,8 +2068,24 @@ export default function AdminDashboard() {
                 setShowRoomForm(false);
                 setEditingRoomId(null);
                 setRoomForm(DEFAULT_ROOM_FORM);
+                setRoomFormErrors({});
               }}>
-                <div className="w-full max-w-3xl bg-white rounded-xl shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
+                <div 
+                  className={`w-full max-w-3xl bg-white rounded-xl shadow-2xl border-2 ${
+                    Object.keys(roomFormErrors).length > 0 ? 'border-red-500' : 'border-gray-200'
+                  } ${roomFormShake ? 'animate-shake' : ''}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <style>{`
+                    @keyframes shake {
+                      0%, 100% { transform: translateX(0); }
+                      10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                      20%, 40%, 60%, 80% { transform: translateX(10px); }
+                    }
+                    .animate-shake {
+                      animation: shake 0.5s;
+                    }
+                  `}</style>
                   <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 className="text-lg font-display font-bold text-gray-900">
                       {editingRoomId ? 'Edit Room' : 'Add New Room'}
@@ -2046,6 +2095,7 @@ export default function AdminDashboard() {
                         setShowRoomForm(false);
                         setEditingRoomId(null);
                         setRoomForm(DEFAULT_ROOM_FORM);
+                        setRoomFormErrors({});
                       }}
                       className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
                     >
@@ -2054,15 +2104,35 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="p-6 max-h-[75vh] overflow-y-auto">
+                    {/* General Error Message */}
+                    {roomFormErrors.general && (
+                      <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {roomFormErrors.general}
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Room Name <span className="text-red-500">*</span>
+                        </label>
                         <input
                           type="text"
                           value={roomForm.room_name}
-                          onChange={(e) => setRoomForm({ ...roomForm, room_name: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          onChange={(e) => {
+                            setRoomForm({ ...roomForm, room_name: e.target.value });
+                            if (roomFormErrors.room_name) {
+                              setRoomFormErrors({ ...roomFormErrors, room_name: '' });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border rounded-lg ${
+                            roomFormErrors.room_name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
+                          placeholder={roomFormErrors.room_name || 'Enter room name'}
                         />
+                        {roomFormErrors.room_name && (
+                          <p className="mt-1 text-xs text-red-600">{roomFormErrors.room_name}</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Room Type</label>
@@ -2078,34 +2148,71 @@ export default function AdminDashboard() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Numbers</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Room Numbers <span className="text-red-500">*</span>
+                        </label>
                         <input
                           type="text"
                           value={roomForm.room_numbers}
-                          onChange={(e) => setRoomForm({ ...roomForm, room_numbers: e.target.value })}
-                          placeholder="e.g. 101, 102, 103"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          onChange={(e) => {
+                            setRoomForm({ ...roomForm, room_numbers: e.target.value });
+                            if (roomFormErrors.room_numbers) {
+                              setRoomFormErrors({ ...roomFormErrors, room_numbers: '' });
+                            }
+                          }}
+                          placeholder={roomFormErrors.room_numbers || 'e.g. 101, 102, 103'}
+                          className={`w-full px-3 py-2 border rounded-lg ${
+                            roomFormErrors.room_numbers ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
                         />
+                        {roomFormErrors.room_numbers && (
+                          <p className="mt-1 text-xs text-red-600">{roomFormErrors.room_numbers}</p>
+                        )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Capacity <span className="text-red-500">*</span>
+                        </label>
                         <input
                           type="number"
                           min={1}
                           value={roomForm.capacity}
-                          onChange={(e) => setRoomForm({ ...roomForm, capacity: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          onChange={(e) => {
+                            setRoomForm({ ...roomForm, capacity: e.target.value });
+                            if (roomFormErrors.capacity) {
+                              setRoomFormErrors({ ...roomFormErrors, capacity: '' });
+                            }
+                          }}
+                          placeholder={roomFormErrors.capacity || 'Enter capacity'}
+                          className={`w-full px-3 py-2 border rounded-lg ${
+                            roomFormErrors.capacity ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
                         />
+                        {roomFormErrors.capacity && (
+                          <p className="mt-1 text-xs text-red-600">{roomFormErrors.capacity}</p>
+                        )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price Per Night</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Price Per Night <span className="text-red-500">*</span>
+                        </label>
                         <input
                           type="text"
                           value={roomForm.price_per_night}
-                          onChange={(e) => setRoomForm({ ...roomForm, price_per_night: e.target.value })}
-                          placeholder="e.g. â‚±1600"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          onChange={(e) => {
+                            setRoomForm({ ...roomForm, price_per_night: e.target.value });
+                            if (roomFormErrors.price_per_night) {
+                              setRoomFormErrors({ ...roomFormErrors, price_per_night: '' });
+                            }
+                          }}
+                          placeholder={roomFormErrors.price_per_night || 'e.g. ₱1600'}
+                          className={`w-full px-3 py-2 border rounded-lg ${
+                            roomFormErrors.price_per_night ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
                         />
+                        {roomFormErrors.price_per_night && (
+                          <p className="mt-1 text-xs text-red-600">{roomFormErrors.price_per_night}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 pt-7">
                         <input
