@@ -8,6 +8,8 @@ import {
   Activity, Download, Menu, X, UserCog, MessageSquare,
   Plus, Pencil, Trash2, Lock, Unlock, Package, ShieldCheck, RefreshCw
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 import AdminSiteSettings from "./AdminSiteSettings";
 import { PaymentSettingsEditor } from "../components/PaymentSettingsEditor";
 import AdminInquiries from "./AdminInquiries";
@@ -255,6 +257,7 @@ const DEFAULT_ROOM_FORM: RoomFormState = {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -967,6 +970,13 @@ export default function AdminDashboard() {
             return;
           }
 
+          // Show success toast instead of modal
+          toast({
+            title: "Room Deleted",
+            description: `${room.room_name} has been deleted successfully.`,
+            variant: "success",
+          });
+
           await fetchDashboardData();
         } catch (error) {
           console.error('Failed to delete room:', error);
@@ -1013,6 +1023,14 @@ export default function AdminDashboard() {
             showNotification('error', 'Action Failed', data.message || `Failed to ${action} user`);
             return;
           }
+
+          // Show success toast instead of modal
+          const actionPastTense = action === 'delete' ? 'deleted' : action === 'lock' ? 'locked' : 'unlocked';
+          toast({
+            title: "User Action Completed",
+            description: `User has been ${actionPastTense} successfully.`,
+            variant: "success",
+          });
 
           await fetchDashboardData();
           setUserActionConfirm(null);
@@ -1124,11 +1142,19 @@ export default function AdminDashboard() {
         'Delete Extra Item',
         'Delete this extra item?',
         () => {
+          const itemName = tempExtraItems[index].item_name;
           setTempExtraItems(tempExtraItems.filter((_, i) => i !== index));
           if (editingTempItemIndex === index) {
             setEditingTempItemIndex(null);
             setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
           }
+          
+          // Show success toast
+          toast({
+            title: "Item Deleted",
+            description: `${itemName} has been removed.`,
+            variant: "success",
+          });
         },
         'Delete',
         'Cancel'
@@ -1136,6 +1162,10 @@ export default function AdminDashboard() {
     };
 
     const deleteExtraItem = async (roomId: number, itemId: number) => {
+      // Get item name before deletion
+      const item = roomExtraItems.find(i => i.id === itemId);
+      const itemName = item?.item_name || 'Item';
+      
       showConfirm(
         'Delete Extra Item',
         'Delete this extra item?',
@@ -1151,6 +1181,13 @@ export default function AdminDashboard() {
               showNotification('error', 'Delete Failed', data.message || 'Failed to delete item');
               return;
             }
+
+            // Show success toast
+            toast({
+              title: "Item Deleted",
+              description: `${itemName} has been removed.`,
+              variant: "success",
+            });
 
             await fetchRoomExtraItems(roomId);
           } catch (error) {
@@ -3049,6 +3086,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      <Toaster />
     </div>
   );
 }
