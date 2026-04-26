@@ -628,10 +628,10 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                           )}
                         </span>
                       </div>
-                      {/* Extra Items Breakdown */}
+                      {/* Special Requests / Extra Items Breakdown */}
                       {formData.extraItems.length > 0 && (
                         <div className="border-t border-gray-200 pt-2 mt-2">
-                          <div className="text-sm font-medium text-gray-700 mb-1">Extra Items:</div>
+                          <div className="text-sm font-medium text-gray-700 mb-1">Special Requests / Extra Items:</div>
                           {formData.extraItems.map((item, index) => (
                             <div key={index} className="flex justify-between text-sm pl-4">
                               <span className="text-gray-600">{item.item} × {item.quantity}:</span>
@@ -639,7 +639,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                             </div>
                           ))}
                           <div className="flex justify-between text-sm font-medium pl-4 mt-1">
-                            <span className="text-gray-700">Extra Items Total:</span>
+                            <span className="text-gray-700">Extra Items Subtotal:</span>
                             <span className="text-gray-900">₱{calculateExtraItemsTotal().toLocaleString()}</span>
                           </div>
                         </div>
@@ -707,8 +707,9 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Extra Items (Optional)
+                    Special Requests / Extra Items (Optional)
                   </label>
+                  <p className="text-xs text-gray-500 mb-3">Add extra items or services to your booking (e.g., extra bedding, meals, equipment)</p>
                   <div className="space-y-3">
                     {/* Add Extra Item Button */}
                     <div className="flex gap-2">
@@ -719,7 +720,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                         disabled={extraItemsLoading || extraItemsOptions.length === 0}
                       >
                         <option value="">
-                          {extraItemsLoading ? 'Loading items...' : extraItemsOptions.length === 0 ? 'No extra items configured' : 'Select an item...'}
+                          {extraItemsLoading ? 'Loading items...' : extraItemsOptions.length === 0 ? 'No extra items available' : 'Select an item to add...'}
                         </option>
                         {extraItemsOptions.map((item) => (
                           <option key={item.name} value={item.name}>
@@ -757,17 +758,18 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                           setSelectedExtraItemName('');
                         }}
                         disabled={extraItemsLoading || extraItemsOptions.length === 0 || !selectedExtraItemName}
-                        className="px-6 py-3 sm:py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition text-base whitespace-nowrap"
+                        className="px-6 py-3 sm:py-2 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition text-base whitespace-nowrap"
                       >
-                        Add
+                        Add Item
                       </button>
                     </div>
 
                     {/* Selected Extra Items */}
                     {formData.extraItems.length > 0 && (
                       <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Selected Items:</p>
                         {formData.extraItems.map((item, index) => (
-                          <div key={index} className="flex items-center justify-between gap-3 bg-white p-3 rounded-lg">
+                          <div key={index} className="flex items-center justify-between gap-3 bg-white p-3 rounded-lg border border-gray-200">
                             <div className="flex-1">
                               <p className="text-sm font-medium text-gray-900">{item.item}</p>
                               <p className="text-xs text-gray-500">₱{item.price} each</p>
@@ -786,6 +788,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                                   }
                                 }}
                                 className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
+                                title="Decrease quantity"
                               >
                                 -
                               </button>
@@ -798,6 +801,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                                   setFormData({ ...formData, extraItems: updated });
                                 }}
                                 className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
+                                title="Increase quantity"
                               >
                                 +
                               </button>
@@ -811,6 +815,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                                   setFormData({ ...formData, extraItems: updated });
                                 }}
                                 className="w-8 h-8 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition"
+                                title="Remove item"
                               >
                                 ×
                               </button>
@@ -819,6 +824,20 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                         ))}
                       </div>
                     )}
+
+                    {/* Additional Notes / Custom Requests */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Additional Notes or Custom Requests
+                      </label>
+                      <textarea
+                        value={formData.specialRequests}
+                        onChange={(e) => setFormData({ ...formData, specialRequests: e.target.value })}
+                        placeholder="Any other special requests or notes? (e.g., early check-in, dietary restrictions, accessibility needs)"
+                        rows={3}
+                        className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base resize-none"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
