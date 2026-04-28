@@ -506,6 +506,19 @@ export default function Index() {
               </button>
               {/* Book Now Modal is now rendered at the root for proper centering and overlay */}
             </div>
+
+            {/* Right Content - Image */}
+            <div className="animate-slideInRight">
+              <div className="relative h-[400px] md:h-[500px] lg:h-[600px] rounded-lg overflow-hidden shadow-2xl">
+                <img
+                  src="/1.jpg"
+                  alt="Prisville Triangle Resort"
+                  className="w-full h-full object-cover"
+                />
+                {/* Overlay gradient for better text visibility if needed */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
