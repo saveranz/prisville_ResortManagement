@@ -511,8 +511,8 @@ export default function Index() {
             <div className="animate-slideInRight">
               <div className="relative h-[400px] md:h-[500px] lg:h-[600px] rounded-lg overflow-hidden shadow-2xl">
                 <img
-                  src="/1.jpg"
-                  alt="Prisville Triangle Resort"
+                  src="/backgroundimage.png"
+                  alt="Prisville Triangle Resort Pool"
                   className="w-full h-full object-cover"
                 />
                 {/* Overlay gradient for better text visibility if needed */}
