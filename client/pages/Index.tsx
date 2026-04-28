@@ -509,14 +509,12 @@ export default function Index() {
 
             {/* Right Content - Image */}
             <div className="animate-slideInRight">
-              <div className="relative h-[400px] md:h-[500px] lg:h-[600px] rounded-lg overflow-hidden shadow-2xl">
+              <div className="relative h-[400px] md:h-[500px] lg:h-[600px] rounded-lg overflow-hidden shadow-2xl bg-gray-100">
                 <img
                   src="/backgroundimage.png"
                   alt="Prisville Triangle Resort Pool"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
-                {/* Overlay gradient for better text visibility if needed */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
               </div>
             </div>
           </div>
