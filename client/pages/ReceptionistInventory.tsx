@@ -100,7 +100,10 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
   });
 
   useEffect(() => {
-    checkAuth();
+    // Skip auth check if embedded in admin dashboard
+    if (!embedded) {
+      checkAuth();
+    }
     fetchInventory();
     fetchStats();
     fetchFinancialTransactions();
