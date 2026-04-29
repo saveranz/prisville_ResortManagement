@@ -30,6 +30,7 @@ import { migrateAuditLogs, getAuditLogs } from "./routes/auditLog";
 import { requireAuth, requireAdmin, requireStaff, requireReceptionist } from "./middleware/auth";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -64,8 +65,6 @@ export function createServer() {
   const app = express();
 
   // Ensure uploads directory exists
-  const fs = require('fs');
-  const path = require('path');
   const uploadsDir = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
