@@ -749,19 +749,36 @@ export const uploadGcashQr: RequestHandler = async (req, res) => {
     const fs = await import('fs/promises');
     const path = await import('path');
     
-    // Define the target path for the GCash QR code
+    // Define target paths for both development and production
     const publicDir = path.join(process.cwd(), 'public');
-    const targetPath = path.join(publicDir, 'gcash-qr.jpg');
+    const distPublicDir = path.join(process.cwd(), 'dist', 'spa');
     
-    // Ensure public directory exists
+    // Ensure directories exist
     try {
       await fs.access(publicDir);
     } catch {
       await fs.mkdir(publicDir, { recursive: true });
     }
     
-    // Move the uploaded file to the public directory
-    await fs.rename(req.file.path, targetPath);
+    // Save to public directory (for development)
+    const publicPath = path.join(publicDir, 'gcash-qr.jpg');
+    await fs.copyFile(req.file.path, publicPath);
+    
+    // Also save to dist/spa directory (for production)
+    try {
+      await fs.access(distPublicDir);
+      const distPath = path.join(distPublicDir, 'gcash-qr.jpg');
+      await fs.copyFile(req.file.path, distPath);
+    } catch (error) {
+      console.log('dist/spa directory not found, skipping production copy');
+    }
+    
+    // Clean up the temporary uploaded file
+    try {
+      await fs.unlink(req.file.path);
+    } catch (error) {
+      console.log('Failed to delete temp file:', error);
+    }
     
     // Log the action
     if (req.user) {

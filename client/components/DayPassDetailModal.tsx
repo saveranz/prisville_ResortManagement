@@ -576,7 +576,7 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
                     <div className="flex-shrink-0 mx-auto sm:mx-0">
                       <div className="w-32 h-40 sm:w-40 sm:h-48 bg-white rounded-lg border-2 border-blue-300 overflow-hidden">
                         <img 
-                          src="/gcash-qr.jpg" 
+                          src={`/gcash-qr.jpg?t=${Date.now()}`} 
                           alt="GCash QR Code" 
                           className="w-full h-full object-contain"
                         />
