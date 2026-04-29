@@ -1269,7 +1269,7 @@ export default function AdminDashboard() {
       });
 
       if (!settingsResponse.ok) {
-        throw new Error('Failed to update payment settings');
+        throw new Error('Error saving changes');
       }
 
       // Upload QR code if a new file was selected
@@ -1285,17 +1285,17 @@ export default function AdminDashboard() {
 
         if (!uploadResponse.ok) {
           const error = await uploadResponse.json();
-          throw new Error(error.message || 'Failed to upload GCash QR code');
+          throw new Error(error.message || 'Error saving changes');
         }
       }
 
-      showNotification('success', 'Update Successful', 'GCash payment details have been updated');
+      showNotification('success', 'Success', 'Payment details successfully changed');
       setIsGcashModalOpen(false);
       setGcashQrFile(null);
       setGcashQrPreview('');
     } catch (error: any) {
       console.error('Failed to update GCash settings:', error);
-      showNotification('error', 'Update Failed', error.message || 'Failed to update GCash settings');
+      showNotification('error', 'Error', error.message || 'Error saving changes');
     } finally {
       setGcashUploading(false);
     }
