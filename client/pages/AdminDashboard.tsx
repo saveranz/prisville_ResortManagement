@@ -2250,8 +2250,6 @@ export default function AdminDashboard() {
         {/* Room Bookings CMS Tab */}
         {activeTab === 'facilities' && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-display font-bold text-gray-900">Room Bookings CMS</h2>
-
             <div className="bg-white rounded-xl shadow-md border border-gray-200">
               <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
                 <div className="flex-1">
