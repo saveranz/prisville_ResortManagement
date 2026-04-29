@@ -970,6 +970,7 @@ export default function AdminDashboard() {
       'Delete Room',
       `Delete ${room.room_name}? This will hide it from guest/client booking options.`,
       async () => {
+        setLoading(true);
         try {
           const response = await fetch(`/api/facilities/rooms/${room.id}`, {
             method: 'DELETE',
@@ -982,17 +983,19 @@ export default function AdminDashboard() {
             return;
           }
 
-          // Show success toast instead of modal
+          // Show success toast
           toast({
             title: "Room Deleted",
             description: `${room.room_name} has been deleted successfully.`,
-            variant: "success",
           });
 
+          // Refresh only the rooms data without full page reload
           await fetchDashboardData();
         } catch (error) {
           console.error('Failed to delete room:', error);
           showNotification('error', 'Delete Failed', 'Failed to delete room');
+        } finally {
+          setLoading(false);
         }
       },
       'Delete',
