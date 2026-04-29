@@ -54,6 +54,7 @@ interface InventoryStats {
 const CATEGORIES = ['Housekeeping', 'Guest Amenities', 'Cleaning', 'Kitchen', 'Maintenance', 'Pool', 'Office', 'Other'];
 
 export default function ReceptionistInventory({ embedded = false }: { embedded?: boolean }) {
+  console.log('ReceptionistInventory embedded prop:', embedded); // Debug log
   const [activeTab, setActiveTab] = useState<'inventory' | 'stock-log' | 'transactions'>('inventory');
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>([]);
@@ -100,14 +101,19 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
   });
 
   useEffect(() => {
-    // Skip auth check if embedded in admin dashboard
-    if (!embedded) {
-      checkAuth();
-    }
-    fetchInventory();
-    fetchStats();
-    fetchFinancialTransactions();
-  }, []);
+    // Only check auth if NOT embedded (standalone receptionist page)
+    // Skip auth check when embedded in admin dashboard
+    const initializeComponent = async () => {
+      if (!embedded) {
+        await checkAuth();
+      }
+      fetchInventory();
+      fetchStats();
+      fetchFinancialTransactions();
+    };
+    
+    initializeComponent();
+  }, [embedded]);
 
   const checkAuth = async () => {
     try {
