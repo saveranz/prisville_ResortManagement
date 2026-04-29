@@ -63,6 +63,14 @@ const MySQLStore = MySQLStoreFactory(session);
 export function createServer() {
   const app = express();
 
+  // Ensure uploads directory exists
+  const fs = require('fs');
+  const path = require('path');
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
   // Trust Railway/cloud proxy so secure cookies work behind HTTPS termination
   app.set('trust proxy', 1);
 

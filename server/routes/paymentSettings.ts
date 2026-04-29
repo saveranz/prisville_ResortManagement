@@ -32,7 +32,10 @@ export const updatePaymentSettings: RequestHandler = async (req, res) => {
   const { account_name, mobile_number, note } = req.body;
   
   if (!account_name || !mobile_number) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({ 
+      error: "Missing required fields",
+      success: false 
+    });
   }
   
   try {
@@ -54,7 +57,7 @@ export const updatePaymentSettings: RequestHandler = async (req, res) => {
         [result.insertId]
       );
       
-      return res.json(newRow[0]);
+      return res.json({ success: true, data: newRow[0] });
     } else {
       // Update existing settings
       await db.query(
@@ -69,10 +72,14 @@ export const updatePaymentSettings: RequestHandler = async (req, res) => {
         [existing[0].id]
       );
       
-      return res.json(updatedRow[0]);
+      return res.json({ success: true, data: updatedRow[0] });
     }
   } catch (err) {
     console.error("Failed to update payment settings:", err);
-    res.status(500).json({ error: "Failed to update payment settings" });
+    res.status(500).json({ 
+      error: "Failed to update payment settings",
+      success: false,
+      details: err instanceof Error ? err.message : 'Unknown error'
+    });
   }
 };

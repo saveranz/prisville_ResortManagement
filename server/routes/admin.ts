@@ -753,6 +753,13 @@ export const uploadGcashQr: RequestHandler = async (req, res) => {
     const publicDir = path.join(process.cwd(), 'public');
     const targetPath = path.join(publicDir, 'gcash-qr.jpg');
     
+    // Ensure public directory exists
+    try {
+      await fs.access(publicDir);
+    } catch {
+      await fs.mkdir(publicDir, { recursive: true });
+    }
+    
     // Move the uploaded file to the public directory
     await fs.rename(req.file.path, targetPath);
     
@@ -777,7 +784,8 @@ export const uploadGcashQr: RequestHandler = async (req, res) => {
     console.error('❌ Error uploading GCash QR:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to upload GCash QR code'
+      message: 'Failed to upload GCash QR code',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 };
