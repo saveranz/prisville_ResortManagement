@@ -75,6 +75,11 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [paymentSettings, setPaymentSettings] = useState({
+    account_name: 'Prisville Resort',
+    mobile_number: '+63 912 345 6789',
+    note: 'This is a reservation fee (50% of total) to secure your booking. The remaining balance will be paid upon arrival.'
+  });
   const modalContentRef = useRef<HTMLDivElement>(null);
 
   // Fetch unavailable dates when booking form opens
@@ -82,8 +87,26 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
     if (showBookingForm && room.roomNumbers) {
       fetchUnavailableDates();
       fetchRoomExtraItems();
+      fetchPaymentSettings();
     }
   }, [showBookingForm, room.roomNumbers]);
+
+  const fetchPaymentSettings = async () => {
+    try {
+      const response = await fetch('/api/payment-settings', { credentials: 'include' });
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentSettings({
+          account_name: data.account_name || 'Prisville Resort',
+          mobile_number: data.mobile_number || '+63 912 345 6789',
+          note: data.note || 'This is a reservation fee (50% of total) to secure your booking. The remaining balance will be paid upon arrival.'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch payment settings:', error);
+      // Keep default values if fetch fails
+    }
+  };
 
   const parsePriceNumber = (value: string) => {
     const numeric = Number(String(value).replace(/[^\d.]/g, ''));
@@ -864,8 +887,8 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 mb-2">GCash Payment Details</h4>
                       <div className="space-y-1 text-sm">
-                        <p className="text-gray-700"><span className="font-medium">Account Name:</span> Prisville Resort</p>
-                        <p className="text-gray-700"><span className="font-medium">Mobile Number:</span> +63 912 345 6789</p>
+                        <p className="text-gray-700"><span className="font-medium">Account Name:</span> {paymentSettings.account_name}</p>
+                        <p className="text-gray-700"><span className="font-medium">Mobile Number:</span> {paymentSettings.mobile_number}</p>
                         {calculateReservationFee() > 0 ? (
                           <p className="text-gray-700"><span className="font-medium">Reservation Fee:</span> <span className="font-bold text-green-700">₱{calculateReservationFee().toLocaleString()}</span></p>
                         ) : (
@@ -874,7 +897,7 @@ export default function RoomDetailModal({ isOpen, onClose, isLoggedIn, onLoginCl
                       </div>
                       <div className="mt-3 p-2 bg-yellow-50 border border-yellow-300 rounded">
                         <p className="text-xs text-gray-700">
-                          <strong>Note:</strong> This is a reservation fee (50% of total) to secure your booking. The remaining balance will be paid upon arrival.
+                          <strong>Note:</strong> {paymentSettings.note}
                         </p>
                       </div>
                     </div>

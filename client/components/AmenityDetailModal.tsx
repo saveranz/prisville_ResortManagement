@@ -55,7 +55,35 @@ export default function AmenityDetailModal({ isOpen, onClose, isLoggedIn, onLogi
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [paymentSettings, setPaymentSettings] = useState({
+    account_name: 'Prisville Resort',
+    mobile_number: '+63 912 345 6789',
+    note: 'This is a reservation fee (50% of total) to secure your booking. The remaining balance will be paid upon arrival.'
+  });
   const modalContentRef = useRef<HTMLDivElement>(null);
+
+  // Fetch payment settings when booking form opens
+  useEffect(() => {
+    if (showBookingForm) {
+      fetchPaymentSettings();
+    }
+  }, [showBookingForm]);
+
+  const fetchPaymentSettings = async () => {
+    try {
+      const response = await fetch('/api/payment-settings', { credentials: 'include' });
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentSettings({
+          account_name: data.account_name || 'Prisville Resort',
+          mobile_number: data.mobile_number || '+63 912 345 6789',
+          note: data.note || 'This is a reservation fee (50% of total) to secure your booking. The remaining balance will be paid upon arrival.'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch payment settings:', error);
+    }
+  };
 
   // Scroll to top when error or loading message changes
   useEffect(() => {
@@ -468,8 +496,8 @@ export default function AmenityDetailModal({ isOpen, onClose, isLoggedIn, onLogi
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 mb-2">GCash Payment Details</h4>
                       <div className="space-y-1 text-sm">
-                        <p className="text-gray-700"><span className="font-medium">Account Name:</span> Prisville Resort</p>
-                        <p className="text-gray-700"><span className="font-medium">Mobile Number:</span> +63 912 345 6789</p>
+                        <p className="text-gray-700"><span className="font-medium">Account Name:</span> {paymentSettings.account_name}</p>
+                        <p className="text-gray-700"><span className="font-medium">Mobile Number:</span> {paymentSettings.mobile_number}</p>
                         <p className="text-gray-700"><span className="font-medium">Total Amount:</span> {amenity.price}</p>
                         <p className="text-gray-700"><span className="font-medium">Reservation Fee (50%):</span> <span className="font-bold text-green-700">₱{calculateReservationFee().toLocaleString()}</span></p>
                       </div>
