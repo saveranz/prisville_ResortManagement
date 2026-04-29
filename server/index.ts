@@ -20,7 +20,7 @@ import { getUserStayHistory, getAllStayHistory, getGuestStatistics, updateStayHi
 import { createBookingIssue, getAllBookingIssues, getUserBookingIssues, getBookingIssueById, updateBookingIssueStatus, updateBookingIssuePriority, deleteBookingIssue } from "./routes/bookingIssues";
 import { getUserNotifications, getUnreadCount, markAsRead, markAllAsRead, createNotification, deleteNotification } from "./routes/notifications";
 import { getAnnouncements, getAllAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, markAnnouncementViewed, toggleAnnouncementStatus } from "./routes/announcements";
-import { getDashboardStats, getAllUsers, updateUserRole, getGuestActivity, getRoomOccupancy, getBookingIssues, getUserActivityAnalytics, lockUser, unlockUser, deleteUser } from "./routes/admin";
+import { getDashboardStats, getAllUsers, updateUserRole, getGuestActivity, getRoomOccupancy, getBookingIssues, getUserActivityAnalytics, lockUser, unlockUser, deleteUser, uploadGcashQr } from "./routes/admin";
 import { generateBookingReport, generateRevenueReport, generateOccupancyReport, generateGuestReport } from "./routes/reports";
 import { getAllRooms, getAllAmenities, getDayPassStats, getRoomAvailabilityCalendar, createRoom, updateRoom, deleteRoom, getRoomExtraItems, addRoomExtraItem, updateRoomExtraItem, deleteRoomExtraItem } from "./routes/facilities";
 import { getAllSettings, updateSetting, updateMultipleSettings, resetSettings } from "./routes/siteSettings";
@@ -28,6 +28,35 @@ import { getPaymentSettings, updatePaymentSettings } from "./routes/paymentSetti
 import { getAllFAQs, getAdminFAQs, createFAQ, updateFAQ, deleteFAQ, submitInquiry, getAllInquiries, getInquiryStats, updateInquiryStatus, respondToInquiry } from "./routes/faq";
 import { migrateAuditLogs, getAuditLogs } from "./routes/auditLog";
 import { requireAuth, requireAdmin, requireStaff, requireReceptionist } from "./middleware/auth";
+import multer from "multer";
+import path from "path";
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Temporary upload directory
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
+});
 
 const MySQLStore = MySQLStoreFactory(session);
 
@@ -281,6 +310,7 @@ export function createServer() {
   app.get("/api/admin/room-occupancy", requireAdmin, getRoomOccupancy);
   app.get("/api/admin/booking-issues", requireAdmin, getBookingIssues);
   app.get("/api/admin/activity-analytics", requireAdmin, getUserActivityAnalytics);
+  app.post("/api/admin/upload-gcash-qr", requireAdmin, upload.single('gcashQr'), uploadGcashQr);
   
   // Reports routes - Require admin authorization
   app.get("/api/reports/bookings", requireAdmin, generateBookingReport);

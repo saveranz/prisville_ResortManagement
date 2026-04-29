@@ -15,6 +15,9 @@ dist-ssr
 # Session files
 .sessions
 
+# Uploads directory (temporary file storage)
+uploads/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

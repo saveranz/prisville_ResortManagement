@@ -735,3 +735,49 @@ export const deleteUser: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// Upload GCash QR Code
+export const uploadGcashQr: RequestHandler = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    
+    // Define the target path for the GCash QR code
+    const publicDir = path.join(process.cwd(), 'public');
+    const targetPath = path.join(publicDir, 'gcash-qr.jpg');
+    
+    // Move the uploaded file to the public directory
+    await fs.rename(req.file.path, targetPath);
+    
+    // Log the action
+    if (req.user) {
+      await insertAuditLog(
+        req.user.id,
+        'update',
+        'gcash_qr',
+        null,
+        'Updated GCash QR code image'
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'GCash QR code updated successfully',
+      filename: 'gcash-qr.jpg'
+    });
+
+  } catch (error) {
+    console.error('❌ Error uploading GCash QR:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload GCash QR code'
+    });
+  }
+};

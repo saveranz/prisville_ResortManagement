@@ -293,6 +293,12 @@ export default function AdminDashboard() {
     cancelText?: string;
   }>({ title: '', message: '', onConfirm: () => {}, confirmText: 'OK', cancelText: 'Cancel' });
   
+  // GCash QR Code management
+  const [isGcashModalOpen, setIsGcashModalOpen] = useState(false);
+  const [gcashQrFile, setGcashQrFile] = useState<File | null>(null);
+  const [gcashQrPreview, setGcashQrPreview] = useState<string>('');
+  const [gcashUploading, setGcashUploading] = useState(false);
+  
   // REMOVED - Operational data for receptionist only
   // const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
   // const [amenityBookings, setAmenityBookings] = useState<AmenityBooking[]>([]);
@@ -1199,6 +1205,57 @@ export default function AdminDashboard() {
         'Cancel'
       );
     };
+
+  // GCash QR Code handlers
+  const handleGcashFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        showNotification('error', 'Invalid File', 'Please select an image file');
+        return;
+      }
+      setGcashQrFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setGcashQrPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGcashUpload = async () => {
+    if (!gcashQrFile) {
+      showNotification('warning', 'No File Selected', 'Please select an image file to upload');
+      return;
+    }
+
+    setGcashUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('gcashQr', gcashQrFile);
+
+      const response = await fetch('/api/admin/upload-gcash-qr', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to upload GCash QR code');
+      }
+
+      showNotification('success', 'Upload Successful', 'GCash QR code has been updated');
+      setIsGcashModalOpen(false);
+      setGcashQrFile(null);
+      setGcashQrPreview('');
+    } catch (error: any) {
+      console.error('Failed to upload GCash QR:', error);
+      showNotification('error', 'Upload Failed', error.message || 'Failed to upload GCash QR code');
+    } finally {
+      setGcashUploading(false);
+    }
+  };
 
   const filteredRooms = rooms.filter((room) => {
     if (!roomSearchTerm) return true;
@@ -2154,13 +2211,22 @@ export default function AdminDashboard() {
                     className="w-full md:max-w-md px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
-                <button
-                  onClick={openCreateRoomForm}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-sm border border-blue-700"
-                >
-                  <Plus size={18} />
-                  Add Room
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsGcashModalOpen(true)}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm border border-green-700"
+                  >
+                    <DollarSign size={18} />
+                    GCash QR Code
+                  </button>
+                  <button
+                    onClick={openCreateRoomForm}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-sm border border-blue-700"
+                  >
+                    <Plus size={18} />
+                    Add Room
+                  </button>
+                </div>
               </div>
 
               <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
@@ -3086,6 +3152,114 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* GCash QR Code Upload Modal */}
+      {isGcashModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scaleIn">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-900">Update GCash QR Code</h3>
+              <button
+                onClick={() => {
+                  setIsGcashModalOpen(false);
+                  setGcashQrFile(null);
+                  setGcashQrPreview('');
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> This QR code will be displayed to users when they make room bookings for payment. Make sure the image is clear and scannable.
+                </p>
+              </div>
+
+              {/* Current GCash QR Preview */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Current GCash QR Code
+                </label>
+                <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <img
+                    src="/gcash-qr.jpg"
+                    alt="Current GCash QR Code"
+                    className="max-w-xs mx-auto"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* File Upload */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Upload New QR Code Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleGcashFileChange}
+                  className="block w-full text-sm text-gray-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+                />
+              </div>
+
+              {/* New Image Preview */}
+              {gcashQrPreview && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    New QR Code Preview
+                  </label>
+                  <div className="border-2 border-green-200 rounded-lg p-4 bg-green-50">
+                    <img
+                      src={gcashQrPreview}
+                      alt="New GCash QR Code Preview"
+                      className="max-w-xs mx-auto"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setIsGcashModalOpen(false);
+                    setGcashQrFile(null);
+                    setGcashQrPreview('');
+                  }}
+                  className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-colors"
+                  disabled={gcashUploading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGcashUpload}
+                  disabled={!gcashQrFile || gcashUploading}
+                  className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {gcashUploading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <DollarSign size={18} />
+                      Update QR Code
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Toaster />
     </div>
   );
