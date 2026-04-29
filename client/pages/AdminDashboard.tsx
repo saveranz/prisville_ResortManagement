@@ -1256,12 +1256,16 @@ export default function AdminDashboard() {
 
     setGcashUploading(true);
     try {
-      // Update payment settings first
+      // Update payment settings (only account_name and mobile_number, keep note as default)
       const settingsResponse = await fetch('/api/payment-settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(paymentSettings)
+        body: JSON.stringify({
+          account_name: paymentSettings.account_name,
+          mobile_number: paymentSettings.mobile_number,
+          note: 'This is a reservation fee (50% of total) to secure your booking. The remaining balance will be paid upon arrival.'
+        })
       });
 
       if (!settingsResponse.ok) {
@@ -3256,21 +3260,6 @@ export default function AdminDashboard() {
                     placeholder="e.g., +63 912 345 6789"
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
-                </div>
-
-                {/* Note */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Payment Note
-                  </label>
-                  <textarea
-                    value={paymentSettings.note}
-                    onChange={(e) => setPaymentSettings({ ...paymentSettings, note: e.target.value })}
-                    placeholder="e.g., This is a reservation fee (50% of total) to secure your booking..."
-                    rows={3}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">This note will be displayed to users during payment</p>
                 </div>
               </div>
 
