@@ -1289,18 +1289,20 @@ export default function ReceptionistDashboard() {
             )}
           </button>
 
-          {/* Walk-In Sub-button */}
-          <button
-            onClick={() => { setActiveTab('walkin'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 ${
-              activeTab === 'walkin'
-                ? 'bg-accent/10 text-accent font-semibold border-l-4 border-accent'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-            }`}
-          >
-            <Plus size={18} />
-            <span className="tracking-wide text-sm">Walk-In</span>
-          </button>
+          {/* Walk-In Sub-button - Only visible when Room Bookings is active */}
+          {(activeTab === 'rooms' || activeTab === 'walkin') && (
+            <button
+              onClick={() => { setActiveTab('walkin'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 ${
+                activeTab === 'walkin'
+                  ? 'bg-accent/10 text-accent font-semibold border-l-4 border-accent'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              <Plus size={18} />
+              <span className="tracking-wide text-sm">Walk-In</span>
+            </button>
+          )}
 
           <button
             onClick={() => { setActiveTab('amenities'); setMobileMenuOpen(false); }}
