@@ -670,7 +670,7 @@ export default function Index() {
                 type: 'Event Space',
                 price: '₱10,000',
                 capacity: 'Up to 300 guests',
-                features: 'Rental of venue includes tables and chairs. Reservations for occasions, birthdays, weddings, meetings. Packages per pax/per plate. Example: 100 guests x ₱1,500 per head/plate',
+                features: 'Rental of venue includes tables and chairs. Reservations for occasions, birthdays, weddings, meetings. Packages per pax/per plate',
                 image: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&h=600&fit=crop'
               })}
             >
