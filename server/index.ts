@@ -12,6 +12,7 @@ import { createWalkInBooking as createWalkIn, getAllWalkInBookings } from "./rou
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
 import { setupDatabase, migrateRoomType, migrateUserStatus, setupFAQs, setupAllMissingTables, setupPaymentSettings } from "./routes/setup";
+import setupWalkInTable from "../database/setup-walk-in-table";
 import { getInventoryItems, addInventoryItem, updateInventoryItem, deleteInventoryItem, updateInventoryQuantity, receiveStock, issueStock, getInventoryTransactions, getInventoryStats, getTransactions, addTransaction } from "./routes/inventory";
 import { getUserRecommendations, saveUserPreferences, getUserPreferences } from "./routes/recommendations";
 import { trackActivity, getUserActivity, getUserActivityStats } from "./routes/activityTracking";
@@ -182,6 +183,10 @@ export function createServer() {
   app.get("/api/setup-faqs", setupFAQs);
   app.get("/api/setup-all", setupAllMissingTables);
   app.get("/api/setup-payment-settings", setupPaymentSettings);
+  app.get("/api/setup-walk-in-table", async (_req, res) => {
+    const result = await setupWalkInTable();
+    res.json(result);
+  });
   app.get("/api/migrate-room-type", migrateRoomType);
   app.get("/api/migrate-user-status", migrateUserStatus);
   app.get("/api/migrate-audit-logs", migrateAuditLogs);
