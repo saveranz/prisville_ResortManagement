@@ -7,7 +7,7 @@ import { handleDemo } from "./routes/demo";
 import pool, { testConnection } from "./db";
 import { testDatabase } from "./routes/database";
 import { register, login, getCurrentUser, logout, requestPasswordReset, verifyResetToken, resetPassword, verifyEmail, resendVerification } from "./routes/auth";
-import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates } from "./routes/bookings";
+import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates, createWalkInBooking } from "./routes/bookings";
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
 import { setupDatabase, migrateRoomType, migrateUserStatus, setupFAQs, setupAllMissingTables, setupPaymentSettings } from "./routes/setup";
@@ -222,6 +222,7 @@ export function createServer() {
   app.get("/api/bookings/room/unavailable-dates", getUnavailableDates);
   app.get("/api/bookings/room/check-availability", checkRoomAvailability);
   app.post("/api/bookings/room", createRoomBooking);
+  app.post("/api/bookings/room/walk-in", requireStaff, createWalkInBooking);
   app.get("/api/bookings/room", getUserRoomBookings);
   app.get("/api/bookings/room/all", requireStaff, getAllRoomBookings);
   app.put("/api/bookings/room/status", requireStaff, updateBookingStatus);

@@ -430,3 +430,121 @@ export const updateBookingStatus: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// Create a walk-in room booking (receptionist only)
+export const createWalkInBooking: RequestHandler = async (req, res) => {
+  try {
+    console.log('📝 Walk-in booking request received');
+    
+    // Check if user is logged in and is receptionist or admin
+    if (!req.session.userId) {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Please login' 
+      });
+      return;
+    }
+
+    if (req.session.userRole !== 'admin' && req.session.userRole !== 'receptionist') {
+      res.status(403).json({ 
+        success: false, 
+        message: 'Unauthorized access' 
+      });
+      return;
+    }
+
+    const {
+      guestName,
+      guestEmail,
+      contactNumber,
+      roomName,
+      roomType,
+      checkIn,
+      checkOut,
+      guests,
+      totalAmount,
+      notes
+    } = req.body;
+
+    console.log('📋 Walk-in booking data:', {
+      guestName,
+      guestEmail,
+      contactNumber,
+      roomName,
+      roomType,
+      checkIn,
+      checkOut,
+      guests,
+      totalAmount
+    });
+
+    // Validate required fields
+    if (!guestName || !guestEmail || !contactNumber || !roomName || !roomType || !checkIn || !checkOut || !guests || !totalAmount) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'All required fields must be filled' 
+      });
+      return;
+    }
+
+    // Check if walk-in user exists, if not create one
+    let walkInUserId: number;
+    const [existingUsers] = await db.query<RowDataPacket[]>(
+      'SELECT id FROM users WHERE email = ?',
+      [guestEmail]
+    );
+
+    if (existingUsers.length > 0) {
+      walkInUserId = existingUsers[0].id;
+      console.log('✅ Using existing user ID:', walkInUserId);
+    } else {
+      // Create a walk-in user account
+      const [userResult] = await db.query<ResultSetHeader>(
+        `INSERT INTO users (name, email, password, role, email_verified, status) 
+        VALUES (?, ?, ?, 'user', 1, 'active')`,
+        [guestName, guestEmail, 'walk-in-guest'] // Password is placeholder for walk-ins
+      );
+      walkInUserId = userResult.insertId;
+      console.log('✅ Created new walk-in user with ID:', walkInUserId);
+    }
+
+    // Generate room numbers (for walk-ins, we'll use a placeholder or let receptionist assign later)
+    const roomNumbers = `${roomType}-WALKIN-${Date.now()}`;
+
+    // Insert booking with approved status (walk-ins are pre-approved)
+    const [result] = await db.query<ResultSetHeader>(
+      `INSERT INTO room_bookings 
+      (user_id, user_email, room_name, room_type, room_numbers, check_in, check_out, guests, contact_number, special_requests, total_amount, payment_proof, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')`,
+      [
+        walkInUserId,
+        guestEmail,
+        roomName,
+        roomType,
+        roomNumbers,
+        checkIn,
+        checkOut,
+        guests,
+        contactNumber,
+        notes || null,
+        totalAmount,
+        'WALK-IN-PAYMENT' // Walk-ins pay at reception
+      ]
+    );
+
+    console.log('✅ Walk-in booking created successfully with ID:', result.insertId);
+
+    res.json({ 
+      success: true, 
+      message: 'Walk-in booking created successfully!',
+      bookingId: result.insertId
+    });
+  } catch (error) {
+    console.error('❌ Create walk-in booking error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to create walk-in booking',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};

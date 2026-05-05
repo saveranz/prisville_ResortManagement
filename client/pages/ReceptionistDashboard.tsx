@@ -212,6 +212,22 @@ export default function ReceptionistDashboard() {
   const [checkInSearchTerm, setCheckInSearchTerm] = useState('');
   const [checkOutSearchTerm, setCheckOutSearchTerm] = useState('');
   
+  // Walk-in booking states
+  const [showWalkInModal, setShowWalkInModal] = useState(false);
+  const [walkInForm, setWalkInForm] = useState({
+    guestName: '',
+    guestEmail: '',
+    contactNumber: '',
+    roomName: '',
+    roomType: '',
+    checkIn: '',
+    checkOut: '',
+    guests: '',
+    totalAmount: '',
+    notes: ''
+  });
+  const [walkInLoading, setWalkInLoading] = useState(false);
+  
   // Pagination for bookings
   const [roomBookingsPage, setRoomBookingsPage] = useState(1);
   const [amenityBookingsPage, setAmenityBookingsPage] = useState(1);
@@ -969,6 +985,58 @@ export default function ReceptionistDashboard() {
     }
   };
 
+  const handleWalkInBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWalkInLoading(true);
+    
+    try {
+      const response = await fetch('/api/bookings/room/walk-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(walkInForm)
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Walk-in booking created",
+          description: `Booking for ${walkInForm.guestName} has been created successfully.`,
+        });
+        setShowWalkInModal(false);
+        setWalkInForm({
+          guestName: '',
+          guestEmail: '',
+          contactNumber: '',
+          roomName: '',
+          roomType: '',
+          checkIn: '',
+          checkOut: '',
+          guests: '',
+          totalAmount: '',
+          notes: ''
+        });
+        fetchAllBookings();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.message || 'Failed to create walk-in booking',
+        });
+      }
+    } catch (error) {
+      console.error('Error creating walk-in booking:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: 'Failed to create walk-in booking',
+      });
+    } finally {
+      setWalkInLoading(false);
+    }
+  };
+
   const calculateTotals = () => {
     const income = filteredTransactions
       .filter(t => t.type === 'income')
@@ -1543,9 +1611,18 @@ export default function ReceptionistDashboard() {
           {activeTab === 'rooms' && (
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-x-auto">
               {/* Title Header */}
-              <div className="px-3 pt-4 pb-2 sm:px-6 sm:pt-6 sm:pb-4 border-b border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900">Room Booking Reservations</h3>
-                <p className="text-sm text-gray-600 mt-1">Manage and review all room booking requests</p>
+              <div className="px-3 pt-4 pb-2 sm:px-6 sm:pt-6 sm:pb-4 border-b border-gray-100 flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Room Booking Reservations</h3>
+                  <p className="text-sm text-gray-600 mt-1">Manage and review all room booking requests</p>
+                </div>
+                <button
+                  onClick={() => setShowWalkInModal(true)}
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2.5 rounded-xl font-semibold transition-all shadow-md flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  Walk-In
+                </button>
               </div>
               
               {/* Search and Filter UI */}
@@ -2706,6 +2783,167 @@ export default function ReceptionistDashboard() {
               <Button type="button" variant="outline" onClick={() => setShowIssueStock(false)}
                 className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300">Cancel</Button>
               <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">Issue Stock</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Walk-In Booking Modal */}
+      <Dialog open={showWalkInModal} onOpenChange={setShowWalkInModal}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
+              <Plus className="text-accent" size={24} /> Walk-In Room Booking
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Record a walk-in guest booking. All fields are required.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleWalkInBooking} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-700">Guest Name *</Label>
+                <Input 
+                  type="text" 
+                  placeholder="Full name" 
+                  value={walkInForm.guestName}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, guestName: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1" 
+                  required 
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Email Address *</Label>
+                <Input 
+                  type="email" 
+                  placeholder="guest@example.com" 
+                  value={walkInForm.guestEmail}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, guestEmail: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1" 
+                  required 
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Contact Number *</Label>
+              <Input 
+                type="tel" 
+                placeholder="+63 XXX XXX XXXX" 
+                value={walkInForm.contactNumber}
+                onChange={(e) => setWalkInForm({ ...walkInForm, contactNumber: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-700">Room Name *</Label>
+                <Input 
+                  type="text" 
+                  placeholder="e.g., Deluxe Room" 
+                  value={walkInForm.roomName}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, roomName: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1" 
+                  required 
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Room Type *</Label>
+                <select
+                  value={walkInForm.roomType}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, roomType: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent mt-1"
+                  required
+                >
+                  <option value="">Select room type</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Deluxe">Deluxe</option>
+                  <option value="Suite">Suite</option>
+                  <option value="Family">Family</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-700">Check-In Date *</Label>
+                <Input 
+                  type="date" 
+                  value={walkInForm.checkIn}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, checkIn: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1" 
+                  required 
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Check-Out Date *</Label>
+                <Input 
+                  type="date" 
+                  value={walkInForm.checkOut}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, checkOut: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1" 
+                  required 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-700">Number of Guests *</Label>
+                <Input 
+                  type="number" 
+                  min="1" 
+                  placeholder="Number of guests" 
+                  value={walkInForm.guests}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, guests: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1" 
+                  required 
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Total Amount (₱) *</Label>
+                <Input 
+                  type="number" 
+                  min="0" 
+                  step="0.01" 
+                  placeholder="0.00" 
+                  value={walkInForm.totalAmount}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, totalAmount: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1" 
+                  required 
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Notes / Special Requests</Label>
+              <Textarea 
+                placeholder="Any special requests or notes..." 
+                value={walkInForm.notes}
+                onChange={(e) => setWalkInForm({ ...walkInForm, notes: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1 min-h-[80px]" 
+              />
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowWalkInModal(false)}
+                className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                disabled={walkInLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                disabled={walkInLoading}
+              >
+                {walkInLoading ? 'Creating...' : 'Create Booking'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
