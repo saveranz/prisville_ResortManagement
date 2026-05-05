@@ -636,7 +636,6 @@ export default function Index() {
                 </svg>
               </div>
               <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Swimming Pools</h3>
-              <p className="text-yellow-600 text-lg font-semibold mb-2">₱100 per pax</p>
               <button className="text-yellow-600/80 hover:text-yellow-500 text-sm transition">Click for day pass</button>
             </div>
 
@@ -659,7 +658,6 @@ export default function Index() {
                 </svg>
               </div>
               <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Function Hall</h3>
-              <p className="text-yellow-600 text-lg font-semibold mb-2">₱10,000</p>
               <button className="text-yellow-600/80 hover:text-yellow-500 text-sm transition">Click for details</button>
             </div>
 
@@ -682,7 +680,6 @@ export default function Index() {
                 </svg>
               </div>
               <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Event Space</h3>
-              <p className="text-yellow-600 text-lg font-semibold mb-2">₱25,000</p>
               <button className="text-yellow-600/80 hover:text-yellow-500 text-sm transition">Click for details</button>
             </div>
 
@@ -704,17 +701,6 @@ export default function Index() {
                 </svg>
               </div>
               <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Cottages & Huts</h3>
-            </div>
-
-            {/* Maximum 5 Hours */}
-            <div className="text-center group animate-scaleIn" style={{ animationDelay: '0.6s' }}>
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-yellow-600/50 flex items-center justify-center group-hover:border-yellow-500 group-hover:scale-110 transition-all duration-500">
-                <svg className="w-10 h-10 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22A9,9 0 0,0 21,13A9,9 0 0,0 12,4M12.5,8H11V14L15.2,16.2L16,14.9L12.5,13.2V8Z"/>
-                </svg>
-              </div>
-              <h3 className="font-serif text-xl md:text-2xl text-white mb-2">Maximum 5 Hours</h3>
-              <p className="text-white/60 text-sm">Amenity Use</p>
             </div>
           </div>
         </div>
