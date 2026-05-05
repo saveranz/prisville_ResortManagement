@@ -2345,10 +2345,19 @@ export default function AdminDashboard() {
 
             {showRoomForm && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => {
-                setShowRoomForm(false);
-                setEditingRoomId(null);
-                setRoomForm(DEFAULT_ROOM_FORM);
-                setRoomFormErrors({});
+                showConfirm(
+                  'Exit Without Saving?',
+                  'Are you sure you want to exit? Any unsaved changes will be lost.',
+                  () => {
+                    setShowRoomForm(false);
+                    setEditingRoomId(null);
+                    setRoomForm(DEFAULT_ROOM_FORM);
+                    setRoomFormErrors({});
+                    setTempExtraItems([]);
+                  },
+                  'Exit',
+                  'Stay'
+                );
               }}>
                 <div 
                   className={`w-full max-w-3xl bg-white rounded-xl shadow-2xl border-2 ${
@@ -2372,10 +2381,19 @@ export default function AdminDashboard() {
                     </h3>
                     <button
                       onClick={() => {
-                        setShowRoomForm(false);
-                        setEditingRoomId(null);
-                        setRoomForm(DEFAULT_ROOM_FORM);
-                        setRoomFormErrors({});
+                        showConfirm(
+                          'Exit Without Saving?',
+                          'Are you sure you want to exit? Any unsaved changes will be lost.',
+                          () => {
+                            setShowRoomForm(false);
+                            setEditingRoomId(null);
+                            setRoomForm(DEFAULT_ROOM_FORM);
+                            setRoomFormErrors({});
+                            setTempExtraItems([]);
+                          },
+                          'Exit',
+                          'Stay'
+                        );
                       }}
                       className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
                     >
@@ -2699,15 +2717,23 @@ export default function AdminDashboard() {
                   <div className="px-6 py-4 border-t border-gray-200 flex gap-2 justify-end">
                     <button
                       onClick={() => {
-                        setShowRoomForm(false);
-                        setEditingRoomId(null);
-                        setRoomForm(DEFAULT_ROOM_FORM);
-                        setRoomFormErrors({});
-                        setRoomExtraItems([]);
-                        setTempExtraItems([]);
-                        setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
-                        setEditingItemId(null);
-                        setEditingTempItemIndex(null);
+                        showConfirm(
+                          'Exit Without Saving?',
+                          'Are you sure you want to exit? Any unsaved changes will be lost.',
+                          () => {
+                            setShowRoomForm(false);
+                            setEditingRoomId(null);
+                            setRoomForm(DEFAULT_ROOM_FORM);
+                            setRoomFormErrors({});
+                            setRoomExtraItems([]);
+                            setTempExtraItems([]);
+                            setExtraItemForm(DEFAULT_EXTRA_ITEM_FORM);
+                            setEditingItemId(null);
+                            setEditingTempItemIndex(null);
+                          },
+                          'Exit',
+                          'Stay'
+                        );
                       }}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
                       disabled={roomFormLoading}
