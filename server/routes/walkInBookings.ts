@@ -5,6 +5,7 @@ import { RowDataPacket, ResultSetHeader } from "mysql2";
 interface WalkInBooking extends RowDataPacket {
   id: number;
   guest_name: string;
+  room_number: string;
   address: string;
   contact_number: string;
   number_of_pax: number;
@@ -38,6 +39,7 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
     const {
       numberOfPax,
       guestName,
+      roomNumber,
       address,
       contactNumber,
       amount
@@ -46,13 +48,14 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
     console.log('📋 Walk-in data:', {
       numberOfPax,
       guestName,
+      roomNumber,
       address,
       contactNumber,
       amount
     });
 
     // Validate required fields
-    if (!numberOfPax || !guestName || !address || !contactNumber || !amount) {
+    if (!numberOfPax || !guestName || !roomNumber || !address || !contactNumber || !amount) {
       res.status(400).json({ 
         success: false, 
         message: 'All fields are required' 
@@ -63,9 +66,9 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
     // Insert walk-in booking
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO walk_in_bookings 
-      (guest_name, address, contact_number, number_of_pax, amount) 
-      VALUES (?, ?, ?, ?, ?)`,
-      [guestName, address, contactNumber, numberOfPax, amount]
+      (guest_name, room_number, address, contact_number, number_of_pax, amount) 
+      VALUES (?, ?, ?, ?, ?, ?)`,
+      [guestName, roomNumber, address, contactNumber, numberOfPax, amount]
     );
 
     console.log('✅ Walk-in recorded successfully with ID:', result.insertId);

@@ -220,6 +220,7 @@ export default function ReceptionistDashboard() {
     guestName: '',
     address: '',
     contactNumber: '',
+    roomNumber: '',
     amount: ''
   });
   const [walkInLoading, setWalkInLoading] = useState(false);
@@ -1008,6 +1009,7 @@ export default function ReceptionistDashboard() {
           guestName: '',
           address: '',
           contactNumber: '',
+          roomNumber: '',
           amount: ''
         });
         fetchWalkInBookings();
@@ -1790,6 +1792,7 @@ export default function ReceptionistDashboard() {
                       <tr className="bg-gray-800">
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Date</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Name</th>
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room No.</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Address</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Contact No.</th>
                         <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">No. of Pax</th>
@@ -1801,6 +1804,7 @@ export default function ReceptionistDashboard() {
                         !walkInSearchTerm || 
                         w.guest_name?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
                         w.contact_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
+                        w.room_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
                         w.address?.toLowerCase().includes(walkInSearchTerm.toLowerCase())
                       ).map((walkIn: any) => (
                         <tr key={walkIn.id} className="hover:bg-gray-50 transition-colors">
@@ -1816,6 +1820,9 @@ export default function ReceptionistDashboard() {
                               </div>
                               <span className="text-xs font-semibold text-gray-900">{walkIn.guest_name}</span>
                             </div>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-primary">
+                            {walkIn.room_number}
                           </td>
                           <td className="px-3 py-3 text-xs text-gray-700 max-w-[200px] truncate" title={walkIn.address}>
                             {walkIn.address}
@@ -2953,6 +2960,18 @@ export default function ReceptionistDashboard() {
                 placeholder="Full name" 
                 value={walkInForm.guestName}
                 onChange={(e) => setWalkInForm({ ...walkInForm, guestName: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Room Number *</Label>
+              <Input 
+                type="text" 
+                placeholder="e.g., 101, 202" 
+                value={walkInForm.roomNumber}
+                onChange={(e) => setWalkInForm({ ...walkInForm, roomNumber: e.target.value })}
                 className="bg-white border-gray-300 text-gray-900 mt-1" 
                 required 
               />
