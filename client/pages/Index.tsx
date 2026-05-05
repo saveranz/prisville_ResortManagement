@@ -720,7 +720,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Accommodation Check-in/Check-out Section */}
+      {/* Day Pass Booking Information Section */}
       <section id="accommodation" className="relative h-[600px] md:h-[700px] overflow-hidden">
         {/* Background Image */}
         <div
@@ -737,13 +737,13 @@ export default function Index() {
         <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
           <div className="animate-fadeInDown">
             <p className="text-white/80 text-xs md:text-sm font-medium tracking-[0.3em] uppercase mb-6">
-              Check-in & Check-out
+              Day Pass Booking Information
             </p>
             <h2 className="font-serif text-4xl md:text-6xl text-white mb-4">
-              Check-in: After 12 PM
+              Check-in: After 1 PM
             </h2>
             <h2 className="font-serif text-4xl md:text-6xl text-white mb-8">
-              Check-out: Before 12 PM
+              Check-out: Before 11 AM
             </h2>
             <div className="max-w-2xl mx-auto mb-10">
               <p className="text-white/90 text-base md:text-lg mb-2">
