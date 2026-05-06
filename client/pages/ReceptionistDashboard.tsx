@@ -1438,10 +1438,6 @@ export default function ReceptionistDashboard() {
             <span className="tracking-wide">Inventory</span>
           </button>
 
-          <div className="pt-2 mt-2 border-t border-gray-200">
-            <p className="text-xs font-semibold text-accent px-4 mb-2 tracking-wider">RESORT OPERATIONS</p>
-          </div>
-
           <button
             onClick={() => { setActiveTab('checkin'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
@@ -1454,6 +1450,21 @@ export default function ReceptionistDashboard() {
             <span className="tracking-wide">Check-In / Check-Out</span>
           </button>
 
+          {/* Stay History Sub-button - Only visible when Check-In/Check-Out is active */}
+          {(activeTab === 'checkin' || activeTab === 'history') && (
+            <button
+              onClick={() => { setActiveTab('history'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 ${
+                activeTab === 'history'
+                  ? 'bg-accent/10 text-accent font-semibold border-l-4 border-accent'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              <History size={18} />
+              <span className="tracking-wide text-sm">Stay History</span>
+            </button>
+          )}
+
           <button
             onClick={() => { setActiveTab('roomstatus'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
@@ -1464,18 +1475,6 @@ export default function ReceptionistDashboard() {
           >
             <Settings size={20} />
             <span className="tracking-wide">Room Status</span>
-          </button>
-
-          <button
-            onClick={() => { setActiveTab('history'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-              activeTab === 'history'
-                ? 'bg-primary/10 text-primary font-semibold  border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-            }`}
-          >
-            <History size={20} />
-            <span className="tracking-wide">Stay History</span>
           </button>
 
           <button
