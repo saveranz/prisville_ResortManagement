@@ -531,7 +531,7 @@ export default function ReceptionistDashboard() {
     // Calculate total revenue from transaction history (income transactions only)
     const totalRevenue = transactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[â‚±,]/g, '')), 0);
+      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[₱,]/g, '')), 0);
 
     setStats({ totalBookings, pendingBookings, approvedToday, totalRevenue });
   };
@@ -1121,14 +1121,14 @@ export default function ReceptionistDashboard() {
     const income = filteredTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => {
-        const amount = parseFloat(t.amount.replace(/[â‚±,]/g, ''));
+        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
     
     const expenses = filteredTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => {
-        const amount = parseFloat(t.amount.replace(/[â‚±,]/g, ''));
+        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
     
@@ -1170,7 +1170,7 @@ export default function ReceptionistDashboard() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-gray-900 truncate">{booking.guest_name || booking.user_email}</p>
                 <p className="text-sm text-gray-600 truncate">
-                  {booking.room_name || booking.amenity_name || 'Day Pass'} â€¢ {formatDate(booking.check_in || booking.booking_date)}
+                  {booking.room_name || booking.amenity_name || 'Day Pass'} • {formatDate(booking.check_in || booking.booking_date)}
                 </p>
               </div>
             </div>
@@ -1642,7 +1642,7 @@ export default function ReceptionistDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-600 text-sm font-medium">Total Revenue</p>
-                      <p className="text-3xl font-display font-bold text-gray-900 mt-2 tracking-tight">â‚±{stats.totalRevenue.toLocaleString()}</p>
+                      <p className="text-3xl font-display font-bold text-gray-900 mt-2 tracking-tight">₱{stats.totalRevenue.toLocaleString()}</p>
                       <p className="text-accent text-sm mt-2 flex items-center gap-1">
                         <DollarSign size={14} />
                         Income transactions
@@ -2443,7 +2443,7 @@ export default function ReceptionistDashboard() {
                                 </div>
                                 <div className="min-w-0">
                                   <p className="text-xs font-semibold text-gray-900 truncate max-w-[160px]">{guest.guest_name || guest.user_email}</p>
-                                  <p className="text-[10px] text-gray-400">#{guest.booking_id} Â· {guest.booking_type}</p>
+                                  <p className="text-[10px] text-gray-400">#{guest.booking_id} · {guest.booking_type}</p>
                                 </div>
                               </div>
                             </td>
