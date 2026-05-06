@@ -1406,11 +1406,11 @@ export default function ReceptionistDashboard() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-gray-50">
+    <div className="flex flex-col lg:flex-row h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       {/* Mobile Menu Backdrop */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" 
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -1418,47 +1418,49 @@ export default function ReceptionistDashboard() {
       {/* Sidebar */}
       <div className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-4/5 max-w-xs lg:w-64 bg-white shadow-xl flex flex-col border-r border-primary/20
+        w-4/5 max-w-xs lg:w-72 bg-gradient-to-b from-white to-gray-50 shadow-2xl flex flex-col border-r border-gray-200
         transform transition-transform duration-300 ease-in-out
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="p-6 border-b border-gray-200">
+        {/* Logo Section */}
+        <div className="p-6 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full shadow-md flex items-center justify-center overflow-hidden bg-white">
+            <div className="w-14 h-14 rounded-xl shadow-lg flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary to-primary/80">
               <img src="/PTR-logo.png" alt="Prisville Logo" className="w-full h-full object-cover scale-150" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-gray-900 text-lg tracking-tight">Prisville</h1>
+              <h1 className="font-display font-bold text-gray-900 text-xl tracking-tight">Prisville</h1>
               <p className="text-xs text-gray-600 font-medium">Resort Management</p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-2 sm:p-4 space-y-2 overflow-y-auto">
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           <button
             onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'overview'
-                ? 'bg-accent/10 text-accent font-semibold  border-l-4 border-accent'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-accent to-accent/90 text-white shadow-lg shadow-accent/30 scale-[1.02]'
+                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
             }`}
           >
-            <TrendingUp size={20} />
+            <TrendingUp size={20} className={activeTab === 'overview' ? 'animate-pulse' : ''} />
             <span className="tracking-wide">Dashboard</span>
           </button>
           
           <button
             onClick={() => { setActiveTab('rooms'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'rooms'
-                ? 'bg-primary/10 text-primary font-semibold  border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
             }`}
           >
             <Home size={20} />
             <span className="tracking-wide">Room Bookings</span>
             {roomBookings.filter(b => b.status === 'pending').length > 0 && (
-              <span className="ml-auto bg-orange-500 text-white text-xs rounded-full px-2 py-0.5 font-bold shadow-lg">
+              <span className="ml-auto bg-orange-500 text-white text-xs rounded-full px-2.5 py-1 font-bold shadow-lg animate-pulse">
                 {roomBookings.filter(b => b.status === 'pending').length}
               </span>
             )}
@@ -1468,10 +1470,10 @@ export default function ReceptionistDashboard() {
           {(activeTab === 'rooms' || activeTab === 'walkin') && (
             <button
               onClick={() => { setActiveTab('walkin'); setMobileMenuOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 ${
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'walkin'
-                  ? 'bg-accent/10 text-accent font-semibold border-l-4 border-accent'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-gradient-to-r from-accent/90 to-accent/80 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-white hover:shadow-md hover:text-gray-900'
               }`}
             >
               <Plus size={18} />
@@ -1481,16 +1483,16 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('amenities'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'amenities'
-                ? 'bg-primary/10 text-primary font-semibold  border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
             }`}
           >
             <Calendar size={20} />
             <span className="tracking-wide">Amenities</span>
             {amenityBookings.filter(b => b.status === 'pending').length > 0 && (
-              <span className="ml-auto bg-orange-500 text-white text-xs rounded-full px-2 py-0.5 font-bold shadow-lg">
+              <span className="ml-auto bg-orange-500 text-white text-xs rounded-full px-2.5 py-1 font-bold shadow-lg animate-pulse">
                 {amenityBookings.filter(b => b.status === 'pending').length}
               </span>
             )}
@@ -1498,16 +1500,16 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('daypass'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'daypass'
-                ? 'bg-primary/10 text-primary font-semibold  border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
             }`}
           >
             <Users size={20} />
             <span className="tracking-wide">Day Pass</span>
             {dayPassBookings.filter(b => b.status === 'pending').length > 0 && (
-              <span className="ml-auto bg-orange-500 text-white text-xs rounded-full px-2 py-0.5 font-bold shadow-lg">
+              <span className="ml-auto bg-orange-500 text-white text-xs rounded-full px-2.5 py-1 font-bold shadow-lg animate-pulse">
                 {dayPassBookings.filter(b => b.status === 'pending').length}
               </span>
             )}
@@ -1517,10 +1519,10 @@ export default function ReceptionistDashboard() {
           {(activeTab === 'daypass' || activeTab === 'daypasswalkin') && (
             <button
               onClick={() => { setActiveTab('daypasswalkin'); setMobileMenuOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 ${
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'daypasswalkin'
-                  ? 'bg-accent/10 text-accent font-semibold border-l-4 border-accent'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-gradient-to-r from-accent/90 to-accent/80 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-white hover:shadow-md hover:text-gray-900'
               }`}
             >
               <Plus size={18} />
@@ -1530,10 +1532,10 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'inventory'
-                ? 'bg-primary/10 text-primary font-semibold  border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
             }`}
           >
             <Package size={20} />
@@ -1542,10 +1544,10 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('checkin'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'checkin'
-                ? 'bg-primary/10 text-primary font-semibold  border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
             }`}
           >
             <LogIn size={20} />
@@ -1556,10 +1558,10 @@ export default function ReceptionistDashboard() {
           {(activeTab === 'checkin' || activeTab === 'history') && (
             <button
               onClick={() => { setActiveTab('history'); setMobileMenuOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 ${
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'history'
-                  ? 'bg-accent/10 text-accent font-semibold border-l-4 border-accent'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-gradient-to-r from-accent/90 to-accent/80 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-white hover:shadow-md hover:text-gray-900'
               }`}
             >
               <History size={18} />
@@ -1569,10 +1571,10 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('roomstatus'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'roomstatus'
-                ? 'bg-primary/10 text-primary font-semibold  border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
             }`}
           >
             <Settings size={20} />
@@ -1581,39 +1583,40 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('issues'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'issues'
-                ? 'bg-primary/10 text-primary font-semibold  border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
             }`}
           >
             <AlertCircle size={20} />
             <span className="tracking-wide">Issues</span>
             {bookingIssues.filter(i => i.status === 'open').length > 0 && (
-              <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold shadow-lg">
+              <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2.5 py-1 font-bold shadow-lg animate-pulse">
                 {bookingIssues.filter(i => i.status === 'open').length}
               </span>
             )}
           </button>
         </nav>
 
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
-            <div className="w-10 h-10 rounded-full bg-accent shadow-md flex items-center justify-center">
-              <span className="text-accent-foreground font-bold text-sm">
+        {/* User Profile Section */}
+        <div className="p-4 border-t border-gray-200 bg-white">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 shadow-sm">
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent to-accent/80 shadow-lg flex items-center justify-center ring-2 ring-white">
+              <span className="text-white font-bold text-base">
                 {user?.name?.charAt(0) || 'R'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">
+              <p className="text-sm font-bold text-gray-900 truncate">
                 {user?.name || user?.email}
               </p>
-              <p className="text-xs text-gray-600 capitalize">{user?.role}</p>
+              <p className="text-xs text-gray-600 capitalize font-medium">{user?.role}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-semibold shadow-md"
+            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-bold shadow-lg hover:shadow-xl hover:scale-[1.02]"
           >
             <LogOut size={18} />
             <span>Logout</span>
@@ -1624,18 +1627,18 @@ export default function ReceptionistDashboard() {
       {/* Main Content */}
       <div className="flex-1 overflow-auto min-w-0">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-2 sm:px-4 lg:px-8 py-3 sm:py-4 shadow-sm">
+        <div className="bg-gradient-to-r from-white to-gray-50 border-b border-gray-200 px-4 lg:px-8 py-4 sm:py-5 shadow-md sticky top-0 z-30 backdrop-blur-sm bg-white/95">
           <div className="flex items-center justify-between gap-4">
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-2.5 rounded-xl hover:bg-gray-100 transition-colors shadow-sm border border-gray-200"
             >
               <Menu size={24} className="text-gray-700" />
             </button>
 
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl sm:text-2xl font-display font-bold text-gray-900 tracking-tight truncate">
+              <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 tracking-tight truncate bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 {activeTab === 'overview' ? 'Dashboard Overview' :
                  activeTab === 'rooms' ? 'Room Bookings' :
                  activeTab === 'walkin' ? 'Walk-In Bookings' :
