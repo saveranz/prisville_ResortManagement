@@ -115,7 +115,7 @@ interface Transaction {
 }
 
 export default function ReceptionistDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'walkin' | 'amenities' | 'daypass' | 'inventory' | 'checkin' | 'roomstatus' | 'history' | 'issues'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'walkin' | 'amenities' | 'daypass' | 'daypasswalkin' | 'inventory' | 'checkin' | 'roomstatus' | 'history' | 'issues'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
@@ -225,6 +225,19 @@ export default function ReceptionistDashboard() {
   });
   const [walkInLoading, setWalkInLoading] = useState(false);
   const [walkInSearchTerm, setWalkInSearchTerm] = useState('');
+  
+  // Day pass walk-in states
+  const [showDayPassWalkInModal, setShowDayPassWalkInModal] = useState(false);
+  const [dayPassWalkInBookings, setDayPassWalkInBookings] = useState<any[]>([]);
+  const [dayPassWalkInForm, setDayPassWalkInForm] = useState({
+    representativeName: '',
+    numberOfPax: '',
+    cottage: '',
+    cottageNumber: '',
+    amount: ''
+  });
+  const [dayPassWalkInLoading, setDayPassWalkInLoading] = useState(false);
+  const [dayPassWalkInSearchTerm, setDayPassWalkInSearchTerm] = useState('');
   
   // Pagination for bookings
   const [roomBookingsPage, setRoomBookingsPage] = useState(1);
@@ -484,6 +497,7 @@ export default function ReceptionistDashboard() {
     fetchStayHistory();
     fetchBookingIssues();
     fetchWalkInBookings();
+    fetchDayPassWalkInBookings();
   }, []);
 
   useEffect(() => {
@@ -1044,6 +1058,65 @@ export default function ReceptionistDashboard() {
     }
   };
 
+  const handleDayPassWalkIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDayPassWalkInLoading(true);
+    
+    try {
+      const response = await fetch('/api/bookings/day-pass-walk-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(dayPassWalkInForm)
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Day pass walk-in recorded",
+          description: `Walk-in for ${dayPassWalkInForm.representativeName} has been recorded successfully.`,
+        });
+        setShowDayPassWalkInModal(false);
+        setDayPassWalkInForm({
+          representativeName: '',
+          numberOfPax: '',
+          cottage: '',
+          cottageNumber: '',
+          amount: ''
+        });
+        fetchDayPassWalkInBookings();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.message || 'Failed to record day pass walk-in',
+        });
+      }
+    } catch (error) {
+      console.error('Error recording day pass walk-in:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: 'Failed to record day pass walk-in',
+      });
+    } finally {
+      setDayPassWalkInLoading(false);
+    }
+  };
+
+  const fetchDayPassWalkInBookings = async () => {
+    try {
+      const response = await fetch('/api/bookings/day-pass-walk-in', { credentials: 'include' });
+      const data = await response.json();
+      if (data.success) {
+        setDayPassWalkInBookings(data.bookings);
+      }
+    } catch (error) {
+      console.error('Error fetching day pass walk-in bookings:', error);
+    }
+  };
+
   const calculateTotals = () => {
     const income = filteredTransactions
       .filter(t => t.type === 'income')
@@ -1333,10 +1406,25 @@ export default function ReceptionistDashboard() {
             <span className="tracking-wide">Day Pass</span>
             {dayPassBookings.filter(b => b.status === 'pending').length > 0 && (
               <span className="ml-auto bg-orange-500 text-white text-xs rounded-full px-2 py-0.5 font-bold shadow-lg">
-                {amenityBookings.filter(b => b.status === 'pending').length}
+                {dayPassBookings.filter(b => b.status === 'pending').length}
               </span>
             )}
           </button>
+
+          {/* Day Pass Walk-In Sub-button - Only visible when Day Pass is active */}
+          {(activeTab === 'daypass' || activeTab === 'daypasswalkin') && (
+            <button
+              onClick={() => { setActiveTab('daypasswalkin'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 ${
+                activeTab === 'daypasswalkin'
+                  ? 'bg-accent/10 text-accent font-semibold border-l-4 border-accent'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              <Plus size={18} />
+              <span className="tracking-wide text-sm">Walk-In Day Pass</span>
+            </button>
+          )}
 
           <button
             onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
@@ -1452,6 +1540,7 @@ export default function ReceptionistDashboard() {
                  activeTab === 'walkin' ? 'Walk-In Bookings' :
                  activeTab === 'amenities' ? 'Amenity Bookings' :
                  activeTab === 'daypass' ? 'Day Pass Bookings' :
+                 activeTab === 'daypasswalkin' ? 'Walk-In Day Pass' :
                  activeTab === 'inventory' ? 'Inventory Management' :
                  activeTab === 'checkin' ? 'Check-In / Check-Out' :
                  activeTab === 'roomstatus' ? 'Room Status Board' :
@@ -2020,6 +2109,122 @@ export default function ReceptionistDashboard() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+          
+          {activeTab === 'daypasswalkin' && (
+            <div className="bg-white rounded-2xl shadow-md border border-gray-200">
+              {/* Title Header */}
+              <div className="px-3 pt-4 pb-2 sm:px-6 sm:pt-6 sm:pb-4 border-b border-gray-100 flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Walk-In Day Pass</h3>
+                  <p className="text-sm text-gray-600 mt-1">Record walk-in day pass guests</p>
+                </div>
+                <button
+                  onClick={() => setShowDayPassWalkInModal(true)}
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2.5 rounded-xl font-semibold transition-all shadow-md flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  Add Walk-In
+                </button>
+              </div>
+
+              {/* Search Filter */}
+              <div className="p-3 sm:p-6 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input
+                      type="text"
+                      placeholder="Search by name or cottage..."
+                      value={dayPassWalkInSearchTerm}
+                      onChange={(e) => setDayPassWalkInSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  {dayPassWalkInSearchTerm && (
+                    <div className="flex items-end mt-2 sm:mt-0">
+                      <button
+                        onClick={() => setDayPassWalkInSearchTerm('')}
+                        className="px-4 py-2.5 text-sm text-primary hover:text-primary/80 flex items-center gap-2 font-semibold border-2 border-primary/30 rounded-lg hover:bg-primary/5 transition-colors"
+                      >
+                        <X size={16} />
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-2 text-xs sm:text-sm text-gray-600">
+                  Showing <span className="font-semibold text-primary">{dayPassWalkInBookings.filter(w => 
+                    !dayPassWalkInSearchTerm || 
+                    w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
+                    w.cottage_number?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
+                  ).length}</span> of {dayPassWalkInBookings.length} walk-ins
+                </div>
+              </div>
+
+              {/* Day Pass Walk-In Table */}
+              <div className="overflow-x-auto">
+                {loading ? (
+                  <div className="text-center py-16">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    <p className="mt-4 text-gray-600">Loading walk-ins...</p>
+                  </div>
+                ) : dayPassWalkInBookings.filter(w => 
+                    !dayPassWalkInSearchTerm || 
+                    w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
+                    w.cottage_number?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
+                  ).length === 0 ? (
+                  <div className="text-center py-20">
+                    <Users size={64} className="mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg text-gray-500">{dayPassWalkInSearchTerm ? 'No walk-ins found matching your search' : 'No day pass walk-ins recorded yet'}</p>
+                  </div>
+                ) : (
+                  <table className="w-full table-auto">
+                    <thead>
+                      <tr className="bg-gray-800">
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Date</th>
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Representative Name</th>
+                        <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">No. of Pax</th>
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Cottage</th>
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {dayPassWalkInBookings.filter(w => 
+                        !dayPassWalkInSearchTerm || 
+                        w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
+                        w.cottage_number?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
+                      ).map((walkIn: any) => (
+                        <tr key={walkIn.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
+                            {formatDateTime(walkIn.created_at)}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-accent/10 border-2 border-accent/30 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <span className="text-accent text-xs font-bold">
+                                  {walkIn.representative_name?.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <span className="text-xs font-semibold text-gray-900">{walkIn.representative_name}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700 text-center">
+                            {walkIn.number_of_pax}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-primary">
+                            {walkIn.cottage === 'yes' ? (walkIn.cottage_number || 'Yes') : 'No'}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
+                            ₱{parseFloat(walkIn.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
           )}
           
@@ -3032,6 +3237,106 @@ export default function ReceptionistDashboard() {
                 disabled={walkInLoading}
               >
                 {walkInLoading ? 'Recording...' : 'Record Walk-In'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Day Pass Walk-In Modal */}
+      <Dialog open={showDayPassWalkInModal} onOpenChange={setShowDayPassWalkInModal}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
+              <Plus className="text-accent" size={24} /> Record Day Pass Walk-In
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Record a walk-in day pass guest. Date will be automatically set to today.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleDayPassWalkIn} className="space-y-4">
+            <div>
+              <Label className="text-gray-700">Representative Name *</Label>
+              <Input 
+                type="text" 
+                placeholder="Main contact person" 
+                value={dayPassWalkInForm.representativeName}
+                onChange={(e) => setDayPassWalkInForm({ ...dayPassWalkInForm, representativeName: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Number of Pax *</Label>
+              <Input 
+                type="number" 
+                min="1" 
+                placeholder="Total people in group" 
+                value={dayPassWalkInForm.numberOfPax}
+                onChange={(e) => setDayPassWalkInForm({ ...dayPassWalkInForm, numberOfPax: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Cottage *</Label>
+              <select
+                value={dayPassWalkInForm.cottage}
+                onChange={(e) => setDayPassWalkInForm({ ...dayPassWalkInForm, cottage: e.target.value, cottageNumber: e.target.value === 'no' ? '' : dayPassWalkInForm.cottageNumber })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent mt-1"
+                required
+              >
+                <option value="">Select option</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            {dayPassWalkInForm.cottage === 'yes' && (
+              <div>
+                <Label className="text-gray-700">Cottage Number (Optional)</Label>
+                <Input 
+                  type="text" 
+                  placeholder="e.g., C1, C2" 
+                  value={dayPassWalkInForm.cottageNumber}
+                  onChange={(e) => setDayPassWalkInForm({ ...dayPassWalkInForm, cottageNumber: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1" 
+                />
+              </div>
+            )}
+
+            <div>
+              <Label className="text-gray-700">Amount (₱) *</Label>
+              <Input 
+                type="number" 
+                min="0" 
+                step="0.01" 
+                placeholder="0.00" 
+                value={dayPassWalkInForm.amount}
+                onChange={(e) => setDayPassWalkInForm({ ...dayPassWalkInForm, amount: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowDayPassWalkInModal(false)}
+                className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                disabled={dayPassWalkInLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                disabled={dayPassWalkInLoading}
+              >
+                {dayPassWalkInLoading ? 'Recording...' : 'Record Walk-In'}
               </Button>
             </DialogFooter>
           </form>

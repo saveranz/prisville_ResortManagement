@@ -9,6 +9,7 @@ import { testDatabase } from "./routes/database";
 import { register, login, getCurrentUser, logout, requestPasswordReset, verifyResetToken, resetPassword, verifyEmail, resendVerification } from "./routes/auth";
 import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates, createWalkInBooking } from "./routes/bookings";
 import { createWalkInBooking as createWalkIn, getAllWalkInBookings } from "./routes/walkInBookings";
+import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
 import { setupDatabase, migrateRoomType, migrateUserStatus, setupFAQs, setupAllMissingTables, setupPaymentSettings } from "./routes/setup";
@@ -236,6 +237,10 @@ export function createServer() {
   // Walk-in bookings routes
   app.post("/api/bookings/walk-in", requireStaff, createWalkIn);
   app.get("/api/bookings/walk-in", requireStaff, getAllWalkInBookings);
+
+  // Day pass walk-in routes
+  app.post("/api/bookings/day-pass-walk-in", requireStaff, createDayPassWalkIn);
+  app.get("/api/bookings/day-pass-walk-in", requireStaff, getAllDayPassWalkIns);
 
   // Amenity Booking routes
   app.get("/api/bookings/amenity/check-availability", checkAmenityAvailability);
