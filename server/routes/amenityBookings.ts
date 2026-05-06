@@ -330,3 +330,140 @@ export const updateAmenityBookingStatus: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// Create amenity booking by receptionist (for walk-in guests)
+export const createAmenityBookingByReceptionist: RequestHandler = async (req, res) => {
+  try {
+    // Check if user is logged in and is receptionist/admin
+    if (!req.session.userId) {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Please login' 
+      });
+      return;
+    }
+
+    if (req.session.userRole !== 'admin' && req.session.userRole !== 'receptionist') {
+      res.status(403).json({ 
+        success: false, 
+        message: 'Unauthorized access' 
+      });
+      return;
+    }
+
+    const {
+      guestName,
+      guestEmail,
+      contactNumber,
+      amenityName,
+      amenityType,
+      bookingDate,
+      startTime,
+      endTime,
+      guests,
+      occasion,
+      eventDetails,
+      totalAmount
+    } = req.body;
+
+    // Validate required fields
+    if (!guestName || !guestEmail || !contactNumber || !amenityName || !amenityType || 
+        !bookingDate || !startTime || !endTime || !guests || !occasion || !totalAmount) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'All required fields must be filled' 
+      });
+      return;
+    }
+
+    // Check amenity availability - only APPROVED bookings block the time slot
+    const [overlappingBookings] = await db.query<AmenityBooking[]>(
+      `SELECT id FROM amenity_bookings 
+      WHERE amenity_type = ? 
+      AND booking_date = ?
+      AND status = 'approved'
+      AND (
+        (start_time < ? AND end_time > ?) OR
+        (start_time < ? AND end_time > ?) OR
+        (start_time >= ? AND end_time <= ?)
+      )`,
+      [amenityType, bookingDate, endTime, startTime, endTime, startTime, startTime, endTime]
+    );
+
+    if (overlappingBookings.length > 0) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'Amenity is not available for the selected date and time. Please choose different time slot.' 
+      });
+      return;
+    }
+
+    // Check if user exists, if not create a basic account
+    const [existingUsers] = await db.query<RowDataPacket[]>(
+      'SELECT id FROM users WHERE email = ?',
+      [guestEmail]
+    );
+
+    let userId: number;
+
+    if (existingUsers.length === 0) {
+      // Create a basic user account for the guest
+      const [userResult] = await db.query<ResultSetHeader>(
+        `INSERT INTO users (email, password, role, status, email_verified) 
+        VALUES (?, ?, 'client', 'active', true)`,
+        [guestEmail, 'WALK_IN_GUEST']
+      );
+      userId = userResult.insertId;
+    } else {
+      userId = existingUsers[0].id;
+    }
+
+    // Insert booking with approved status (receptionist bookings are pre-approved)
+    const [result] = await db.query<ResultSetHeader>(
+      `INSERT INTO amenity_bookings 
+      (user_id, user_email, amenity_name, amenity_type, booking_date, start_time, end_time, 
+       guests, contact_number, event_details, total_amount, payment_proof, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')`,
+      [
+        userId,
+        guestEmail,
+        amenityName,
+        amenityType,
+        bookingDate,
+        startTime,
+        endTime,
+        guests,
+        contactNumber,
+        `${occasion}${eventDetails ? ' - ' + eventDetails : ''}`,
+        totalAmount,
+        'RECEPTIONIST_BOOKING', // Special marker for receptionist bookings
+      ]
+    );
+
+    // Send notification to the guest
+    await sendNotificationToUser(
+      userId,
+      'booking',
+      'Amenity Booking Confirmed',
+      `Your amenity booking for ${amenityName} on ${bookingDate} has been confirmed by our receptionist.`,
+      {
+        relatedBookingId: result.insertId,
+        relatedBookingType: 'amenity',
+        priority: 'high'
+      }
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Amenity booking created successfully!',
+      bookingId: result.insertId
+    });
+  } catch (error) {
+    console.error('Create amenity booking by receptionist error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to create booking',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};

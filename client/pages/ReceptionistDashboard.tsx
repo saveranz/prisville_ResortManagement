@@ -239,6 +239,26 @@ export default function ReceptionistDashboard() {
   const [dayPassWalkInLoading, setDayPassWalkInLoading] = useState(false);
   const [dayPassWalkInSearchTerm, setDayPassWalkInSearchTerm] = useState('');
   
+  // Amenity booking creation states
+  const [showAmenityBookingModal, setShowAmenityBookingModal] = useState(false);
+  const [availableAmenities, setAvailableAmenities] = useState<any[]>([]);
+  const [amenityBookingForm, setAmenityBookingForm] = useState({
+    guestName: '',
+    guestEmail: '',
+    contactNumber: '',
+    amenityId: '',
+    amenityName: '',
+    amenityType: '',
+    bookingDate: '',
+    startTime: '',
+    endTime: '',
+    guests: '',
+    occasion: '',
+    eventDetails: '',
+    totalAmount: ''
+  });
+  const [amenityBookingLoading, setAmenityBookingLoading] = useState(false);
+  
   // Pagination for bookings
   const [roomBookingsPage, setRoomBookingsPage] = useState(1);
   const [amenityBookingsPage, setAmenityBookingsPage] = useState(1);
@@ -498,6 +518,7 @@ export default function ReceptionistDashboard() {
     fetchBookingIssues();
     fetchWalkInBookings();
     fetchDayPassWalkInBookings();
+    fetchAvailableAmenities();
   }, []);
 
   useEffect(() => {
@@ -1114,6 +1135,87 @@ export default function ReceptionistDashboard() {
       }
     } catch (error) {
       console.error('Error fetching day pass walk-in bookings:', error);
+    }
+  };
+
+  // Amenity booking functions
+  const fetchAvailableAmenities = async () => {
+    try {
+      const response = await fetch('/api/facilities/amenities', { credentials: 'include' });
+      const data = await response.json();
+      if (data.success) {
+        setAvailableAmenities(data.amenities);
+      }
+    } catch (error) {
+      console.error('Error fetching amenities:', error);
+    }
+  };
+
+  const handleAmenityBookingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAmenityBookingLoading(true);
+    
+    try {
+      // Create a user account if email doesn't exist (walk-in guest)
+      const response = await fetch('/api/bookings/amenity/receptionist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(amenityBookingForm)
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Amenity booking created",
+          description: `Booking for ${amenityBookingForm.guestName} has been created successfully.`,
+        });
+        setShowAmenityBookingModal(false);
+        setAmenityBookingForm({
+          guestName: '',
+          guestEmail: '',
+          contactNumber: '',
+          amenityId: '',
+          amenityName: '',
+          amenityType: '',
+          bookingDate: '',
+          startTime: '',
+          endTime: '',
+          guests: '',
+          occasion: '',
+          eventDetails: '',
+          totalAmount: ''
+        });
+        fetchAllBookings();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.message || 'Failed to create amenity booking',
+        });
+      }
+    } catch (error) {
+      console.error('Error creating amenity booking:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: 'Failed to create amenity booking',
+      });
+    } finally {
+      setAmenityBookingLoading(false);
+    }
+  };
+
+  const handleAmenitySelection = (amenityId: string) => {
+    const selectedAmenity = availableAmenities.find(a => a.id === parseInt(amenityId));
+    if (selectedAmenity) {
+      setAmenityBookingForm(prev => ({
+        ...prev,
+        amenityId,
+        amenityName: selectedAmenity.amenity_name,
+        amenityType: selectedAmenity.amenity_type
+      }));
     }
   };
 
@@ -1938,9 +2040,30 @@ export default function ReceptionistDashboard() {
           {activeTab === 'amenities' && (
             <div className="bg-white rounded-2xl shadow-md border border-gray-200">
               {/* Title Header */}
-              <div className="px-6 pt-6 pb-4 border-b border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900">Amenity Booking Reservations</h3>
-                <p className="text-sm text-gray-600 mt-1">Manage and review all amenity booking requests</p>
+              <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Amenity Booking Reservations</h3>
+                  <p className="text-sm text-gray-600 mt-1">Manage and review all amenity booking requests</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowAmenityBookingModal(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
+                  >
+                    <Plus size={20} />
+                    Add Booking
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAmenityBookingModal(true);
+                      // You can add a flag here to indicate it's a walk-in if needed
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
+                  >
+                    <LogIn size={20} />
+                    Walk-In
+                  </button>
+                </div>
               </div>
               
               {/* Search and Filter UI */}
@@ -3336,6 +3459,190 @@ export default function ReceptionistDashboard() {
                 disabled={dayPassWalkInLoading}
               >
                 {dayPassWalkInLoading ? 'Recording...' : 'Record Walk-In'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Amenity Booking Modal */}
+      <Dialog open={showAmenityBookingModal} onOpenChange={setShowAmenityBookingModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">Create Amenity Booking</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Create a new amenity booking for a guest. All fields marked with * are required.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleAmenityBookingSubmit} className="space-y-4">
+            {/* Guest Information */}
+            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-gray-900">Guest Information</h4>
+              
+              <div>
+                <Label className="text-gray-700">Guest Name *</Label>
+                <Input
+                  type="text"
+                  placeholder="Full name"
+                  value={amenityBookingForm.guestName}
+                  onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, guestName: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label className="text-gray-700">Email Address *</Label>
+                <Input
+                  type="email"
+                  placeholder="guest@example.com"
+                  value={amenityBookingForm.guestEmail}
+                  onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, guestEmail: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label className="text-gray-700">Contact Number *</Label>
+                <Input
+                  type="tel"
+                  placeholder="09XX XXX XXXX"
+                  value={amenityBookingForm.contactNumber}
+                  onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, contactNumber: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Booking Details */}
+            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-gray-900">Booking Details</h4>
+              
+              <div>
+                <Label className="text-gray-700">Select Amenity *</Label>
+                <select
+                  value={amenityBookingForm.amenityId}
+                  onChange={(e) => handleAmenitySelection(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white mt-1 focus:ring-2 focus:ring-primary focus:border-transparent"
+                  required
+                >
+                  <option value="">Choose an amenity...</option>
+                  {availableAmenities.map((amenity) => (
+                    <option key={amenity.id} value={amenity.id}>
+                      {amenity.amenity_name} - {amenity.base_price || amenity.price_per_pax} 
+                      {amenity.price_per_pax && ' per pax'} (Capacity: {amenity.capacity})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-700">Booking Date *</Label>
+                  <Input
+                    type="date"
+                    value={amenityBookingForm.bookingDate}
+                    onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, bookingDate: e.target.value })}
+                    className="bg-white border-gray-300 text-gray-900 mt-1"
+                    min={new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-gray-700">Number of Guests *</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="Number of guests"
+                    value={amenityBookingForm.guests}
+                    onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, guests: e.target.value })}
+                    className="bg-white border-gray-300 text-gray-900 mt-1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-700">Start Time *</Label>
+                  <Input
+                    type="time"
+                    value={amenityBookingForm.startTime}
+                    onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, startTime: e.target.value })}
+                    className="bg-white border-gray-300 text-gray-900 mt-1"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-gray-700">End Time *</Label>
+                  <Input
+                    type="time"
+                    value={amenityBookingForm.endTime}
+                    onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, endTime: e.target.value })}
+                    className="bg-white border-gray-300 text-gray-900 mt-1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-gray-700">Occasion/Event Type *</Label>
+                <Input
+                  type="text"
+                  placeholder="e.g., Birthday Party, Wedding, Corporate Event"
+                  value={amenityBookingForm.occasion}
+                  onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, occasion: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label className="text-gray-700">Event Details (Optional)</Label>
+                <Textarea
+                  placeholder="Additional details about the event..."
+                  value={amenityBookingForm.eventDetails}
+                  onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, eventDetails: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1 min-h-[80px]"
+                />
+              </div>
+
+              <div>
+                <Label className="text-gray-700">Total Amount (₱) *</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={amenityBookingForm.totalAmount}
+                  onChange={(e) => setAmenityBookingForm({ ...amenityBookingForm, totalAmount: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 mt-1"
+                  required
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline" 
+                onClick={() => setShowAmenityBookingModal(false)}
+                className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                disabled={amenityBookingLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                disabled={amenityBookingLoading}
+              >
+                {amenityBookingLoading ? 'Creating...' : 'Create Booking'}
               </Button>
             </DialogFooter>
           </form>
