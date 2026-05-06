@@ -2040,29 +2040,31 @@ export default function ReceptionistDashboard() {
           {activeTab === 'amenities' && (
             <div className="bg-white rounded-2xl shadow-md border border-gray-200">
               {/* Title Header */}
-              <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">Amenity Booking Reservations</h3>
-                  <p className="text-sm text-gray-600 mt-1">Manage and review all amenity booking requests</p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowAmenityBookingModal(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
-                  >
-                    <Plus size={20} />
-                    Add Booking
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowAmenityBookingModal(true);
-                      // You can add a flag here to indicate it's a walk-in if needed
-                    }}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
-                  >
-                    <LogIn size={20} />
-                    Walk-In
-                  </button>
+              <div className="px-4 sm:px-6 pt-6 pb-4 border-b border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Amenity Booking Reservations</h3>
+                    <p className="text-sm text-gray-600 mt-1">Manage and review all amenity booking requests</p>
+                  </div>
+                  <div className="flex gap-2 sm:gap-3 flex-shrink-0">
+                    <button
+                      onClick={() => setShowAmenityBookingModal(true)}
+                      className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg text-sm whitespace-nowrap"
+                    >
+                      <Plus size={18} />
+                      Add Booking
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAmenityBookingModal(true);
+                        // You can add a flag here to indicate it's a walk-in if needed
+                      }}
+                      className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg text-sm whitespace-nowrap"
+                    >
+                      <LogIn size={18} />
+                      Walk-In
+                    </button>
+                  </div>
                 </div>
               </div>
               
