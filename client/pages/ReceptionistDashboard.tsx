@@ -1,4 +1,4 @@
-﻿// Utility to format peso values
+// Utility to format peso values
 function formatPeso(value: string | number) {
   const num = Number(value);
   if (isNaN(num)) return '-';
@@ -552,7 +552,7 @@ export default function ReceptionistDashboard() {
     // Calculate total revenue from transaction history (income transactions only)
     const totalRevenue = transactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[₱,]/g, '')), 0);
+      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[?,]/g, '')), 0);
 
     setStats({ totalBookings, pendingBookings, approvedToday, totalRevenue });
   };
@@ -662,7 +662,7 @@ export default function ReceptionistDashboard() {
         if (lowStockItems.length > 0) {
           toast({
             variant: "destructive",
-            title: "âš ï¸ Low Stock Warning",
+            title: "⚠️ Low Stock Warning",
             description: `${lowStockItems.length} item${lowStockItems.length > 1 ? 's are' : ' is'} at or below PAR level: ${lowStockItems.map(i => i.item_name).join(', ')}`,
           });
         }
@@ -1223,14 +1223,14 @@ export default function ReceptionistDashboard() {
     const income = filteredTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => {
-        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+        const amount = parseFloat(t.amount.replace(/[?,]/g, ''));
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
     
     const expenses = filteredTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => {
-        const amount = parseFloat(t.amount.replace(/[₱,]/g, ''));
+        const amount = parseFloat(t.amount.replace(/[?,]/g, ''));
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
     
@@ -1272,7 +1272,7 @@ export default function ReceptionistDashboard() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-gray-900 truncate">{booking.guest_name || booking.user_email}</p>
                 <p className="text-sm text-gray-600 truncate">
-                  {booking.room_name || booking.amenity_name || 'Day Pass'} • {formatDate(booking.check_in || booking.booking_date)}
+                  {booking.room_name || booking.amenity_name || 'Day Pass'} � {formatDate(booking.check_in || booking.booking_date)}
                 </p>
               </div>
             </div>
@@ -1442,7 +1442,7 @@ export default function ReceptionistDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'overview'
                 ? 'bg-gradient-to-r from-accent to-accent/90 text-white shadow-lg shadow-accent/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
             <TrendingUp size={20} className={activeTab === 'overview' ? 'animate-pulse' : ''} />
@@ -1454,7 +1454,7 @@ export default function ReceptionistDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'rooms'
                 ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
             <Home size={20} />
@@ -1473,7 +1473,7 @@ export default function ReceptionistDashboard() {
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'walkin'
                   ? 'bg-gradient-to-r from-accent/90 to-accent/80 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-white hover:shadow-md hover:text-gray-900'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
               <Plus size={18} />
@@ -1486,7 +1486,7 @@ export default function ReceptionistDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'amenities'
                 ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
             <Calendar size={20} />
@@ -1503,7 +1503,7 @@ export default function ReceptionistDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'daypass'
                 ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
             <Users size={20} />
@@ -1522,7 +1522,7 @@ export default function ReceptionistDashboard() {
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'daypasswalkin'
                   ? 'bg-gradient-to-r from-accent/90 to-accent/80 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-white hover:shadow-md hover:text-gray-900'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
               <Plus size={18} />
@@ -1535,7 +1535,7 @@ export default function ReceptionistDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'inventory'
                 ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
             <Package size={20} />
@@ -1547,7 +1547,7 @@ export default function ReceptionistDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'checkin'
                 ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
             <LogIn size={20} />
@@ -1561,7 +1561,7 @@ export default function ReceptionistDashboard() {
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'history'
                   ? 'bg-gradient-to-r from-accent/90 to-accent/80 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-white hover:shadow-md hover:text-gray-900'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
               <History size={18} />
@@ -1574,7 +1574,7 @@ export default function ReceptionistDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'roomstatus'
                 ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
             <Settings size={20} />
@@ -1586,7 +1586,7 @@ export default function ReceptionistDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'issues'
                 ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-white hover:shadow-md hover:text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
             <AlertCircle size={20} />
@@ -1747,7 +1747,7 @@ export default function ReceptionistDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-600 text-sm font-medium">Total Revenue</p>
-                      <p className="text-3xl font-display font-bold text-gray-900 mt-2 tracking-tight">₱{stats.totalRevenue.toLocaleString()}</p>
+                      <p className="text-3xl font-display font-bold text-gray-900 mt-2 tracking-tight">?{stats.totalRevenue.toLocaleString()}</p>
                       <p className="text-accent text-sm mt-2 flex items-center gap-1">
                         <DollarSign size={14} />
                         Income transactions
@@ -1774,7 +1774,7 @@ export default function ReceptionistDashboard() {
                     onClick={() => setActiveTab('rooms')}
                     className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all shadow-lg"
                   >
-                    View Details â†’
+                    View Details →
                   </button>
                 </div>
 
@@ -1790,7 +1790,7 @@ export default function ReceptionistDashboard() {
                     onClick={() => setActiveTab('amenities')}
                     className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all shadow-lg"
                   >
-                    View Details →
+                    View Details ?
                   </button>
                 </div>
 
@@ -1806,7 +1806,7 @@ export default function ReceptionistDashboard() {
                     onClick={() => setActiveTab('daypass')}
                     className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all shadow-lg"
                   >
-                    View Details â†’
+                    View Details →
                   </button>
                 </div>
               </div>
@@ -2029,7 +2029,7 @@ export default function ReceptionistDashboard() {
                             {walkIn.number_of_pax}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
-                            ₱{parseFloat(walkIn.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ?{parseFloat(walkIn.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         </tr>
                       ))}
@@ -2344,7 +2344,7 @@ export default function ReceptionistDashboard() {
                             {walkIn.cottage === 'yes' ? (walkIn.cottage_number || 'Yes') : 'No'}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
-                            ₱{parseFloat(walkIn.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ?{parseFloat(walkIn.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         </tr>
                       ))}
@@ -2571,7 +2571,7 @@ export default function ReceptionistDashboard() {
                                 </div>
                                 <div className="min-w-0">
                                   <p className="text-xs font-semibold text-gray-900 truncate max-w-[160px]">{guest.guest_name || guest.user_email}</p>
-                                  <p className="text-[10px] text-gray-400">#{guest.booking_id} · {guest.booking_type}</p>
+                                  <p className="text-[10px] text-gray-400">#{guest.booking_id} � {guest.booking_type}</p>
                                 </div>
                               </div>
                             </td>
@@ -3335,7 +3335,7 @@ export default function ReceptionistDashboard() {
             </div>
 
             <div>
-              <Label className="text-gray-700">Amount (₱) *</Label>
+              <Label className="text-gray-700">Amount (?) *</Label>
               <Input 
                 type="number" 
                 min="0" 
@@ -3435,7 +3435,7 @@ export default function ReceptionistDashboard() {
             )}
 
             <div>
-              <Label className="text-gray-700">Amount (₱) *</Label>
+              <Label className="text-gray-700">Amount (?) *</Label>
               <Input 
                 type="number" 
                 min="0" 
@@ -3618,7 +3618,7 @@ export default function ReceptionistDashboard() {
               </div>
 
               <div>
-                <Label className="text-gray-700">Total Amount (₱) *</Label>
+                <Label className="text-gray-700">Total Amount (?) *</Label>
                 <Input
                   type="number"
                   min="0"
@@ -3656,3 +3656,4 @@ export default function ReceptionistDashboard() {
     </div>
   );
 }
+
