@@ -19,10 +19,14 @@ interface WalkInBooking extends RowDataPacket {
 // Create a walk-in booking (receptionist only)
 export const createWalkInBooking: RequestHandler = async (req, res) => {
   try {
-    console.log('📝 Walk-in booking request received');
+    console.log('🔍 [BACKEND] ========================================');
+    console.log('🔍 [BACKEND] Walk-in booking request received');
+    console.log('🔍 [BACKEND] Session userId:', req.session.userId);
+    console.log('🔍 [BACKEND] Session userRole:', req.session.userRole);
     
     // Check if user is logged in and is receptionist or admin
     if (!req.session.userId) {
+      console.log('🔍 [BACKEND] ❌ Authentication failed: No userId in session');
       res.status(401).json({ 
         success: false, 
         message: 'Please login' 
@@ -31,6 +35,7 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
     }
 
     if (req.session.userRole !== 'admin' && req.session.userRole !== 'receptionist') {
+      console.log('🔍 [BACKEND] ❌ Authorization failed: User role is', req.session.userRole);
       res.status(403).json({ 
         success: false, 
         message: 'Unauthorized access' 
@@ -48,7 +53,7 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
       balance
     } = req.body;
 
-    console.log('📋 Walk-in data:', {
+    console.log('🔍 [BACKEND] Request body received:', {
       numberOfPax,
       guestName,
       roomNumber,
@@ -60,6 +65,7 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
 
     // Validate required fields
     if (!numberOfPax || !guestName || !roomNumber || !contactNumber || !totalAmount) {
+      console.log('🔍 [BACKEND] ❌ Validation failed: Missing required fields');
       res.status(400).json({ 
         success: false, 
         message: 'All required fields must be filled' 
@@ -74,12 +80,14 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
     const calculatedBalance = parseFloat(totalAmount) - actualDownPayment;
     const paymentStatus = calculatedBalance <= 0 ? 'paid' : 'partial';
 
-    console.log('💰 Payment calculation:', {
+    console.log('🔍 [BACKEND] Payment calculation:', {
       totalAmount,
       actualDownPayment,
       calculatedBalance,
       paymentStatus
     });
+
+    console.log('🔍 [BACKEND] Attempting to insert into database...');
 
     // Insert walk-in booking
     const [result] = await db.query<ResultSetHeader>(
@@ -89,7 +97,8 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
       [guestName, roomNumber, contactNumber, numberOfPax, totalAmount, actualDownPayment, calculatedBalance, paymentStatus]
     );
 
-    console.log('✅ Walk-in recorded successfully with ID:', result.insertId);
+    console.log('🔍 [BACKEND] ✅ Walk-in recorded successfully with ID:', result.insertId);
+    console.log('🔍 [BACKEND] ========================================');
 
     res.json({ 
       success: true, 
@@ -97,11 +106,19 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
       bookingId: result.insertId
     });
   } catch (error) {
-    console.error('❌ Create walk-in error:', error);
+    console.error('🔍 [BACKEND] ========================================');
+    console.error('🔍 [BACKEND] ❌❌❌ CRITICAL ERROR ❌❌❌');
+    console.error('🔍 [BACKEND] Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error('🔍 [BACKEND] Error message:', error instanceof Error ? error.message : String(error));
+    console.error('🔍 [BACKEND] Full error object:', error);
+    console.error('🔍 [BACKEND] Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('🔍 [BACKEND] ========================================');
+    
     res.status(500).json({ 
       success: false, 
       message: 'Failed to record walk-in',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      details: error instanceof Error ? error.stack : String(error)
     });
   }
 };

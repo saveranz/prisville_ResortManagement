@@ -1041,22 +1041,29 @@ export default function ReceptionistDashboard() {
       const downPayment = walkInForm.downPayment ? parseFloat(walkInForm.downPayment) : totalAmount;
       const balance = totalAmount - downPayment;
 
+      const payload = {
+        numberOfPax: walkInForm.numberOfPax,
+        guestName: walkInForm.guestName,
+        contactNumber: walkInForm.contactNumber,
+        roomNumber: walkInForm.roomNumber,
+        totalAmount: totalAmount,
+        downPayment: downPayment,
+        balance: balance
+      };
+
+      console.log('🔍 [FRONTEND] Submitting walk-in booking with payload:', payload);
+
       const response = await fetch('/api/bookings/walk-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          numberOfPax: walkInForm.numberOfPax,
-          guestName: walkInForm.guestName,
-          contactNumber: walkInForm.contactNumber,
-          roomNumber: walkInForm.roomNumber,
-          totalAmount: totalAmount,
-          downPayment: downPayment,
-          balance: balance
-        })
+        body: JSON.stringify(payload)
       });
       
+      console.log('🔍 [FRONTEND] Response status:', response.status);
+      
       const data = await response.json();
+      console.log('🔍 [FRONTEND] Response data:', data);
       
       if (data.success) {
         toast({
@@ -1075,6 +1082,7 @@ export default function ReceptionistDashboard() {
         });
         fetchWalkInBookings();
       } else {
+        console.error('🔍 [FRONTEND] Server returned error:', data.message);
         toast({
           variant: "destructive",
           title: "Error",
@@ -1082,7 +1090,7 @@ export default function ReceptionistDashboard() {
         });
       }
     } catch (error) {
-      console.error('Error recording walk-in:', error);
+      console.error('🔍 [FRONTEND] Exception caught:', error);
       toast({
         variant: "destructive",
         title: "Error",
