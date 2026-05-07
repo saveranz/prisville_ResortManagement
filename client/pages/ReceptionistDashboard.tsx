@@ -1036,11 +1036,24 @@ export default function ReceptionistDashboard() {
     setWalkInLoading(true);
     
     try {
+      // Calculate the actual values to send
+      const totalAmount = parseFloat(walkInForm.totalAmount) || 0;
+      const downPayment = walkInForm.downPayment ? parseFloat(walkInForm.downPayment) : totalAmount;
+      const balance = totalAmount - downPayment;
+
       const response = await fetch('/api/bookings/walk-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(walkInForm)
+        body: JSON.stringify({
+          numberOfPax: walkInForm.numberOfPax,
+          guestName: walkInForm.guestName,
+          contactNumber: walkInForm.contactNumber,
+          roomNumber: walkInForm.roomNumber,
+          totalAmount: totalAmount,
+          downPayment: downPayment,
+          balance: balance
+        })
       });
       
       const data = await response.json();
@@ -1054,10 +1067,11 @@ export default function ReceptionistDashboard() {
         setWalkInForm({
           numberOfPax: '',
           guestName: '',
-          address: '',
           contactNumber: '',
           roomNumber: '',
-          amount: ''
+          totalAmount: '',
+          downPayment: '',
+          balance: ''
         });
         fetchWalkInBookings();
       } else {
