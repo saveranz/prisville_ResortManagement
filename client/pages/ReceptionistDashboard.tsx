@@ -1272,7 +1272,7 @@ export default function ReceptionistDashboard() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-gray-900 truncate">{booking.guest_name || booking.user_email}</p>
                 <p className="text-sm text-gray-600 truncate">
-                  {booking.room_name || booking.amenity_name || 'Day Pass'} • {formatDate(booking.check_in || booking.booking_date)}
+                  {booking.room_name || booking.amenity_name || 'Day Pass'} ï¿½ {formatDate(booking.check_in || booking.booking_date)}
                 </p>
               </div>
             </div>
@@ -1441,7 +1441,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'overview'
-                ? 'bg-gradient-to-r from-accent to-accent/90 text-white shadow-lg shadow-accent/30 scale-[1.02]'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-600/30 scale-[1.02]'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
@@ -1453,7 +1453,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('rooms'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'rooms'
-                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
@@ -1472,7 +1472,7 @@ export default function ReceptionistDashboard() {
               onClick={() => { setActiveTab('walkin'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'walkin'
-                  ? 'bg-gradient-to-r from-accent/90 to-accent/80 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
@@ -1485,7 +1485,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('amenities'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'amenities'
-                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
@@ -1502,7 +1502,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('daypass'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'daypass'
-                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
@@ -1521,7 +1521,7 @@ export default function ReceptionistDashboard() {
               onClick={() => { setActiveTab('daypasswalkin'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'daypasswalkin'
-                  ? 'bg-gradient-to-r from-accent/90 to-accent/80 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
@@ -1534,7 +1534,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'inventory'
-                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
@@ -1546,7 +1546,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('checkin'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'checkin'
-                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
@@ -1560,7 +1560,7 @@ export default function ReceptionistDashboard() {
               onClick={() => { setActiveTab('history'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'history'
-                  ? 'bg-gradient-to-r from-accent/90 to-accent/80 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
@@ -1573,7 +1573,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('roomstatus'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'roomstatus'
-                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
@@ -1585,7 +1585,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('issues'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'issues'
-                ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
@@ -2571,7 +2571,7 @@ export default function ReceptionistDashboard() {
                                 </div>
                                 <div className="min-w-0">
                                   <p className="text-xs font-semibold text-gray-900 truncate max-w-[160px]">{guest.guest_name || guest.user_email}</p>
-                                  <p className="text-[10px] text-gray-400">#{guest.booking_id} · {guest.booking_type}</p>
+                                  <p className="text-[10px] text-gray-400">#{guest.booking_id} ï¿½ {guest.booking_type}</p>
                                 </div>
                               </div>
                             </td>
@@ -3656,4 +3656,5 @@ export default function ReceptionistDashboard() {
     </div>
   );
 }
+
 
