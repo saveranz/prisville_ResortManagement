@@ -1406,7 +1406,7 @@ export default function ReceptionistDashboard() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
+    <div className="flex flex-col lg:flex-row h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
       {/* Mobile Menu Backdrop */}
       {mobileMenuOpen && (
         <div 
@@ -1418,43 +1418,43 @@ export default function ReceptionistDashboard() {
       {/* Sidebar */}
       <div className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-4/5 max-w-xs lg:w-72 bg-gradient-to-b from-white to-gray-50 shadow-2xl flex flex-col border-r border-gray-200
+        w-4/5 max-w-xs lg:w-80 bg-white shadow-2xl flex flex-col border-r border-slate-200
         transform transition-transform duration-300 ease-in-out
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Logo Section */}
-        <div className="p-6 border-b border-gray-200 bg-white">
+        <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-blue-600 to-blue-700">
           <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-xl shadow-lg flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary to-primary/80">
+            <div className="w-14 h-14 rounded-2xl shadow-lg flex items-center justify-center overflow-hidden bg-white ring-4 ring-blue-400/30">
               <img src="/PTR-logo.png" alt="Prisville Logo" className="w-full h-full object-cover scale-150" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-gray-900 text-xl tracking-tight">Prisville</h1>
-              <p className="text-xs text-gray-600 font-medium">Resort Management</p>
+              <h1 className="font-display font-bold text-white text-xl tracking-tight">Prisville Resort</h1>
+              <p className="text-xs text-blue-100 font-medium">Management System</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto bg-gradient-to-b from-slate-50 to-white">
           <button
             onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-semibold ${
               activeTab === 'overview'
-                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-600/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/40 scale-[1.02]'
+                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm'
             }`}
           >
-            <TrendingUp size={20} className={activeTab === 'overview' ? 'animate-pulse' : ''} />
+            <TrendingUp size={20} />
             <span className="tracking-wide">Dashboard</span>
           </button>
           
           <button
             onClick={() => { setActiveTab('rooms'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-semibold ${
               activeTab === 'rooms'
-                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/40 scale-[1.02]'
+                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm'
             }`}
           >
             <Home size={20} />
@@ -1466,14 +1466,14 @@ export default function ReceptionistDashboard() {
             )}
           </button>
 
-          {/* Walk-In Sub-button - Only visible when Room Bookings is active */}
+          {/* Walk-In Sub-button */}
           {(activeTab === 'rooms' || activeTab === 'walkin') && (
             <button
               onClick={() => { setActiveTab('walkin'); setMobileMenuOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'walkin'
                   ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               <Plus size={18} />
@@ -1483,10 +1483,10 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('amenities'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-semibold ${
               activeTab === 'amenities'
-                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/40 scale-[1.02]'
+                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm'
             }`}
           >
             <Calendar size={20} />
@@ -1502,8 +1502,8 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('daypass'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'daypass'
-                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/40 scale-[1.02]'
+                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm'
             }`}
           >
             <Users size={20} />
@@ -1522,7 +1522,7 @@ export default function ReceptionistDashboard() {
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'daypasswalkin'
                   ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               <Plus size={18} />
@@ -1534,8 +1534,8 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'inventory'
-                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/40 scale-[1.02]'
+                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm'
             }`}
           >
             <Package size={20} />
@@ -1546,8 +1546,8 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('checkin'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'checkin'
-                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/40 scale-[1.02]'
+                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm'
             }`}
           >
             <LogIn size={20} />
@@ -1561,7 +1561,7 @@ export default function ReceptionistDashboard() {
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ml-6 font-medium ${
                 activeTab === 'history'
                   ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               <History size={18} />
@@ -1573,8 +1573,8 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('roomstatus'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'roomstatus'
-                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/40 scale-[1.02]'
+                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm'
             }`}
           >
             <Settings size={20} />
@@ -1585,8 +1585,8 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('issues'); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
               activeTab === 'issues'
-                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30 scale-[1.02]'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/40 scale-[1.02]'
+                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm'
             }`}
           >
             <AlertCircle size={20} />
@@ -1600,23 +1600,23 @@ export default function ReceptionistDashboard() {
         </nav>
 
         {/* User Profile Section */}
-        <div className="p-4 border-t border-gray-200 bg-white">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 shadow-sm">
-            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent to-accent/80 shadow-lg flex items-center justify-center ring-2 ring-white">
-              <span className="text-white font-bold text-base">
+        <div className="p-4 border-t border-slate-200 bg-white">
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-lg flex items-center justify-center ring-2 ring-blue-200">
+              <span className="text-white font-bold text-lg">
                 {user?.name?.charAt(0) || 'R'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-900 truncate">
+              <p className="text-sm font-bold text-slate-900 truncate">
                 {user?.name || user?.email}
               </p>
-              <p className="text-xs text-gray-600 capitalize font-medium">{user?.role}</p>
+              <p className="text-xs text-slate-600 capitalize font-medium">{user?.role}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-bold shadow-lg hover:shadow-xl hover:scale-[1.02]"
+            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-3.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-bold shadow-lg hover:shadow-xl hover:scale-[1.02]"
           >
             <LogOut size={18} />
             <span>Logout</span>
@@ -1627,18 +1627,18 @@ export default function ReceptionistDashboard() {
       {/* Main Content */}
       <div className="flex-1 overflow-auto min-w-0">
         {/* Header */}
-        <div className="bg-gradient-to-r from-white to-gray-50 border-b border-gray-200 px-4 lg:px-8 py-4 sm:py-5 shadow-md sticky top-0 z-30 backdrop-blur-sm bg-white/95">
+        <div className="bg-white border-b border-slate-200 px-4 lg:px-8 py-5 shadow-sm sticky top-0 z-30 backdrop-blur-sm bg-white/95">
           <div className="flex items-center justify-between gap-4">
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2.5 rounded-xl hover:bg-gray-100 transition-colors shadow-sm border border-gray-200"
+              className="lg:hidden p-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm border border-slate-200"
             >
-              <Menu size={24} className="text-gray-700" />
+              <Menu size={24} className="text-slate-700" />
             </button>
 
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 tracking-tight truncate bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            <div className="flex-1 min-w-0 flex items-center gap-4">
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-slate-900 tracking-tight truncate">
                 {activeTab === 'overview' ? 'Dashboard Overview' :
                  activeTab === 'rooms' ? 'Room Bookings' :
                  activeTab === 'walkin' ? 'Walk-In Bookings' :
@@ -3656,5 +3656,6 @@ export default function ReceptionistDashboard() {
     </div>
   );
 }
+
 
 
