@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 interface PaymentSettings {
   account_name: string;
   mobile_number: string;
-  note: string;
 }
 
 interface Props {
@@ -16,7 +15,6 @@ export const PaymentSettingsEditor: React.FC<Props> = ({ isAdmin }) => {
   const [form, setForm] = useState<PaymentSettings>({
     account_name: "",
     mobile_number: "",
-    note: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +28,6 @@ export const PaymentSettingsEditor: React.FC<Props> = ({ isAdmin }) => {
         setForm({
           account_name: data.account_name || "",
           mobile_number: data.mobile_number || "",
-          note: data.note || "",
         });
       })
       .catch(() => setError("Failed to load payment settings"));
@@ -93,19 +90,6 @@ export const PaymentSettingsEditor: React.FC<Props> = ({ isAdmin }) => {
           />
         ) : (
           <div>{settings.mobile_number}</div>
-        )}
-      </div>
-      <div className="mb-2">
-        <label className="block font-medium">Note</label>
-        {editMode ? (
-          <textarea
-            name="note"
-            value={form.note}
-            onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
-          />
-        ) : (
-          <div>{settings.note}</div>
         )}
       </div>
       {isAdmin && (

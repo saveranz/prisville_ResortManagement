@@ -33,7 +33,6 @@ export const PaymentSettingsDisplay: React.FC = () => {
       <h3 className="font-bold text-lg mb-2">GCash Payment Details</h3>
       <div className="mb-1"><span className="font-medium">Account Name:</span> {settings.account_name}</div>
       <div className="mb-1"><span className="font-medium">Mobile Number:</span> {settings.mobile_number}</div>
-      <div className="mb-1"><span className="font-medium">Note:</span> {settings.note}</div>
     </div>
   );
 };
