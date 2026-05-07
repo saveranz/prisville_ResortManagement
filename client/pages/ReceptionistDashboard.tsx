@@ -1099,6 +1099,103 @@ export default function ReceptionistDashboard() {
     }
   };
 
+  const handleUpdateWalkIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWalkInLoading(true);
+    
+    try {
+      const totalAmount = parseFloat(walkInForm.totalAmount) || 0;
+      const downPayment = walkInForm.downPayment ? parseFloat(walkInForm.downPayment) : totalAmount;
+      const balance = totalAmount - downPayment;
+
+      const payload = {
+        id: editingWalkIn.id,
+        numberOfPax: walkInForm.numberOfPax,
+        guestName: walkInForm.guestName,
+        contactNumber: walkInForm.contactNumber,
+        roomNumber: walkInForm.roomNumber,
+        totalAmount: totalAmount,
+        downPayment: downPayment,
+        balance: balance
+      };
+
+      const response = await fetch(`/api/bookings/walk-in/${editingWalkIn.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Walk-in updated",
+          description: `Walk-in for ${walkInForm.guestName} has been updated successfully.`,
+        });
+        setShowEditWalkInModal(false);
+        setEditingWalkIn(null);
+        setWalkInForm({
+          numberOfPax: '',
+          guestName: '',
+          contactNumber: '',
+          roomNumber: '',
+          totalAmount: '',
+          downPayment: '',
+          balance: ''
+        });
+        fetchWalkInBookings();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.message || 'Failed to update walk-in',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating walk-in:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: 'Failed to update walk-in',
+      });
+    } finally {
+      setWalkInLoading(false);
+    }
+  };
+
+  const handleDeleteWalkIn = async (id: number) => {
+    try {
+      const response = await fetch(`/api/bookings/walk-in/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Walk-in deleted",
+          description: "Walk-in record has been deleted successfully.",
+        });
+        fetchWalkInBookings();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.message || 'Failed to delete walk-in',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting walk-in:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: 'Failed to delete walk-in',
+      });
+    }
+  };
+
   const fetchWalkInBookings = async () => {
     try {
       const response = await fetch('/api/bookings/walk-in', { credentials: 'include' });
@@ -2013,6 +2110,7 @@ export default function ReceptionistDashboard() {
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Down Payment</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Balance</th>
                         <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
+                        <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
@@ -2066,6 +2164,40 @@ export default function ReceptionistDashboard() {
                                 Paid
                               </span>
                             )}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingWalkIn(walkIn);
+                                  setWalkInForm({
+                                    numberOfPax: walkIn.number_of_pax?.toString() || '',
+                                    guestName: walkIn.guest_name || '',
+                                    contactNumber: walkIn.contact_number || '',
+                                    roomNumber: walkIn.room_number || '',
+                                    totalAmount: walkIn.total_amount?.toString() || walkIn.amount?.toString() || '',
+                                    downPayment: walkIn.down_payment?.toString() || '',
+                                    balance: walkIn.balance?.toString() || ''
+                                  });
+                                  setShowEditWalkInModal(true);
+                                }}
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="Edit"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to delete walk-in record for ${walkIn.guest_name}?`)) {
+                                    handleDeleteWalkIn(walkIn.id);
+                                  }
+                                }}
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -3446,6 +3578,163 @@ export default function ReceptionistDashboard() {
                 disabled={walkInLoading}
               >
                 {walkInLoading ? 'Recording...' : 'Record Walk-In'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Walk-In Modal */}
+      <Dialog open={showEditWalkInModal} onOpenChange={setShowEditWalkInModal}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
+              <Edit className="text-accent" size={24} /> Edit Walk-In
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Update walk-in guest information.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateWalkIn} className="space-y-4">
+            <div>
+              <Label className="text-gray-700">Number of Pax *</Label>
+              <Input 
+                type="number" 
+                min="1" 
+                placeholder="Number of people" 
+                value={walkInForm.numberOfPax}
+                onChange={(e) => setWalkInForm({ ...walkInForm, numberOfPax: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Guest Name *</Label>
+              <Input 
+                type="text" 
+                placeholder="Full name" 
+                value={walkInForm.guestName}
+                onChange={(e) => setWalkInForm({ ...walkInForm, guestName: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Room Number *</Label>
+              <Input 
+                type="text" 
+                placeholder="e.g., 101, 202" 
+                value={walkInForm.roomNumber}
+                onChange={(e) => setWalkInForm({ ...walkInForm, roomNumber: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Contact Number *</Label>
+              <Input 
+                type="tel" 
+                placeholder="+63 XXX XXX XXXX" 
+                value={walkInForm.contactNumber}
+                onChange={(e) => setWalkInForm({ ...walkInForm, contactNumber: e.target.value })}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Total Amount (₱) *</Label>
+              <Input 
+                type="number" 
+                min="0" 
+                step="0.01" 
+                placeholder="0.00" 
+                value={walkInForm.totalAmount}
+                onChange={(e) => {
+                  const total = parseFloat(e.target.value) || 0;
+                  const dp = parseFloat(walkInForm.downPayment) || total; // Default to full amount
+                  setWalkInForm({ 
+                    ...walkInForm, 
+                    totalAmount: e.target.value,
+                    downPayment: walkInForm.downPayment || e.target.value, // Auto-fill if empty
+                    balance: (total - dp).toFixed(2)
+                  });
+                }}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Amount Paid (₱)</Label>
+              <Input 
+                type="number" 
+                min="0" 
+                step="0.01" 
+                placeholder="Full amount (leave empty for full payment)" 
+                value={walkInForm.downPayment}
+                onChange={(e) => {
+                  const total = parseFloat(walkInForm.totalAmount) || 0;
+                  const dp = e.target.value ? parseFloat(e.target.value) : total; // If empty, use total
+                  setWalkInForm({ 
+                    ...walkInForm, 
+                    downPayment: e.target.value,
+                    balance: (total - dp).toFixed(2)
+                  });
+                }}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+              />
+              <p className="text-xs text-gray-500 mt-1">Leave empty if customer pays full amount</p>
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Balance (₱)</Label>
+              <Input 
+                type="text" 
+                value={(() => {
+                  const total = parseFloat(walkInForm.totalAmount) || 0;
+                  const dp = walkInForm.downPayment ? parseFloat(walkInForm.downPayment) : total;
+                  const balance = total - dp;
+                  return `₱${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                })()}
+                className="bg-gray-100 border-gray-300 text-gray-900 mt-1 font-semibold" 
+                disabled
+                readOnly
+              />
+              <p className="text-xs text-gray-500 mt-1">Automatically calculated</p>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setShowEditWalkInModal(false);
+                  setEditingWalkIn(null);
+                  setWalkInForm({
+                    numberOfPax: '',
+                    guestName: '',
+                    contactNumber: '',
+                    roomNumber: '',
+                    totalAmount: '',
+                    downPayment: '',
+                    balance: ''
+                  });
+                }}
+                className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                disabled={walkInLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                disabled={walkInLoading}
+              >
+                {walkInLoading ? 'Updating...' : 'Update Walk-In'}
               </Button>
             </DialogFooter>
           </form>

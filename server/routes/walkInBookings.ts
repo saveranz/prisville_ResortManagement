@@ -125,3 +125,118 @@ export const getAllWalkInBookings: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// Update a walk-in booking (receptionist only)
+export const updateWalkInBooking: RequestHandler = async (req, res) => {
+  try {
+    // Check if user is logged in and is receptionist or admin
+    if (!req.session.userId) {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Please login' 
+      });
+      return;
+    }
+
+    if (req.session.userRole !== 'admin' && req.session.userRole !== 'receptionist') {
+      res.status(403).json({ 
+        success: false, 
+        message: 'Unauthorized access' 
+      });
+      return;
+    }
+
+    const { id } = req.params;
+    const {
+      numberOfPax,
+      guestName,
+      roomNumber,
+      contactNumber,
+      totalAmount,
+      downPayment,
+      balance
+    } = req.body;
+
+    // Validate required fields
+    if (!numberOfPax || !guestName || !roomNumber || !contactNumber || !totalAmount) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'All required fields must be filled' 
+      });
+      return;
+    }
+
+    // If downPayment is empty or not provided, assume full payment
+    const actualDownPayment = downPayment && downPayment !== '' ? parseFloat(downPayment) : parseFloat(totalAmount);
+    
+    // Calculate balance and payment status
+    const calculatedBalance = parseFloat(totalAmount) - actualDownPayment;
+    const paymentStatus = calculatedBalance <= 0 ? 'paid' : 'partial';
+    
+    // For display: if full payment, show 0 for down_payment
+    const displayDownPayment = calculatedBalance <= 0 ? 0 : actualDownPayment;
+
+    // Update walk-in booking (including legacy fields for backward compatibility)
+    await db.query(
+      `UPDATE walk_in_bookings 
+      SET guest_name = ?, room_number = ?, contact_number = ?, number_of_pax = ?, 
+          address = ?, amount = ?, total_amount = ?, down_payment = ?, balance = ?, payment_status = ?
+      WHERE id = ?`,
+      [guestName, roomNumber, contactNumber, numberOfPax, '', totalAmount, totalAmount, displayDownPayment, calculatedBalance, paymentStatus, id]
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Walk-in updated successfully!'
+    });
+  } catch (error) {
+    console.error('Update walk-in error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update walk-in',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+// Delete a walk-in booking (receptionist only)
+export const deleteWalkInBooking: RequestHandler = async (req, res) => {
+  try {
+    // Check if user is logged in and is receptionist or admin
+    if (!req.session.userId) {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Please login' 
+      });
+      return;
+    }
+
+    if (req.session.userRole !== 'admin' && req.session.userRole !== 'receptionist') {
+      res.status(403).json({ 
+        success: false, 
+        message: 'Unauthorized access' 
+      });
+      return;
+    }
+
+    const { id } = req.params;
+
+    // Delete walk-in booking
+    await db.query(
+      `DELETE FROM walk_in_bookings WHERE id = ?`,
+      [id]
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Walk-in deleted successfully!'
+    });
+  } catch (error) {
+    console.error('Delete walk-in error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete walk-in',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};

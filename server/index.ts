@@ -8,7 +8,7 @@ import pool, { testConnection } from "./db";
 import { testDatabase } from "./routes/database";
 import { register, login, getCurrentUser, logout, requestPasswordReset, verifyResetToken, resetPassword, verifyEmail, resendVerification } from "./routes/auth";
 import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates, createWalkInBooking } from "./routes/bookings";
-import { createWalkInBooking as createWalkIn, getAllWalkInBookings } from "./routes/walkInBookings";
+import { createWalkInBooking as createWalkIn, getAllWalkInBookings, updateWalkInBooking, deleteWalkInBooking } from "./routes/walkInBookings";
 import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability, createAmenityBookingByReceptionist } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
@@ -237,6 +237,8 @@ export function createServer() {
   // Walk-in bookings routes
   app.post("/api/bookings/walk-in", requireStaff, createWalkIn);
   app.get("/api/bookings/walk-in", requireStaff, getAllWalkInBookings);
+  app.put("/api/bookings/walk-in/:id", requireStaff, updateWalkInBooking);
+  app.delete("/api/bookings/walk-in/:id", requireStaff, deleteWalkInBooking);
 
   // Day pass walk-in routes
   app.post("/api/bookings/day-pass-walk-in", requireStaff, createDayPassWalkIn);
