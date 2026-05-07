@@ -118,6 +118,7 @@ export default function ReceptionistDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'walkin' | 'amenities' | 'daypass' | 'daypasswalkin' | 'inventory' | 'checkin' | 'roomstatus' | 'history' | 'issues'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
   const [amenityBookings, setAmenityBookings] = useState<Booking[]>([]);
   const [dayPassBookings, setDayPassBookings] = useState<Booking[]>([]);
@@ -1415,16 +1416,19 @@ export default function ReceptionistDashboard() {
         />
       )}
 
-      {/* Sidebar - Minimalist Icon-Only Design */}
+      {/* Sidebar - Expandable Icon-Only/Full Navigation */}
       <div className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-20 bg-gray-100 shadow-sm flex flex-col border-r border-gray-200
-        transform transition-transform duration-300 ease-in-out
+        ${sidebarExpanded ? 'w-64' : 'w-20'} bg-gray-100 shadow-sm flex flex-col border-r border-gray-200
+        transition-all duration-300 ease-in-out
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Logo/Menu Button */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-center">
-          <button className="w-12 h-12 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors">
+          <button 
+            onClick={() => setSidebarExpanded(!sidebarExpanded)}
+            className="w-12 h-12 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
+          >
             <Menu size={24} className="text-white" />
           </button>
         </div>
@@ -1433,28 +1437,30 @@ export default function ReceptionistDashboard() {
         <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
           <button
             onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center justify-center rounded-lg transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'overview'
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
-            title="Dashboard"
+            title={!sidebarExpanded ? "Dashboard" : undefined}
           >
-            <TrendingUp size={20} />
+            <TrendingUp size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Dashboard</span>}
           </button>
           
           <button
             onClick={() => { setActiveTab('rooms'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center justify-center rounded-lg transition-all relative ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'rooms' || activeTab === 'walkin'
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
-            title="Room Bookings"
+            title={!sidebarExpanded ? "Room Bookings" : undefined}
           >
-            <Home size={20} />
+            <Home size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Room Bookings</span>}
             {roomBookings.filter(b => b.status === 'pending').length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              <span className={`${sidebarExpanded ? 'ml-auto' : 'absolute -top-1 -right-1'} bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold`}>
                 {roomBookings.filter(b => b.status === 'pending').length}
               </span>
             )}
@@ -1462,16 +1468,17 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('amenities'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center justify-center rounded-lg transition-all relative ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'amenities'
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
-            title="Amenities"
+            title={!sidebarExpanded ? "Amenities" : undefined}
           >
-            <Calendar size={20} />
+            <Calendar size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Amenities</span>}
             {amenityBookings.filter(b => b.status === 'pending').length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              <span className={`${sidebarExpanded ? 'ml-auto' : 'absolute -top-1 -right-1'} bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold`}>
                 {amenityBookings.filter(b => b.status === 'pending').length}
               </span>
             )}
@@ -1479,16 +1486,17 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('daypass'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center justify-center rounded-lg transition-all relative ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'daypass' || activeTab === 'daypasswalkin'
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
-            title="Day Pass"
+            title={!sidebarExpanded ? "Day Pass" : undefined}
           >
-            <Users size={20} />
+            <Users size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Day Pass</span>}
             {dayPassBookings.filter(b => b.status === 'pending').length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              <span className={`${sidebarExpanded ? 'ml-auto' : 'absolute -top-1 -right-1'} bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold`}>
                 {dayPassBookings.filter(b => b.status === 'pending').length}
               </span>
             )}
@@ -1496,52 +1504,56 @@ export default function ReceptionistDashboard() {
 
           <button
             onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center justify-center rounded-lg transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'inventory'
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
-            title="Inventory"
+            title={!sidebarExpanded ? "Inventory" : undefined}
           >
-            <Package size={20} />
+            <Package size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Inventory</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('checkin'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center justify-center rounded-lg transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'checkin' || activeTab === 'history'
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
-            title="Check-In / Check-Out"
+            title={!sidebarExpanded ? "Check-In / Check-Out" : undefined}
           >
-            <LogIn size={20} />
+            <LogIn size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Check-In / Out</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('roomstatus'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center justify-center rounded-lg transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'roomstatus'
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
-            title="Room Status"
+            title={!sidebarExpanded ? "Room Status" : undefined}
           >
-            <Settings size={20} />
+            <Settings size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Room Status</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('issues'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center justify-center rounded-lg transition-all relative ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'issues'
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
-            title="Issues"
+            title={!sidebarExpanded ? "Issues" : undefined}
           >
-            <AlertCircle size={20} />
+            <AlertCircle size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Issues</span>}
             {bookingIssues.filter(i => i.status === 'open').length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              <span className={`${sidebarExpanded ? 'ml-auto' : 'absolute -top-1 -right-1'} bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold`}>
                 {bookingIssues.filter(i => i.status === 'open').length}
               </span>
             )}
@@ -1552,10 +1564,11 @@ export default function ReceptionistDashboard() {
         <div className="p-3 border-t border-gray-200">
           <button
             onClick={handleLogout}
-            className="w-full h-12 flex items-center justify-center rounded-lg bg-gray-800 hover:bg-gray-700 text-white transition-colors"
-            title="Logout"
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg bg-gray-800 hover:bg-gray-700 text-white transition-colors`}
+            title={!sidebarExpanded ? "Logout" : undefined}
           >
-            <LogOut size={20} />
+            <LogOut size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Logout</span>}
           </button>
         </div>
       </div>
