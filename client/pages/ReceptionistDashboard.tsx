@@ -6,7 +6,7 @@ function formatPeso(value: string | number) {
 }
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, ChevronDown, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink } from "lucide-react";
+import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, ChevronDown, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink, Edit, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -228,6 +228,10 @@ export default function ReceptionistDashboard() {
   });
   const [walkInLoading, setWalkInLoading] = useState(false);
   const [walkInSearchTerm, setWalkInSearchTerm] = useState('');
+  
+  // Walk-in edit states
+  const [editingWalkIn, setEditingWalkIn] = useState<any>(null);
+  const [showEditWalkInModal, setShowEditWalkInModal] = useState(false);
   
   // Day pass walk-in states
   const [showDayPassWalkInModal, setShowDayPassWalkInModal] = useState(false);
