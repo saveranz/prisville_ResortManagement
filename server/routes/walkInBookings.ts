@@ -89,12 +89,12 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
 
     console.log('🔍 [BACKEND] Attempting to insert into database...');
 
-    // Insert walk-in booking
+    // Insert walk-in booking (including legacy fields for backward compatibility)
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO walk_in_bookings 
-      (guest_name, room_number, contact_number, number_of_pax, address, total_amount, down_payment, balance, payment_status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [guestName, roomNumber, contactNumber, numberOfPax, '', totalAmount, actualDownPayment, calculatedBalance, paymentStatus]
+      (guest_name, room_number, contact_number, number_of_pax, address, amount, total_amount, down_payment, balance, payment_status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [guestName, roomNumber, contactNumber, numberOfPax, '', totalAmount, totalAmount, actualDownPayment, calculatedBalance, paymentStatus]
     );
 
     console.log('🔍 [BACKEND] ✅ Walk-in recorded successfully with ID:', result.insertId);
