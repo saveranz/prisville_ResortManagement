@@ -1051,8 +1051,6 @@ export default function ReceptionistDashboard() {
         balance: balance
       };
 
-      console.log('🔍 [FRONTEND] Submitting walk-in booking with payload:', payload);
-
       const response = await fetch('/api/bookings/walk-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1060,19 +1058,7 @@ export default function ReceptionistDashboard() {
         body: JSON.stringify(payload)
       });
       
-      console.log('🔍 [FRONTEND] Response status:', response.status);
-      
       const data = await response.json();
-      console.log('🔍 [FRONTEND] Response data:', data);
-      
-      // Show detailed error if available
-      if (!data.success && data.error) {
-        console.error('🔍 [FRONTEND] ❌ Server Error Details:');
-        console.error('🔍 [FRONTEND] Error Message:', data.error);
-        if (data.details) {
-          console.error('🔍 [FRONTEND] Error Stack:', data.details);
-        }
-      }
       
       if (data.success) {
         toast({
@@ -1091,7 +1077,6 @@ export default function ReceptionistDashboard() {
         });
         fetchWalkInBookings();
       } else {
-        console.error('🔍 [FRONTEND] Server returned error:', data.message);
         toast({
           variant: "destructive",
           title: "Error",
@@ -1099,7 +1084,7 @@ export default function ReceptionistDashboard() {
         });
       }
     } catch (error) {
-      console.error('🔍 [FRONTEND] Exception caught:', error);
+      console.error('Error recording walk-in:', error);
       toast({
         variant: "destructive",
         title: "Error",
