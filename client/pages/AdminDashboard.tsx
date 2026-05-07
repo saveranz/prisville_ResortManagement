@@ -260,6 +260,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -813,6 +814,11 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    handleLogout();
   };
 
   const openCreateRoomForm = () => {
@@ -1485,7 +1491,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
             className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-semibold shadow-md"
           >
             <LogOut size={18} />
@@ -3373,6 +3379,37 @@ export default function AdminDashboard() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scaleIn">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                  <LogOut className="w-6 h-6 text-amber-800" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Confirm Logout</h3>
+              </div>
+              <p className="text-gray-600 mb-6">Are you sure you want to logout?</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmLogout}
+                  className="px-6 py-2.5 bg-amber-800 text-white rounded-lg hover:bg-amber-700 font-semibold transition-colors"
+                >
+                  Yes, Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>

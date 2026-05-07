@@ -119,6 +119,7 @@ export default function ReceptionistDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
   const [amenityBookings, setAmenityBookings] = useState<Booking[]>([]);
   const [dayPassBookings, setDayPassBookings] = useState<Booking[]>([]);
@@ -633,6 +634,11 @@ export default function ReceptionistDashboard() {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    handleLogout();
   };
 
   const toggleFullscreen = async () => {
@@ -1583,7 +1589,7 @@ export default function ReceptionistDashboard() {
         {/* User Profile Icon */}
         <div className="p-3 border-t border-gray-200">
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg bg-amber-800 hover:bg-amber-700 text-white transition-colors`}
             title={!sidebarExpanded ? "Logout" : undefined}
           >
@@ -3587,6 +3593,38 @@ export default function ReceptionistDashboard() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Logout Confirmation Modal */}
+      <Dialog open={showLogoutModal} onOpenChange={setShowLogoutModal}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl text-gray-900">
+              <LogOut className="text-amber-800" size={24} />
+              Confirm Logout
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Are you sure you want to logout?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowLogoutModal(false)}
+              className="border-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmLogout}
+              className="bg-amber-800 hover:bg-amber-700 text-white"
+            >
+              Yes, Logout
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
