@@ -6,7 +6,7 @@ function formatPeso(value: string | number) {
 }
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, ChevronDown, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink, Edit, Trash2 } from "lucide-react";
+import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, ChevronDown, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink, Edit, Archive } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1164,7 +1164,7 @@ export default function ReceptionistDashboard() {
     }
   };
 
-  const handleDeleteWalkIn = async (id: number) => {
+  const handleArchiveWalkIn = async (id: number) => {
     try {
       const response = await fetch(`/api/bookings/walk-in/${id}`, {
         method: 'DELETE',
@@ -1175,23 +1175,23 @@ export default function ReceptionistDashboard() {
       
       if (data.success) {
         toast({
-          title: "Walk-in deleted",
-          description: "Walk-in record has been deleted successfully.",
+          title: "Walk-in archived",
+          description: "Walk-in record has been archived successfully.",
         });
         fetchWalkInBookings();
       } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: data.message || 'Failed to delete walk-in',
+          description: data.message || 'Failed to archive walk-in',
         });
       }
     } catch (error) {
-      console.error('Error deleting walk-in:', error);
+      console.error('Error archiving walk-in:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: 'Failed to delete walk-in',
+        description: 'Failed to archive walk-in',
       });
     }
   };
@@ -2188,14 +2188,14 @@ export default function ReceptionistDashboard() {
                               </button>
                               <button
                                 onClick={() => {
-                                  if (confirm(`Are you sure you want to delete walk-in record for ${walkIn.guest_name}?`)) {
-                                    handleDeleteWalkIn(walkIn.id);
+                                  if (confirm(`Are you sure you want to archive walk-in record for ${walkIn.guest_name}? This will hide it from the active list.`)) {
+                                    handleArchiveWalkIn(walkIn.id);
                                   }
                                 }}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                title="Delete"
+                                className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                                title="Archive"
                               >
-                                <Trash2 size={16} />
+                                <Archive size={16} />
                               </button>
                             </div>
                           </td>
