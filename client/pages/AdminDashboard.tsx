@@ -1574,92 +1574,92 @@ export default function AdminDashboard() {
             
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-600">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Total Bookings</p>
-                    <p className="text-3xl font-display font-bold text-blue-600 mt-1">{stats.totalBookings}</p>
+                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.totalBookings}</p>
                     <p className="text-xs text-gray-500 mt-1">All time</p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
                     <Calendar className="text-white" size={24} />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-700">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Total Revenue</p>
-                    <p className="text-3xl font-display font-bold text-green-600 mt-1">â‚±{parseFloat(stats.totalRevenue).toLocaleString()}</p>
+                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">₱{parseFloat(stats.totalRevenue).toLocaleString()}</p>
                     <p className="text-xs text-gray-500 mt-1">Approved bookings</p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-700 to-amber-800 flex items-center justify-center">
                     <DollarSign className="text-white" size={24} />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-600">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Pending Approvals</p>
-                    <p className="text-3xl font-display font-bold text-orange-600 mt-1">{stats.pendingApprovals}</p>
+                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.pendingApprovals}</p>
                     <p className="text-xs text-gray-500 mt-1">Require attention</p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
                     <Clock className="text-white" size={24} />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-700">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Checked-In Guests</p>
-                    <p className="text-3xl font-display font-bold text-purple-600 mt-1">{stats.checkedInGuests}</p>
+                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.checkedInGuests}</p>
                     <p className="text-xs text-gray-500 mt-1">Currently staying</p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-700 to-amber-800 flex items-center justify-center">
                     <UserCheck className="text-white" size={24} />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-indigo-500">
+              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-600">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Total Users</p>
-                    <p className="text-3xl font-display font-bold text-indigo-600 mt-1">{stats.totalUsers}</p>
+                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.totalUsers}</p>
                     <p className="text-xs text-gray-500 mt-1">{stats.activeUsers} active</p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
                     <Users className="text-white" size={24} />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-pink-500">
+              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-700">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Room Bookings</p>
-                    <p className="text-3xl font-display font-bold text-pink-600 mt-1">{stats.roomBookings}</p>
+                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.roomBookings}</p>
                     <p className="text-xs text-gray-500 mt-1">Total rooms</p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-700 to-amber-800 flex items-center justify-center">
                     <BedDouble className="text-white" size={24} />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-teal-500">
+              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-600">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Recent Bookings</p>
-                    <p className="text-3xl font-display font-bold text-teal-600 mt-1">{stats.recentBookings}</p>
+                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.recentBookings}</p>
                     <p className="text-xs text-gray-500 mt-1">Last 7 days</p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
                     <Activity className="text-white" size={24} />
                   </div>
                 </div>
