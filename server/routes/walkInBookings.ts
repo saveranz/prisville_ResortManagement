@@ -6,10 +6,12 @@ interface WalkInBooking extends RowDataPacket {
   id: number;
   guest_name: string;
   room_number: string;
-  address: string;
   contact_number: string;
   number_of_pax: number;
-  amount: string;
+  total_amount: string;
+  down_payment: string;
+  balance: string;
+  payment_status: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -40,22 +42,24 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
       numberOfPax,
       guestName,
       roomNumber,
-      address,
       contactNumber,
-      amount
+      totalAmount,
+      downPayment,
+      balance
     } = req.body;
 
     console.log('📋 Walk-in data:', {
       numberOfPax,
       guestName,
       roomNumber,
-      address,
       contactNumber,
-      amount
+      totalAmount,
+      downPayment,
+      balance
     });
 
     // Validate required fields
-    if (!numberOfPax || !guestName || !roomNumber || !address || !contactNumber || !amount) {
+    if (!numberOfPax || !guestName || !roomNumber || !contactNumber || !totalAmount || downPayment === undefined) {
       res.status(400).json({ 
         success: false, 
         message: 'All fields are required' 
@@ -63,12 +67,16 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
       return;
     }
 
+    // Calculate balance and payment status
+    const calculatedBalance = parseFloat(totalAmount) - parseFloat(downPayment);
+    const paymentStatus = calculatedBalance <= 0 ? 'paid' : 'partial';
+
     // Insert walk-in booking
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO walk_in_bookings 
-      (guest_name, room_number, address, contact_number, number_of_pax, amount) 
-      VALUES (?, ?, ?, ?, ?, ?)`,
-      [guestName, roomNumber, address, contactNumber, numberOfPax, amount]
+      (guest_name, room_number, contact_number, number_of_pax, total_amount, down_payment, balance, payment_status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [guestName, roomNumber, contactNumber, numberOfPax, totalAmount, downPayment, calculatedBalance, paymentStatus]
     );
 
     console.log('✅ Walk-in recorded successfully with ID:', result.insertId);

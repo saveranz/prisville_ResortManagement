@@ -222,7 +222,9 @@ export default function ReceptionistDashboard() {
     guestName: '',
     contactNumber: '',
     roomNumber: '',
-    amount: ''
+    totalAmount: '',
+    downPayment: '',
+    balance: ''
   });
   const [walkInLoading, setWalkInLoading] = useState(false);
   const [walkInSearchTerm, setWalkInSearchTerm] = useState('');
@@ -1987,7 +1989,10 @@ export default function ReceptionistDashboard() {
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room No.</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Contact No.</th>
                         <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">No. of Pax</th>
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amount</th>
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Total Amount</th>
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Down Payment</th>
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Balance</th>
+                        <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
@@ -2021,7 +2026,26 @@ export default function ReceptionistDashboard() {
                             {walkIn.number_of_pax}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
-                            ₱{parseFloat(walkIn.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₱{parseFloat(walkIn.total_amount || walkIn.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-xs text-green-700 font-semibold">
+                            ₱{parseFloat(walkIn.down_payment || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold">
+                            <span className={parseFloat(walkIn.balance || 0) > 0 ? 'text-orange-600' : 'text-green-600'}>
+                              ₱{parseFloat(walkIn.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-center">
+                            {parseFloat(walkIn.balance || 0) > 0 ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800">
+                                Partial
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                Paid
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -3325,17 +3349,59 @@ export default function ReceptionistDashboard() {
             </div>
 
             <div>
-              <Label className="text-gray-700">Amount (?) *</Label>
+              <Label className="text-gray-700">Total Amount (₱) *</Label>
               <Input 
                 type="number" 
                 min="0" 
                 step="0.01" 
                 placeholder="0.00" 
-                value={walkInForm.amount}
-                onChange={(e) => setWalkInForm({ ...walkInForm, amount: e.target.value })}
+                value={walkInForm.totalAmount}
+                onChange={(e) => {
+                  const total = parseFloat(e.target.value) || 0;
+                  const dp = parseFloat(walkInForm.downPayment) || 0;
+                  setWalkInForm({ 
+                    ...walkInForm, 
+                    totalAmount: e.target.value,
+                    balance: (total - dp).toFixed(2)
+                  });
+                }}
                 className="bg-white border-gray-300 text-gray-900 mt-1" 
                 required 
               />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Down Payment (₱) *</Label>
+              <Input 
+                type="number" 
+                min="0" 
+                step="0.01" 
+                placeholder="0.00" 
+                value={walkInForm.downPayment}
+                onChange={(e) => {
+                  const total = parseFloat(walkInForm.totalAmount) || 0;
+                  const dp = parseFloat(e.target.value) || 0;
+                  setWalkInForm({ 
+                    ...walkInForm, 
+                    downPayment: e.target.value,
+                    balance: (total - dp).toFixed(2)
+                  });
+                }}
+                className="bg-white border-gray-300 text-gray-900 mt-1" 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700">Balance (₱)</Label>
+              <Input 
+                type="text" 
+                value={walkInForm.balance ? `₱${parseFloat(walkInForm.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '₱0.00'}
+                className="bg-gray-100 border-gray-300 text-gray-900 mt-1 font-semibold" 
+                disabled
+                readOnly
+              />
+              <p className="text-xs text-gray-500 mt-1">Automatically calculated (Total - Down Payment)</p>
             </div>
 
             <DialogFooter className="gap-2">
