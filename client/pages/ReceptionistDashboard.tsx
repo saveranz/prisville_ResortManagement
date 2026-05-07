@@ -220,7 +220,6 @@ export default function ReceptionistDashboard() {
   const [walkInForm, setWalkInForm] = useState({
     numberOfPax: '',
     guestName: '',
-    address: '',
     contactNumber: '',
     roomNumber: '',
     amount: ''
@@ -1957,8 +1956,7 @@ export default function ReceptionistDashboard() {
                   Showing <span className="font-semibold text-primary">{walkInBookings.filter(w => 
                     !walkInSearchTerm || 
                     w.guest_name?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
-                    w.contact_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
-                    w.address?.toLowerCase().includes(walkInSearchTerm.toLowerCase())
+                    w.contact_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase())
                   ).length}</span> of {walkInBookings.length} walk-ins
                 </div>
               </div>
@@ -1987,7 +1985,6 @@ export default function ReceptionistDashboard() {
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Date</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Guest Name</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Room No.</th>
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Address</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Contact No.</th>
                         <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">No. of Pax</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amount</th>
@@ -1998,8 +1995,7 @@ export default function ReceptionistDashboard() {
                         !walkInSearchTerm || 
                         w.guest_name?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
                         w.contact_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
-                        w.room_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
-                        w.address?.toLowerCase().includes(walkInSearchTerm.toLowerCase())
+                        w.room_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase())
                       ).map((walkIn: any) => (
                         <tr key={walkIn.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
@@ -2018,9 +2014,6 @@ export default function ReceptionistDashboard() {
                           <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-primary">
                             {walkIn.room_number}
                           </td>
-                          <td className="px-3 py-3 text-xs text-gray-700 max-w-[200px] truncate" title={walkIn.address}>
-                            {walkIn.address}
-                          </td>
                           <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
                             {walkIn.contact_number}
                           </td>
@@ -2028,7 +2021,7 @@ export default function ReceptionistDashboard() {
                             {walkIn.number_of_pax}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
-                            ?{parseFloat(walkIn.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₱{parseFloat(walkIn.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         </tr>
                       ))}
@@ -3316,17 +3309,6 @@ export default function ReceptionistDashboard() {
                 onChange={(e) => setWalkInForm({ ...walkInForm, roomNumber: e.target.value })}
                 className="bg-white border-gray-300 text-gray-900 mt-1" 
                 required 
-              />
-            </div>
-
-            <div>
-              <Label className="text-gray-700">Address *</Label>
-              <Textarea 
-                placeholder="Complete address" 
-                value={walkInForm.address}
-                onChange={(e) => setWalkInForm({ ...walkInForm, address: e.target.value })}
-                className="bg-white border-gray-300 text-gray-900 mt-1 min-h-[60px]" 
-                required
               />
             </div>
 
