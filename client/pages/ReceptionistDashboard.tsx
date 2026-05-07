@@ -1424,13 +1424,33 @@ export default function ReceptionistDashboard() {
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Logo/Menu Button */}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-center">
-          <button 
-            onClick={() => setSidebarExpanded(!sidebarExpanded)}
-            className="w-12 h-12 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
-          >
-            <Menu size={24} className="text-white" />
-          </button>
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          {sidebarExpanded ? (
+            <>
+              {/* Logo and Company Name when expanded */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center overflow-hidden shadow-sm">
+                  <img src="/PTR-logo.png" alt="Prisville Logo" className="w-full h-full object-cover scale-150" />
+                </div>
+                <span className="text-sm font-semibold text-gray-900">Prisville Resort</span>
+              </div>
+              {/* Menu button to collapse */}
+              <button 
+                onClick={() => setSidebarExpanded(false)}
+                className="w-8 h-8 rounded-lg hover:bg-gray-200 flex items-center justify-center transition-colors"
+              >
+                <Menu size={18} className="text-gray-700" />
+              </button>
+            </>
+          ) : (
+            /* Menu button when collapsed */
+            <button 
+              onClick={() => setSidebarExpanded(true)}
+              className="w-12 h-12 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors mx-auto"
+            >
+              <Menu size={24} className="text-white" />
+            </button>
+          )}
         </div>
 
         {/* Navigation Icons */}
