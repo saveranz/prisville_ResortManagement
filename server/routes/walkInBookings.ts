@@ -61,13 +61,16 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
     // Calculate balance and payment status
     const calculatedBalance = parseFloat(totalAmount) - actualDownPayment;
     const paymentStatus = calculatedBalance <= 0 ? 'paid' : 'partial';
+    
+    // For display: if full payment, show 0 for down_payment
+    const displayDownPayment = calculatedBalance <= 0 ? 0 : actualDownPayment;
 
     // Insert walk-in booking (including legacy fields for backward compatibility)
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO walk_in_bookings 
       (guest_name, room_number, contact_number, number_of_pax, address, amount, total_amount, down_payment, balance, payment_status) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [guestName, roomNumber, contactNumber, numberOfPax, '', totalAmount, totalAmount, actualDownPayment, calculatedBalance, paymentStatus]
+      [guestName, roomNumber, contactNumber, numberOfPax, '', totalAmount, totalAmount, displayDownPayment, calculatedBalance, paymentStatus]
     );
 
     res.json({ 
