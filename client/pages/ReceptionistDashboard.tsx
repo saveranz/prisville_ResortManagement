@@ -6,7 +6,7 @@ function formatPeso(value: string | number) {
 }
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink } from "lucide-react";
+import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, ChevronDown, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -240,6 +240,10 @@ export default function ReceptionistDashboard() {
   });
   const [dayPassWalkInLoading, setDayPassWalkInLoading] = useState(false);
   const [dayPassWalkInSearchTerm, setDayPassWalkInSearchTerm] = useState('');
+  
+  // Sidebar submenu expansion states
+  const [roomsMenuExpanded, setRoomsMenuExpanded] = useState(false);
+  const [dayPassMenuExpanded, setDayPassMenuExpanded] = useState(false);
   
   // Amenity booking creation states
   const [showAmenityBookingModal, setShowAmenityBookingModal] = useState(false);
@@ -1475,7 +1479,11 @@ export default function ReceptionistDashboard() {
           </button>
           
           <button
-            onClick={() => { setActiveTab('rooms'); setMobileMenuOpen(false); }}
+            onClick={() => { 
+              setRoomsMenuExpanded(!roomsMenuExpanded);
+              setActiveTab('rooms'); 
+              setMobileMenuOpen(false); 
+            }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'rooms' || activeTab === 'walkin'
                 ? 'bg-amber-800 text-white'
@@ -1490,7 +1498,25 @@ export default function ReceptionistDashboard() {
                 {roomBookings.filter(b => b.status === 'pending').length}
               </span>
             )}
+            {sidebarExpanded && (
+              <ChevronDown size={16} className={`ml-auto transition-transform ${roomsMenuExpanded ? 'rotate-180' : ''}`} />
+            )}
           </button>
+          
+          {/* Room Bookings Sub-menu */}
+          {sidebarExpanded && roomsMenuExpanded && (
+            <button
+              onClick={() => { setActiveTab('walkin'); setMobileMenuOpen(false); }}
+              className={`w-full h-10 flex items-center justify-start pl-12 pr-4 gap-3 rounded-lg transition-all ${
+                activeTab === 'walkin'
+                  ? 'bg-amber-700 text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              <LogIn size={16} className="flex-shrink-0" />
+              <span className="text-sm font-medium">Walk-In</span>
+            </button>
+          )}
 
           <button
             onClick={() => { setActiveTab('amenities'); setMobileMenuOpen(false); }}
@@ -1511,7 +1537,11 @@ export default function ReceptionistDashboard() {
           </button>
 
           <button
-            onClick={() => { setActiveTab('daypass'); setMobileMenuOpen(false); }}
+            onClick={() => { 
+              setDayPassMenuExpanded(!dayPassMenuExpanded);
+              setActiveTab('daypass'); 
+              setMobileMenuOpen(false); 
+            }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'daypass' || activeTab === 'daypasswalkin'
                 ? 'bg-amber-800 text-white'
@@ -1526,7 +1556,25 @@ export default function ReceptionistDashboard() {
                 {dayPassBookings.filter(b => b.status === 'pending').length}
               </span>
             )}
+            {sidebarExpanded && (
+              <ChevronDown size={16} className={`ml-auto transition-transform ${dayPassMenuExpanded ? 'rotate-180' : ''}`} />
+            )}
           </button>
+          
+          {/* Day Pass Sub-menu */}
+          {sidebarExpanded && dayPassMenuExpanded && (
+            <button
+              onClick={() => { setActiveTab('daypasswalkin'); setMobileMenuOpen(false); }}
+              className={`w-full h-10 flex items-center justify-start pl-12 pr-4 gap-3 rounded-lg transition-all ${
+                activeTab === 'daypasswalkin'
+                  ? 'bg-amber-700 text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              <LogIn size={16} className="flex-shrink-0" />
+              <span className="text-sm font-medium">Walk-In</span>
+            </button>
+          )}
 
           <button
             onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
