@@ -92,9 +92,9 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
     // Insert walk-in booking
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO walk_in_bookings 
-      (guest_name, room_number, contact_number, number_of_pax, total_amount, down_payment, balance, payment_status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [guestName, roomNumber, contactNumber, numberOfPax, totalAmount, actualDownPayment, calculatedBalance, paymentStatus]
+      (guest_name, room_number, contact_number, number_of_pax, address, total_amount, down_payment, balance, payment_status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [guestName, roomNumber, contactNumber, numberOfPax, '', totalAmount, actualDownPayment, calculatedBalance, paymentStatus]
     );
 
     console.log('🔍 [BACKEND] ✅ Walk-in recorded successfully with ID:', result.insertId);
