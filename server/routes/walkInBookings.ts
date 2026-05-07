@@ -59,24 +59,34 @@ export const createWalkInBooking: RequestHandler = async (req, res) => {
     });
 
     // Validate required fields
-    if (!numberOfPax || !guestName || !roomNumber || !contactNumber || !totalAmount || downPayment === undefined) {
+    if (!numberOfPax || !guestName || !roomNumber || !contactNumber || !totalAmount) {
       res.status(400).json({ 
         success: false, 
-        message: 'All fields are required' 
+        message: 'All required fields must be filled' 
       });
       return;
     }
 
+    // If downPayment is empty or not provided, assume full payment
+    const actualDownPayment = downPayment && downPayment !== '' ? parseFloat(downPayment) : parseFloat(totalAmount);
+    
     // Calculate balance and payment status
-    const calculatedBalance = parseFloat(totalAmount) - parseFloat(downPayment);
+    const calculatedBalance = parseFloat(totalAmount) - actualDownPayment;
     const paymentStatus = calculatedBalance <= 0 ? 'paid' : 'partial';
+
+    console.log('💰 Payment calculation:', {
+      totalAmount,
+      actualDownPayment,
+      calculatedBalance,
+      paymentStatus
+    });
 
     // Insert walk-in booking
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO walk_in_bookings 
       (guest_name, room_number, contact_number, number_of_pax, total_amount, down_payment, balance, payment_status) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [guestName, roomNumber, contactNumber, numberOfPax, totalAmount, downPayment, calculatedBalance, paymentStatus]
+      [guestName, roomNumber, contactNumber, numberOfPax, totalAmount, actualDownPayment, calculatedBalance, paymentStatus]
     );
 
     console.log('✅ Walk-in recorded successfully with ID:', result.insertId);

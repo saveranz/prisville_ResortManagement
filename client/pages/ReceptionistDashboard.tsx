@@ -3358,10 +3358,11 @@ export default function ReceptionistDashboard() {
                 value={walkInForm.totalAmount}
                 onChange={(e) => {
                   const total = parseFloat(e.target.value) || 0;
-                  const dp = parseFloat(walkInForm.downPayment) || 0;
+                  const dp = parseFloat(walkInForm.downPayment) || total; // Default to full amount
                   setWalkInForm({ 
                     ...walkInForm, 
                     totalAmount: e.target.value,
+                    downPayment: walkInForm.downPayment || e.target.value, // Auto-fill if empty
                     balance: (total - dp).toFixed(2)
                   });
                 }}
@@ -3371,16 +3372,16 @@ export default function ReceptionistDashboard() {
             </div>
 
             <div>
-              <Label className="text-gray-700">Down Payment (₱) *</Label>
+              <Label className="text-gray-700">Amount Paid (₱)</Label>
               <Input 
                 type="number" 
                 min="0" 
                 step="0.01" 
-                placeholder="0.00" 
+                placeholder="Full amount (leave empty for full payment)" 
                 value={walkInForm.downPayment}
                 onChange={(e) => {
                   const total = parseFloat(walkInForm.totalAmount) || 0;
-                  const dp = parseFloat(e.target.value) || 0;
+                  const dp = e.target.value ? parseFloat(e.target.value) : total; // If empty, use total
                   setWalkInForm({ 
                     ...walkInForm, 
                     downPayment: e.target.value,
@@ -3388,20 +3389,25 @@ export default function ReceptionistDashboard() {
                   });
                 }}
                 className="bg-white border-gray-300 text-gray-900 mt-1" 
-                required 
               />
+              <p className="text-xs text-gray-500 mt-1">Leave empty if customer pays full amount</p>
             </div>
 
             <div>
               <Label className="text-gray-700">Balance (₱)</Label>
               <Input 
                 type="text" 
-                value={walkInForm.balance ? `₱${parseFloat(walkInForm.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '₱0.00'}
+                value={(() => {
+                  const total = parseFloat(walkInForm.totalAmount) || 0;
+                  const dp = walkInForm.downPayment ? parseFloat(walkInForm.downPayment) : total;
+                  const balance = total - dp;
+                  return `₱${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                })()}
                 className="bg-gray-100 border-gray-300 text-gray-900 mt-1 font-semibold" 
                 disabled
                 readOnly
               />
-              <p className="text-xs text-gray-500 mt-1">Automatically calculated (Total - Down Payment)</p>
+              <p className="text-xs text-gray-500 mt-1">Automatically calculated</p>
             </div>
 
             <DialogFooter className="gap-2">
