@@ -1446,7 +1446,7 @@ export default function ReceptionistDashboard() {
             /* Menu button when collapsed */
             <button 
               onClick={() => setSidebarExpanded(true)}
-              className="w-12 h-12 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors mx-auto"
+              className="w-12 h-12 rounded-xl bg-amber-800 hover:bg-amber-700 flex items-center justify-center transition-colors mx-auto"
             >
               <Menu size={24} className="text-white" />
             </button>
@@ -1459,7 +1459,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'overview'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-amber-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
             title={!sidebarExpanded ? "Dashboard" : undefined}
@@ -1472,7 +1472,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('rooms'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'rooms' || activeTab === 'walkin'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-amber-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
             title={!sidebarExpanded ? "Room Bookings" : undefined}
@@ -1490,7 +1490,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('amenities'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'amenities'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-amber-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
             title={!sidebarExpanded ? "Amenities" : undefined}
@@ -1508,7 +1508,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('daypass'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'daypass' || activeTab === 'daypasswalkin'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-amber-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
             title={!sidebarExpanded ? "Day Pass" : undefined}
@@ -1526,7 +1526,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'inventory'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-amber-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
             title={!sidebarExpanded ? "Inventory" : undefined}
@@ -1539,7 +1539,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('checkin'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'checkin' || activeTab === 'history'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-amber-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
             title={!sidebarExpanded ? "Check-In / Check-Out" : undefined}
@@ -1552,7 +1552,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('roomstatus'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'roomstatus'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-amber-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
             title={!sidebarExpanded ? "Room Status" : undefined}
@@ -1565,7 +1565,7 @@ export default function ReceptionistDashboard() {
             onClick={() => { setActiveTab('issues'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
               activeTab === 'issues'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-amber-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
             title={!sidebarExpanded ? "Issues" : undefined}
@@ -1584,7 +1584,7 @@ export default function ReceptionistDashboard() {
         <div className="p-3 border-t border-gray-200">
           <button
             onClick={handleLogout}
-            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg bg-gray-800 hover:bg-gray-700 text-white transition-colors`}
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg bg-amber-800 hover:bg-amber-700 text-white transition-colors`}
             title={!sidebarExpanded ? "Logout" : undefined}
           >
             <LogOut size={20} className="flex-shrink-0" />
@@ -1599,7 +1599,7 @@ export default function ReceptionistDashboard() {
         <div className="bg-white border-b border-gray-200 px-6 lg:px-8 py-4 flex items-center justify-between">
           {/* Left: Company Logo/Name */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-amber-800 flex items-center justify-center">
               <span className="text-white font-bold text-sm">PR</span>
             </div>
             <span className="text-lg font-semibold text-gray-900 hidden sm:block">Prisville Resort</span>
@@ -1619,7 +1619,7 @@ export default function ReceptionistDashboard() {
               )}
             </button>
             <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200">
-              <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-amber-800 flex items-center justify-center">
                 <span className="text-white font-bold text-xs">
                   {user?.name?.charAt(0) || 'R'}
                 </span>
@@ -1639,17 +1639,17 @@ export default function ReceptionistDashboard() {
               {/* Stats Cards - First Dark, Rest Light */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {/* Dark Card - Total Bookings */}
-                <div className="bg-gray-800 rounded-2xl p-6 text-white">
+                <div className="bg-amber-800 rounded-2xl p-6 text-white">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <p className="text-gray-300 text-sm font-medium mb-1">Total Bookings</p>
+                      <p className="text-amber-100 text-sm font-medium mb-1">Total Bookings</p>
                       <p className="text-4xl font-bold">{stats.totalBookings}</p>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
                       <FileText size={24} />
                     </div>
                   </div>
-                  <p className="text-gray-400 text-sm">+{stats.totalBookings > 0 ? '2,031' : '0'}</p>
+                  <p className="text-amber-200 text-sm">+{stats.totalBookings > 0 ? '2,031' : '0'}</p>
                 </div>
 
                 {/* Light Card - Total Revenue */}
@@ -1708,7 +1708,7 @@ export default function ReceptionistDashboard() {
                   <p className="text-3xl font-bold text-gray-900 mb-4">{roomBookings.length}</p>
                   <button
                     onClick={() => setActiveTab('rooms')}
-                    className="w-full bg-gray-800 hover:bg-gray-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                    className="w-full bg-amber-800 hover:bg-amber-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
                   >
                     View Details
                   </button>
@@ -1725,7 +1725,7 @@ export default function ReceptionistDashboard() {
                   <p className="text-3xl font-bold text-gray-900 mb-4">{amenityBookings.length}</p>
                   <button
                     onClick={() => setActiveTab('amenities')}
-                    className="w-full bg-gray-800 hover:bg-gray-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                    className="w-full bg-amber-800 hover:bg-amber-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
                   >
                     View Details
                   </button>
@@ -1742,7 +1742,7 @@ export default function ReceptionistDashboard() {
                   <p className="text-3xl font-bold text-gray-900 mb-4">{dayPassBookings.length}</p>
                   <button
                     onClick={() => setActiveTab('daypass')}
-                    className="w-full bg-gray-800 hover:bg-gray-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                    className="w-full bg-amber-800 hover:bg-amber-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
                   >
                     View Details
                   </button>
