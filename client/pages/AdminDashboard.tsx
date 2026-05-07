@@ -261,6 +261,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -1339,215 +1340,229 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
+      {/* Sidebar - Expandable Icon-Only/Full Navigation */}
       <div className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-64 bg-white shadow-xl flex flex-col border-r border-primary/20
-        transform transition-transform duration-300 ease-in-out
+        ${sidebarExpanded ? 'w-64' : 'w-20'} bg-gray-100 shadow-sm flex flex-col border-r border-gray-200
+        transition-all duration-300 ease-in-out
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full shadow-md flex items-center justify-center overflow-hidden bg-white">
-              <img src="/PTR-logo.png" alt="Prisville Logo" className="w-full h-full object-cover scale-150" />
-            </div>
-            <div>
-              <h1 className="font-display font-bold text-gray-900 text-lg tracking-tight">Prisville</h1>
-              <p className="text-xs text-gray-600 font-medium">Admin Dashboard</p>
-            </div>
-          </div>
+        {/* Logo/Menu Button */}
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          {sidebarExpanded ? (
+            <>
+              {/* Logo and Company Name when expanded */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center overflow-hidden shadow-sm">
+                  <img src="/PTR-logo.png" alt="Prisville Logo" className="w-full h-full object-cover scale-150" />
+                </div>
+                <span className="text-sm font-semibold text-gray-900">Prisville Resort</span>
+              </div>
+              {/* Menu button to collapse */}
+              <button 
+                onClick={() => setSidebarExpanded(false)}
+                className="w-8 h-8 rounded-lg hover:bg-gray-200 flex items-center justify-center transition-colors"
+              >
+                <Menu size={18} className="text-gray-700" />
+              </button>
+            </>
+          ) : (
+            /* Menu button when collapsed */
+            <button 
+              onClick={() => setSidebarExpanded(true)}
+              className="w-12 h-12 rounded-xl bg-amber-800 hover:bg-amber-700 flex items-center justify-center transition-colors mx-auto"
+            >
+              <Menu size={24} className="text-white" />
+            </button>
+          )}
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        {/* Navigation Icons */}
+        <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
           <button
             onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'overview'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Overview" : undefined}
           >
-            <BarChart3 size={20} />
-            <span className="tracking-wide">Overview</span>
+            <BarChart3 size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Overview</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('reservations'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'reservations'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Analytics" : undefined}
           >
-            <Calendar size={20} />
-            <span className="tracking-wide">Analytics</span>
+            <Calendar size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Analytics</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('guests'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'guests'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Guests" : undefined}
           >
-            <Users size={20} />
-            <span className="tracking-wide">Guests</span>
+            <Users size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Guests</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'reports'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Reports" : undefined}
           >
-            <FileText size={20} />
-            <span className="tracking-wide">Reports</span>
+            <FileText size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Reports</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('facilities'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'facilities'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Room Bookings" : undefined}
           >
-            <BedDouble size={20} />
-            <span className="tracking-wide">Room Bookings</span>
+            <BedDouble size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Room Bookings</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('users'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'users'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Users" : undefined}
           >
-            <UserCog size={20} />
-            <span className="tracking-wide">Users</span>
+            <UserCog size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Users</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('inquiries'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'inquiries'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Inquiries & FAQ" : undefined}
           >
-            <MessageSquare size={20} />
-            <span className="tracking-wide">Inquiries & FAQ</span>
+            <MessageSquare size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Inquiries & FAQ</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('settings'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'settings'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Site Settings" : undefined}
           >
-            <Settings size={20} />
-            <span className="tracking-wide">Site Settings</span>
+            <Settings size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Site Settings</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'inventory'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Inventory" : undefined}
           >
-            <Package size={20} />
-            <span className="tracking-wide">Inventory</span>
+            <Package size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Inventory</span>}
           </button>
 
           <button
             onClick={() => { setActiveTab('audit'); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'audit'
-                ? 'bg-primary/10 text-primary font-semibold border-l-4 border-primary'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
+            title={!sidebarExpanded ? "Audit Trail" : undefined}
           >
-            <ShieldCheck size={20} />
-            <span className="tracking-wide">Audit Trail</span>
+            <ShieldCheck size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Audit Trail</span>}
           </button>
         </nav>
 
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
-            <div className="w-10 h-10 rounded-full bg-primary shadow-md flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">Administrator</p>
-              <p className="text-xs text-gray-600">System Admin</p>
-            </div>
-          </div>
+        {/* User Profile and Actions */}
+        <div className="p-3 border-t border-gray-200">
+          {sidebarExpanded && (
+            <button
+              onClick={() => navigate('/admin/announcements')}
+              className="w-full mb-2 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-medium text-sm"
+            >
+              <FileText size={18} />
+              <span>Announcements</span>
+            </button>
+          )}
           <button
             onClick={() => setShowLogoutModal(true)}
-            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-semibold shadow-md"
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg bg-amber-800 hover:bg-amber-700 text-white transition-colors`}
+            title={!sidebarExpanded ? "Logout" : undefined}
           >
-            <LogOut size={18} />
-            <span>Logout</span>
-          </button>
-          <button
-            onClick={() => navigate('/admin/announcements')}
-            className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-all font-semibold border border-primary/30"
-          >
-            <FileText size={18} />
-            <span>Announcements</span>
+            <LogOut size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">Logout</span>}
           </button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 shadow-sm">
-          <div className="flex items-center justify-between gap-4">
-            {/* Mobile Menu Button */}
+        {/* Header - Clean Minimalist Design */}
+        <div className="bg-white border-b border-gray-200 px-6 lg:px-8 py-4 flex items-center justify-between">
+          {/* Left: Company Logo/Name */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-800 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">PR</span>
+            </div>
+            <span className="text-lg font-semibold text-gray-900 hidden sm:block">Prisville Resort</span>
+          </div>
+
+          {/* Right: User Info */}
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <Menu size={24} className="text-gray-700" />
             </button>
-
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl sm:text-2xl font-display font-bold text-gray-900 tracking-tight truncate">
-                {activeTab === 'overview' && 'Dashboard Overview'}
-                {activeTab === 'reservations' && 'All Reservations'}
-                {activeTab === 'guests' && 'Guest Activity'}
-                {activeTab === 'reports' && 'Generate Reports'}
-                {activeTab === 'facilities' && 'Room Bookings CMS'}
-                {activeTab === 'users' && 'User Management'}
-                {activeTab === 'inquiries' && 'Inquiries & FAQ Management'}
-                {activeTab === 'settings' && 'Site Settings'}
-                {activeTab === 'inventory' && 'Inventory & Transactions'}
-                {activeTab === 'audit' && 'Audit Trail'}
-              </h2>
-              <p className="text-gray-600 text-sm mt-1 font-medium hidden sm:block">
-                {activeTab === 'overview' && 'Monitor resort operations and key metrics'}
-                {activeTab === 'reservations' && 'View and manage all bookings'}
-                {activeTab === 'guests' && 'Track guest activity and bookings'}
-                {activeTab === 'reports' && 'Generate and export operational reports'}
-                {activeTab === 'facilities' && 'Add, edit, and delete rooms shown across booking flows'}
-                {activeTab === 'users' && 'Manage user accounts and roles'}
-                {activeTab === 'inventory' && 'View inventory items and manage financial transactions'}
-                {activeTab === 'audit' && 'Track all admin actions and system changes'}
-              </p>
+            <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200">
+              <div className="w-8 h-8 rounded-lg bg-amber-800 flex items-center justify-center">
+                <span className="text-white font-bold text-xs">A</span>
+              </div>
+              <div className="hidden sm:block text-right">
+                <p className="text-sm font-semibold text-gray-900">Administrator</p>
+                <p className="text-xs text-gray-500 capitalize">System Admin</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="hidden sm:block text-right bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-xl shadow-sm border border-gray-200">
-                <p className="text-xs text-gray-600 font-medium">Today's Date</p>
-                <p className="text-sm sm:text-base font-bold text-gray-900">
+          </div>
+        </div>
                   {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </p>
               </div>
