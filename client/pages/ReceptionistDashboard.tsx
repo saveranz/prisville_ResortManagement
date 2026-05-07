@@ -1065,6 +1065,15 @@ export default function ReceptionistDashboard() {
       const data = await response.json();
       console.log('🔍 [FRONTEND] Response data:', data);
       
+      // Show detailed error if available
+      if (!data.success && data.error) {
+        console.error('🔍 [FRONTEND] ❌ Server Error Details:');
+        console.error('🔍 [FRONTEND] Error Message:', data.error);
+        if (data.details) {
+          console.error('🔍 [FRONTEND] Error Stack:', data.details);
+        }
+      }
+      
       if (data.success) {
         toast({
           title: "Walk-in recorded",
