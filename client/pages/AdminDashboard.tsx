@@ -1563,12 +1563,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-                  {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Content Area */}
         <div className="p-4 sm:p-6 lg:p-8 bg-gray-50">
