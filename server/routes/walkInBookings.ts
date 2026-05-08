@@ -108,12 +108,29 @@ export const getAllWalkInBookings: RequestHandler = async (req, res) => {
       return;
     }
 
-    // Check if archived column exists, if not, just get all records
-    const [bookings] = await db.query<WalkInBooking[]>(
-      `SELECT * FROM walk_in_bookings 
-       WHERE (archived IS NULL OR archived = FALSE OR archived = 0)
-       ORDER BY created_at DESC`
-    );
+    // Try to fetch with archived filter first, if it fails (column doesn't exist), fetch all
+    let bookings: WalkInBooking[] = [];
+    
+    try {
+      // Try with archived column
+      const [result] = await db.query<WalkInBooking[]>(
+        `SELECT * FROM walk_in_bookings 
+         WHERE (archived = FALSE OR archived = 0)
+         ORDER BY created_at DESC`
+      );
+      bookings = result;
+    } catch (error: any) {
+      // If archived column doesn't exist, fetch all records
+      if (error.code === 'ER_BAD_FIELD_ERROR') {
+        console.log('[Walk-In API] Archived column not found, fetching all records');
+        const [result] = await db.query<WalkInBooking[]>(
+          `SELECT * FROM walk_in_bookings ORDER BY created_at DESC`
+        );
+        bookings = result;
+      } else {
+        throw error;
+      }
+    }
 
     console.log('[Walk-In API] Fetched bookings count:', bookings.length);
     console.log('[Walk-In API] Sample booking:', bookings[0]);
