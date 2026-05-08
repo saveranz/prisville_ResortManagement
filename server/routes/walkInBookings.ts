@@ -108,8 +108,11 @@ export const getAllWalkInBookings: RequestHandler = async (req, res) => {
       return;
     }
 
+    // Check if archived column exists, if not, just get all records
     const [bookings] = await db.query<WalkInBooking[]>(
-      `SELECT * FROM walk_in_bookings WHERE archived = FALSE ORDER BY created_at DESC`
+      `SELECT * FROM walk_in_bookings 
+       WHERE (archived IS NULL OR archived = FALSE OR archived = 0)
+       ORDER BY created_at DESC`
     );
 
     res.json({ 
@@ -221,11 +224,22 @@ export const archiveWalkInBooking: RequestHandler = async (req, res) => {
 
     const { id } = req.params;
 
-    // Archive walk-in booking (soft delete)
-    await db.query(
-      `UPDATE walk_in_bookings SET archived = TRUE WHERE id = ?`,
-      [id]
-    );
+    // Try to archive walk-in booking (soft delete)
+    // If archived column doesn't exist, the error will be caught
+    try {
+      await db.query(
+        `UPDATE walk_in_bookings SET archived = TRUE WHERE id = ?`,
+        [id]
+      );
+    } catch (dbError: any) {
+      // If column doesn't exist, add it first then try again
+      if (dbError.code === 'ER_BAD_FIELD_ERROR') {
+        await db.query(`ALTER TABLE walk_in_bookings ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE`);
+        await db.query(`UPDATE walk_in_bookings SET archived = TRUE WHERE id = ?`, [id]);
+      } else {
+        throw dbError;
+      }
+    }
 
     res.json({ 
       success: true, 
