@@ -2438,7 +2438,7 @@ export default function ReceptionistDashboard() {
                   Showing <span className="font-semibold text-primary">{dayPassWalkInBookings.filter(w => 
                     !dayPassWalkInSearchTerm || 
                     w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
-                    w.cottage_number?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
+                    w.cottage_type?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
                   ).length}</span> of {dayPassWalkInBookings.length} walk-ins
                 </div>
               </div>
@@ -2453,7 +2453,7 @@ export default function ReceptionistDashboard() {
                 ) : dayPassWalkInBookings.filter(w => 
                     !dayPassWalkInSearchTerm || 
                     w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
-                    w.cottage_number?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
+                    w.cottage_type?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
                   ).length === 0 ? (
                   <div className="text-center py-20">
                     <Users size={64} className="mx-auto mb-4 text-gray-300" />
@@ -2466,7 +2466,8 @@ export default function ReceptionistDashboard() {
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Date</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Representative Name</th>
                         <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">No. of Pax</th>
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Cottage</th>
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Cottage Type</th>
+                        <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Time</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Amount</th>
                       </tr>
                     </thead>
@@ -2474,7 +2475,7 @@ export default function ReceptionistDashboard() {
                       {dayPassWalkInBookings.filter(w => 
                         !dayPassWalkInSearchTerm || 
                         w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
-                        w.cottage_number?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
+                        w.cottage_type?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
                       ).map((walkIn: any) => (
                         <tr key={walkIn.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
@@ -2493,11 +2494,22 @@ export default function ReceptionistDashboard() {
                           <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700 text-center">
                             {walkIn.number_of_pax}
                           </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-primary">
-                            {walkIn.cottage === 'yes' ? (walkIn.cottage_number || 'Yes') : 'No'}
+                          <td className="px-3 py-3 whitespace-nowrap text-xs font-medium">
+                            <span className={`px-2 py-1 rounded-full font-semibold ${
+                              walkIn.cottage_type === 'concrete' ? 'bg-gray-100 text-gray-700' : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {walkIn.cottage_type === 'concrete' ? 'Concrete' : 'Kubo'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-xs text-center">
+                            <span className={`px-2 py-1 rounded-full font-semibold ${
+                              walkIn.time_of_day === 'day' ? 'bg-yellow-100 text-yellow-700' : 'bg-indigo-100 text-indigo-700'
+                            }`}>
+                              {walkIn.time_of_day === 'day' ? 'Day' : 'Night'}
+                            </span>
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
-                            ?{parseFloat(walkIn.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₱{parseFloat(walkIn.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         </tr>
                       ))}
