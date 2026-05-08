@@ -9,6 +9,7 @@ import { testDatabase } from "./routes/database";
 import { register, login, getCurrentUser, logout, requestPasswordReset, verifyResetToken, resetPassword, verifyEmail, resendVerification } from "./routes/auth";
 import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates, createWalkInBooking } from "./routes/bookings";
 import { createWalkInBooking as createWalkIn, getAllWalkInBookings, updateWalkInBooking, archiveWalkInBooking } from "./routes/walkInBookings";
+import { clearAllWalkInData } from "./routes/clearWalkInData";
 import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
 import { insertDayPassHistoricalData } from "./routes/insertDayPassData";
 import { insertLinenInventory } from "./routes/insertInventoryData";
@@ -308,6 +309,9 @@ export function createServer() {
   
   // TEMPORARY: Delete linen inventory data (DELETE AFTER USE!)
   app.delete("/api/admin/delete-linen-inventory", requireStaff, deleteLinenInventory);
+  
+  // TEMPORARY: Clear all walk-in data (ADMIN ONLY - DELETE AFTER USE!)
+  app.post("/api/admin/clear-walk-in-data", clearAllWalkInData);
   
   // TEMPORARY: Remove duplicate day pass walk-in records (DELETE AFTER USE!)
   app.post("/api/admin/remove-day-pass-duplicates", requireStaff, removeDayPassDuplicates);

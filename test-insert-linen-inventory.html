@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insert Linen Inventory</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-left: 4px solid #4CAF50;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .error {
+      border-left-color: #f44336;
+      background: #ffebee;
+    }
+    .info {
+      border-left-color: #2196F3;
+      background: #e3f2fd;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #4CAF50;
+      color: white;
+    }
+    .summary {
+      margin-top: 20px;
+      padding: 15px;
+      background: #e8f5e9;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🛏️ Insert Consolidated Linen Inventory</h1>
+    <p>This will insert <strong>4 consolidated linen records</strong> (one per item type) with total quantities and automatic PAR levels.</p>
+    
+    <div class="summary" style="margin: 20px 0;">
+      <h3>📋 Records to be inserted:</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Total Quantity</th>
+            <th>PAR Level (80%)</th>
+            <th>Unit Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Towel</td>
+            <td>24 pcs</td>
+            <td>20 pcs</td>
+            <td>₱50.00</td>
+          </tr>
+          <tr>
+            <td>Pillow</td>
+            <td>53 pcs</td>
+            <td>42 pcs</td>
+            <td>₱100.00</td>
+          </tr>
+          <tr>
+            <td>Kumot</td>
+            <td>15 pcs</td>
+            <td>12 pcs</td>
+            <td>₱150.00</td>
+          </tr>
+          <tr>
+            <td>Bedsheet</td>
+            <td>22 pcs</td>
+            <td>18 pcs</td>
+            <td>₱120.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div style="margin: 20px 0;">
+      <button id="insertBtn" onclick="insertLinenInventory()">Insert Consolidated Inventory</button>
+      <button onclick="showCalculation()">Show Calculation</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function insertLinenInventory() {
+      const resultDiv = document.getElementById('result');
+      const insertBtn = document.getElementById('insertBtn');
+      
+      resultDiv.className = '';
+      resultDiv.innerHTML = '⏳ Inserting consolidated linen inventory...\n\n';
+      insertBtn.disabled = true;
+
+      try {
+        const response = await fetch('http://localhost:8081/api/admin/insert-linen-inventory', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          resultDiv.className = '';
+          let output = `✅ SUCCESS!\n\n`;
+          output += `📊 Summary:\n`;
+          output += `   Total items inserted: ${data.successCount}\n`;
+          output += `   Failed: ${data.errorCount}\n`;
+          output += `   No duplicates - each item has ONE record\n\n`;
+          
+          if (data.errors && data.errors.length > 0) {
+            output += `⚠️ Errors:\n`;
+            data.errors.forEach(err => {
+              output += `   - ${err}\n`;
+            });
+          }
+          
+          resultDiv.innerHTML = output;
+          
+          // Show summary if available
+          if (data.summary && data.summary.length > 0) {
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'summary';
+            summaryDiv.innerHTML = '<h3>📋 Inserted Inventory:</h3>';
+            
+            const table = document.createElement('table');
+            table.innerHTML = `
+              <thead>
+                <tr>
+                  <th>Item Name</th>
+                  <th>Current Stock</th>
+                  <th>PAR Level</th>
+                  <th>Unit Price</th>
+                  <th>Total Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.summary.map(item => `
+                  <tr>
+                    <td>${item.item_name}</td>
+                    <td>${item.current_stock} pcs</td>
+                    <td>${item.par_level} pcs</td>
+                    <td>₱${parseFloat(item.unit_price).toFixed(2)}</td>
+                    <td>₱${parseFloat(item.total_value).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            `;
+            summaryDiv.appendChild(table);
+            resultDiv.appendChild(summaryDiv);
+          }
+        } else {
+          resultDiv.className = 'error';
+          resultDiv.innerHTML = `❌ Error: ${data.message}\n\n`;
+          if (data.error) {
+            resultDiv.innerHTML += `Details: ${data.error}`;
+          }
+        }
+      } catch (error) {
+        resultDiv.className = 'error';
+        resultDiv.innerHTML = `❌ Error: ${error.message}\n\n`;
+        resultDiv.innerHTML += `Make sure:\n`;
+        resultDiv.innerHTML += `1. Dev server is running on port 8081\n`;
+        resultDiv.innerHTML += `2. You are logged in as admin or receptionist\n`;
+        resultDiv.innerHTML += `3. Database is accessible\n`;
+      } finally {
+        insertBtn.disabled = false;
+      }
+    }
+
+    function showCalculation() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.className = 'info';
+      resultDiv.innerHTML = `📊 Quantity Calculation from Image:\n\n`;
+      resultDiv.innerHTML += `Towel:\n`;
+      resultDiv.innerHTML += `  Row 1: 4 pcs\n`;
+      resultDiv.innerHTML += `  Row 2: 4 pcs\n`;
+      resultDiv.innerHTML += `  Row 4: 4 pcs\n`;
+      resultDiv.innerHTML += `  Row 6: 4 pcs\n`;
+      resultDiv.innerHTML += `  Row 8: 8 pcs\n`;
+      resultDiv.innerHTML += `  TOTAL: 24 pcs → PAR Level: 20 pcs (80%)\n\n`;
+      
+      resultDiv.innerHTML += `Pillow:\n`;
+      resultDiv.innerHTML += `  Row 1: 4 pcs\n`;
+      resultDiv.innerHTML += `  Row 2: 8 pcs\n`;
+      resultDiv.innerHTML += `  Row 3: 11 pcs\n`;
+      resultDiv.innerHTML += `  Row 4: 10 pcs\n`;
+      resultDiv.innerHTML += `  Row 5: 10 pcs\n`;
+      resultDiv.innerHTML += `  TOTAL: 53 pcs → PAR Level: 42 pcs (80%)\n\n`;
+      
+      resultDiv.innerHTML += `Kumot:\n`;
+      resultDiv.innerHTML += `  Row 1: 2 pcs\n`;
+      resultDiv.innerHTML += `  Row 2: 2 pcs\n`;
+      resultDiv.innerHTML += `  Row 4: 3 pcs\n`;
+      resultDiv.innerHTML += `  Row 5: 3 pcs\n`;
+      resultDiv.innerHTML += `  Row 7: 5 pcs\n`;
+      resultDiv.innerHTML += `  TOTAL: 15 pcs → PAR Level: 12 pcs (80%)\n\n`;
+      
+      resultDiv.innerHTML += `Bedsheet:\n`;
+      resultDiv.innerHTML += `  Row 1: 2 pcs\n`;
+      resultDiv.innerHTML += `  Row 2: 2 pcs\n`;
+      resultDiv.innerHTML += `  Row 3: 3 pcs\n`;
+      resultDiv.innerHTML += `  Row 4: 4 pcs\n`;
+      resultDiv.innerHTML += `  Row 5: 3 pcs\n`;
+      resultDiv.innerHTML += `  Row 6: 2 pcs\n`;
+      resultDiv.innerHTML += `  Row 8: 6 pcs\n`;
+      resultDiv.innerHTML += `  TOTAL: 22 pcs → PAR Level: 18 pcs (80%)\n\n`;
+      
+      resultDiv.innerHTML += `💡 PAR Level Formula: Total Quantity × 0.80 (rounded)\n`;
+      resultDiv.innerHTML += `This ensures you get alerted when stock drops to 80% or below.\n`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day Pass Walk-In API Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button.secondary {
+      background: #2196F3;
+    }
+    button.secondary:hover {
+      background: #0b7dda;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-left: 4px solid #4CAF50;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    .error {
+      border-left-color: #f44336;
+      background: #ffebee;
+    }
+    .info {
+      border-left-color: #2196F3;
+      background: #e3f2fd;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    th {
+      background: #4CAF50;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .status.success {
+      background: #4CAF50;
+      color: white;
+    }
+    .status.error {
+      background: #f44336;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏖️ Day Pass Walk-In API Test</h1>
+    <p>This page tests the day pass walk-in API endpoint to verify data is being fetched correctly.</p>
+    
+    <div style="margin: 20px 0;">
+      <button onclick="testAPI()">Test API</button>
+      <button class="secondary" onclick="checkDatabase()">Check Database</button>
+      <button class="secondary" onclick="showInstructions()">Show Instructions</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function testAPI() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.className = '';
+      resultDiv.innerHTML = '⏳ Testing API endpoint...\n\n';
+
+      try {
+        const response = await fetch('http://localhost:8081/api/bookings/day-pass-walk-in', {
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        let output = `📊 API Response:\n`;
+        output += `Status: ${response.status} ${response.statusText}\n`;
+        output += `Success: ${data.success}\n`;
+        output += `Records Count: ${data.bookings?.length || 0}\n\n`;
+
+        if (data.success && data.bookings && data.bookings.length > 0) {
+          resultDiv.className = '';
+          output += `✅ SUCCESS! Found ${data.bookings.length} day pass walk-in records\n\n`;
+          output += `First 5 records:\n`;
+          output += JSON.stringify(data.bookings.slice(0, 5), null, 2);
+
+          // Create a table
+          output += '\n\n';
+          let table = '<table><thead><tr>';
+          table += '<th>ID</th><th>Name</th><th>Pax</th><th>Cottage</th><th>Time</th><th>Amount</th><th>Date</th>';
+          table += '</tr></thead><tbody>';
+
+          data.bookings.forEach(booking => {
+            table += '<tr>';
+            table += `<td>${booking.id}</td>`;
+            table += `<td>${booking.representative_name}</td>`;
+            table += `<td>${booking.number_of_pax}</td>`;
+            table += `<td>${booking.cottage_type}</td>`;
+            table += `<td>${booking.time_of_day}</td>`;
+            table += `<td>₱${parseFloat(booking.total_amount).toFixed(2)}</td>`;
+            table += `<td>${new Date(booking.created_at).toLocaleDateString()}</td>`;
+            table += '</tr>';
+          });
+
+          table += '</tbody></table>';
+          resultDiv.innerHTML = output + table;
+        } else if (data.success && data.bookings && data.bookings.length === 0) {
+          resultDiv.className = 'info';
+          output += `⚠️ API is working but returned 0 records\n\n`;
+          output += `This means:\n`;
+          output += `1. ✅ The API endpoint is working\n`;
+          output += `2. ✅ You are authenticated\n`;
+          output += `3. ❌ The database table is empty or doesn't exist\n\n`;
+          output += `Next steps:\n`;
+          output += `1. Run the database setup script: database/setup_local_database_safe.sql\n`;
+          output += `2. Verify the data was inserted: database/verify_day_pass_setup.sql\n`;
+          output += `3. Restart the dev server\n`;
+          output += `4. Test again\n`;
+          resultDiv.innerHTML = output;
+        } else {
+          resultDiv.className = 'error';
+          output += `❌ API Error:\n`;
+          output += JSON.stringify(data, null, 2);
+          resultDiv.innerHTML = output;
+        }
+      } catch (error) {
+        resultDiv.className = 'error';
+        resultDiv.innerHTML = `❌ Error: ${error.message}\n\n`;
+        resultDiv.innerHTML += `Make sure:\n`;
+        resultDiv.innerHTML += `1. Dev server is running on port 8081\n`;
+        resultDiv.innerHTML += `2. You are logged in as receptionist\n`;
+        resultDiv.innerHTML += `3. Database is set up correctly\n`;
+      }
+    }
+
+    function checkDatabase() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.className = 'info';
+      resultDiv.innerHTML = `📋 Database Check Instructions:\n\n`;
+      resultDiv.innerHTML += `Run these SQL queries in your MySQL client:\n\n`;
+      resultDiv.innerHTML += `1. Check if table exists:\n`;
+      resultDiv.innerHTML += `   SHOW TABLES LIKE 'day_pass_walk_in';\n\n`;
+      resultDiv.innerHTML += `2. Count records:\n`;
+      resultDiv.innerHTML += `   SELECT COUNT(*) FROM day_pass_walk_in;\n\n`;
+      resultDiv.innerHTML += `3. View first 5 records:\n`;
+      resultDiv.innerHTML += `   SELECT * FROM day_pass_walk_in ORDER BY created_at DESC LIMIT 5;\n\n`;
+      resultDiv.innerHTML += `Expected results:\n`;
+      resultDiv.innerHTML += `- Table should exist\n`;
+      resultDiv.innerHTML += `- Should have 24 records\n`;
+      resultDiv.innerHTML += `- Records should have names like "Judith", "Francis Bryan L. Aligata", etc.\n`;
+    }
+
+    function showInstructions() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.className = 'info';
+      resultDiv.innerHTML = `📖 Setup Instructions:\n\n`;
+      resultDiv.innerHTML += `Step 1: Set up the database\n`;
+      resultDiv.innerHTML += `   Run: database/setup_local_database_safe.sql\n\n`;
+      resultDiv.innerHTML += `Step 2: Verify the setup\n`;
+      resultDiv.innerHTML += `   Run: database/verify_day_pass_setup.sql\n\n`;
+      resultDiv.innerHTML += `Step 3: Restart dev server\n`;
+      resultDiv.innerHTML += `   Stop (Ctrl+C) and run: pnpm dev\n\n`;
+      resultDiv.innerHTML += `Step 4: Navigate to the correct page\n`;
+      resultDiv.innerHTML += `   1. Go to Receptionist Dashboard\n`;
+      resultDiv.innerHTML += `   2. Click "Day Pass" in sidebar\n`;
+      resultDiv.innerHTML += `   3. Click "Walk-In" under Day Pass\n`;
+      resultDiv.innerHTML += `   4. You should see 24 records\n\n`;
+      resultDiv.innerHTML += `⚠️ IMPORTANT: Make sure you're on Day Pass > Walk-In\n`;
+      resultDiv.innerHTML += `   NOT Room Bookings > Walk-In (different page!)\n`;
+    }
+
+    // Auto-run test on page load
+    window.onload = () => {
+      showInstructions();
+    };
+  </script>
+</body>
+</html>
