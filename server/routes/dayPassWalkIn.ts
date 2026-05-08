@@ -105,16 +105,19 @@ export const getAllDayPassWalkIns: RequestHandler = async (req, res) => {
       return;
     }
 
+    console.log('[Day Pass Walk-In API] Fetching all day pass walk-ins...');
     const [bookings] = await db.query<DayPassWalkIn[]>(
       `SELECT * FROM day_pass_walk_in ORDER BY created_at DESC`
     );
+    console.log('[Day Pass Walk-In API] Fetched bookings count:', bookings.length);
+    console.log('[Day Pass Walk-In API] Sample booking:', bookings[0]);
 
     res.json({ 
       success: true, 
       bookings
     });
   } catch (error) {
-    console.error('Get day pass walk-ins error:', error);
+    console.error('[Day Pass Walk-In API] ❌ Get day pass walk-ins error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to fetch day pass walk-ins',

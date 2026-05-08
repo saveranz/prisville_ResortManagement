@@ -137,7 +137,7 @@ export default function ReceptionistDashboard() {
   // const [inventoryTab, setInventoryTab] = useState<'inventory' | 'transactions'>('inventory');
   
   // Check-in/Check-out sub-tab state
-  const [checkInTab, setCheckInTab] = useState<'checkin' | 'checkout' | 'history'>('checkin');
+  const [checkInTab, setCheckInTab] = useState<'checkin' | 'checkout'>('checkin');
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showAddItem, setShowAddItem] = useState(false);
@@ -2567,17 +2567,6 @@ export default function ReceptionistDashboard() {
                     <LogOutIcon size={20} className="inline mr-2" />
                     Check-Out
                   </button>
-                  <button
-                    onClick={() => setCheckInTab('history')}
-                    className={`px-6 py-3 font-semibold text-sm rounded-t-xl transition-all ${
-                      checkInTab === 'history'
-                        ? 'bg-white text-primary border-t-2 border-x-2 border-primary border-b-0'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    <History size={20} className="inline mr-2" />
-                    History
-                  </button>
                 </nav>
               </div>
 
@@ -2801,83 +2790,6 @@ export default function ReceptionistDashboard() {
                 </div>
               )}
             </>
-          )}
-
-          {/* Check-In/Out History Tab */}
-          {checkInTab === 'history' && (
-            <div className="bg-white rounded-xl shadow-md border border-gray-200">
-              <div className="px-6 pt-6 pb-4 border-b border-gray-100">
-                <h3 className="text-lg font-display font-bold text-gray-900">Check-In/Out History</h3>
-                <p className="text-sm text-gray-600 mt-1">View all past check-ins and check-outs</p>
-              </div>
-
-              {stayHistory.length === 0 ? (
-                <div className="text-center py-20">
-                  <History size={64} className="mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg text-gray-500">No history records yet</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-gray-800">
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase">Guest</th>
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase">Type</th>
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase">Room/Amenity</th>
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase">Check-In</th>
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase">Check-Out</th>
-                        <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase">Nights</th>
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase">Total Spent</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
-                      {stayHistory.map((history: StayHistory) => (
-                        <tr key={history.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center flex-shrink-0">
-                                <span className="text-primary text-xs font-bold">
-                                  {(history.guest_name || history.user_email)?.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <div>
-                                <p className="text-xs font-semibold text-gray-900">{history.guest_name || 'N/A'}</p>
-                                <p className="text-xs text-gray-500">{history.user_email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              history.booking_type === 'room' ? 'bg-blue-100 text-blue-700' :
-                              history.booking_type === 'amenity' ? 'bg-purple-100 text-purple-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
-                              {history.booking_type === 'room' ? 'Room' : history.booking_type === 'amenity' ? 'Amenity' : 'Day Pass'}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-xs font-medium text-gray-900">
-                            {history.room_name || history.amenity_name || 'N/A'}
-                            {history.room_numbers && <span className="text-gray-500 ml-1">({history.room_numbers})</span>}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
-                            {formatDateTime(history.actual_check_in || history.check_in_date)}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
-                            {formatDateTime(history.actual_check_out)}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-center text-xs font-semibold text-gray-900">
-                            {history.nights_stayed || 0}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-green-600">
-                            ₱{parseFloat(history.total_spent || '0').toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
           )}
 
           {/* Room Status Tab */}
