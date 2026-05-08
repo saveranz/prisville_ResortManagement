@@ -14,11 +14,11 @@ export const insertRealWalkInData: RequestHandler = async (req, res) => {
       return;
     }
 
-    // Walk-in room bookings data (CORRECT DATA - 10 records)
+    // Walk-in room bookings data (CORRECT DATA - 10 records, ALL PAID)
     const walkInBookings = [
       ['Elizabeth Asi', 'Room 101', 'N/A', '09706741259', 10, '7400.00', '7400.00', '7400.00', '0.00', 'paid', 0, '2026-03-29 00:00:00'],
-      ['Eden Rose Refugia', 'Room 104', 'N/A', '09565115965', 2, '4000.00', '4000.00', '2000.00', '2000.00', 'paid', 0, '2026-03-30 00:00:00'],
-      ['Raul Palentinos', 'Room 108', 'N/A', '09668007495', 10, '7000.00', '7000.00', '4500.00', '2500.00', 'paid', 0, '2026-03-31 00:00:00'],
+      ['Eden Rose Refugia', 'Room 104', 'N/A', '09565115965', 2, '4000.00', '4000.00', '4000.00', '0.00', 'paid', 0, '2026-03-30 00:00:00'],
+      ['Raul Palentinos', 'Room 108', 'N/A', '09668007495', 10, '7000.00', '7000.00', '7000.00', '0.00', 'paid', 0, '2026-03-31 00:00:00'],
       ['Eden', 'Room 102', 'N/A', '09655543278', 2, '1000.00', '1000.00', '1000.00', '0.00', 'paid', 0, '2026-04-01 00:00:00'],
       ['Xyrus Emmanuel V. Gaton', 'Room 103', 'N/A', '09651888700', 6, '4000.00', '4000.00', '4000.00', '0.00', 'paid', 0, '2026-04-03 00:00:00'],
       ['Michael Jusayan', 'Room 105', 'N/A', '09657220735', 2, '2000.00', '2000.00', '2000.00', '0.00', 'paid', 0, '2026-04-05 00:00:00'],
