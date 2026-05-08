@@ -239,9 +239,9 @@ export default function ReceptionistDashboard() {
   const [dayPassWalkInForm, setDayPassWalkInForm] = useState({
     representativeName: '',
     numberOfPax: '',
-    cottage: '',
-    cottageNumber: '',
-    amount: ''
+    cottageType: '', // 'concrete' or 'kubo'
+    timeOfDay: '', // 'day' or 'night'
+    totalAmount: ''
   });
   const [dayPassWalkInLoading, setDayPassWalkInLoading] = useState(false);
   const [dayPassWalkInSearchTerm, setDayPassWalkInSearchTerm] = useState('');
@@ -1237,9 +1237,9 @@ export default function ReceptionistDashboard() {
         setDayPassWalkInForm({
           representativeName: '',
           numberOfPax: '',
-          cottage: '',
-          cottageNumber: '',
-          amount: ''
+          cottageType: '',
+          timeOfDay: '',
+          totalAmount: ''
         });
         fetchDayPassWalkInBookings();
       } else {
@@ -3755,7 +3755,7 @@ export default function ReceptionistDashboard() {
               <Plus className="text-accent" size={24} /> Record Day Pass Walk-In
             </DialogTitle>
             <DialogDescription className="text-gray-600">
-              Record a walk-in day pass guest. Date will be automatically set to today.
+              Record a walk-in day pass guest. Amount is auto-calculated based on cottage type and time.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleDayPassWalkIn} className="space-y-4">
@@ -3778,58 +3778,125 @@ export default function ReceptionistDashboard() {
                 min="1" 
                 placeholder="Total people in group" 
                 value={dayPassWalkInForm.numberOfPax}
-                onChange={(e) => setDayPassWalkInForm({ ...dayPassWalkInForm, numberOfPax: e.target.value })}
+                onChange={(e) => {
+                  const pax = parseInt(e.target.value) || 0;
+                  const cottageType = dayPassWalkInForm.cottageType;
+                  const timeOfDay = dayPassWalkInForm.timeOfDay;
+                  
+                  let total = 0;
+                  if (cottageType && timeOfDay) {
+                    if (timeOfDay === 'day') {
+                      // Day: Concrete = 500 + (100 * pax), Kubo = 100 * pax
+                      total = cottageType === 'concrete' ? 500 + (100 * pax) : 100 * pax;
+                    } else {
+                      // Night: Concrete = 600 + (150 * pax), Kubo = 150 * pax
+                      total = cottageType === 'concrete' ? 600 + (150 * pax) : 150 * pax;
+                    }
+                  }
+                  
+                  setDayPassWalkInForm({ 
+                    ...dayPassWalkInForm, 
+                    numberOfPax: e.target.value,
+                    totalAmount: total.toString()
+                  });
+                }}
                 className="bg-white border-gray-300 text-gray-900 mt-1" 
                 required 
               />
             </div>
 
             <div>
-              <Label className="text-gray-700">Cottage *</Label>
+              <Label className="text-gray-700">Cottage Type *</Label>
               <select
-                value={dayPassWalkInForm.cottage}
-                onChange={(e) => setDayPassWalkInForm({ ...dayPassWalkInForm, cottage: e.target.value, cottageNumber: e.target.value === 'no' ? '' : dayPassWalkInForm.cottageNumber })}
+                value={dayPassWalkInForm.cottageType}
+                onChange={(e) => {
+                  const cottageType = e.target.value;
+                  const pax = parseInt(dayPassWalkInForm.numberOfPax) || 0;
+                  const timeOfDay = dayPassWalkInForm.timeOfDay;
+                  
+                  let total = 0;
+                  if (pax > 0 && timeOfDay) {
+                    if (timeOfDay === 'day') {
+                      total = cottageType === 'concrete' ? 500 + (100 * pax) : 100 * pax;
+                    } else {
+                      total = cottageType === 'concrete' ? 600 + (150 * pax) : 150 * pax;
+                    }
+                  }
+                  
+                  setDayPassWalkInForm({ 
+                    ...dayPassWalkInForm, 
+                    cottageType,
+                    totalAmount: total.toString()
+                  });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent mt-1"
                 required
               >
-                <option value="">Select option</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
+                <option value="">Select cottage type</option>
+                <option value="concrete">Concrete</option>
+                <option value="kubo">Kubo</option>
               </select>
             </div>
 
-            {dayPassWalkInForm.cottage === 'yes' && (
-              <div>
-                <Label className="text-gray-700">Cottage Number (Optional)</Label>
-                <Input 
-                  type="text" 
-                  placeholder="e.g., C1, C2" 
-                  value={dayPassWalkInForm.cottageNumber}
-                  onChange={(e) => setDayPassWalkInForm({ ...dayPassWalkInForm, cottageNumber: e.target.value })}
-                  className="bg-white border-gray-300 text-gray-900 mt-1" 
-                />
-              </div>
-            )}
+            <div>
+              <Label className="text-gray-700">Time of Day *</Label>
+              <select
+                value={dayPassWalkInForm.timeOfDay}
+                onChange={(e) => {
+                  const timeOfDay = e.target.value;
+                  const pax = parseInt(dayPassWalkInForm.numberOfPax) || 0;
+                  const cottageType = dayPassWalkInForm.cottageType;
+                  
+                  let total = 0;
+                  if (pax > 0 && cottageType) {
+                    if (timeOfDay === 'day') {
+                      total = cottageType === 'concrete' ? 500 + (100 * pax) : 100 * pax;
+                    } else {
+                      total = cottageType === 'concrete' ? 600 + (150 * pax) : 150 * pax;
+                    }
+                  }
+                  
+                  setDayPassWalkInForm({ 
+                    ...dayPassWalkInForm, 
+                    timeOfDay,
+                    totalAmount: total.toString()
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent mt-1"
+                required
+              >
+                <option value="">Select time</option>
+                <option value="day">Day (100/head, Concrete +500)</option>
+                <option value="night">Night (150/head, Concrete +600)</option>
+              </select>
+            </div>
 
             <div>
-              <Label className="text-gray-700">Amount (?) *</Label>
+              <Label className="text-gray-700">Total Amount (₱)</Label>
               <Input 
-                type="number" 
-                min="0" 
-                step="0.01" 
-                placeholder="0.00" 
-                value={dayPassWalkInForm.amount}
-                onChange={(e) => setDayPassWalkInForm({ ...dayPassWalkInForm, amount: e.target.value })}
-                className="bg-white border-gray-300 text-gray-900 mt-1" 
-                required 
+                type="text" 
+                value={dayPassWalkInForm.totalAmount ? `₱${parseFloat(dayPassWalkInForm.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '₱0.00'}
+                className="bg-gray-100 border-gray-300 text-gray-900 mt-1 font-semibold text-lg" 
+                disabled
+                readOnly
               />
+              <p className="text-xs text-gray-500 mt-1">Automatically calculated based on selections</p>
             </div>
 
             <DialogFooter className="gap-2">
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => setShowDayPassWalkInModal(false)}
+                onClick={() => {
+                  setShowDayPassWalkInModal(false);
+                  setDayPassWalkInForm({
+                    representativeName: '',
+                    numberOfPax: '',
+                    cottageType: '',
+                    timeOfDay: '',
+                    totalAmount: ''
+                  });
+                }}
                 className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
                 disabled={dayPassWalkInLoading}
               >

@@ -6,9 +6,9 @@ interface DayPassWalkIn extends RowDataPacket {
   id: number;
   representative_name: string;
   number_of_pax: number;
-  cottage: 'yes' | 'no';
-  cottage_number: string | null;
-  amount: string;
+  cottage_type: 'concrete' | 'kubo';
+  time_of_day: 'day' | 'night';
+  total_amount: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -38,21 +38,21 @@ export const createDayPassWalkIn: RequestHandler = async (req, res) => {
     const {
       representativeName,
       numberOfPax,
-      cottage,
-      cottageNumber,
-      amount
+      cottageType,
+      timeOfDay,
+      totalAmount
     } = req.body;
 
     console.log('📋 Day pass walk-in data:', {
       representativeName,
       numberOfPax,
-      cottage,
-      cottageNumber,
-      amount
+      cottageType,
+      timeOfDay,
+      totalAmount
     });
 
     // Validate required fields
-    if (!representativeName || !numberOfPax || !cottage || !amount) {
+    if (!representativeName || !numberOfPax || !cottageType || !timeOfDay || !totalAmount) {
       res.status(400).json({ 
         success: false, 
         message: 'All required fields must be filled' 
@@ -63,9 +63,9 @@ export const createDayPassWalkIn: RequestHandler = async (req, res) => {
     // Insert day pass walk-in
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO day_pass_walk_in 
-      (representative_name, number_of_pax, cottage, cottage_number, amount) 
+      (representative_name, number_of_pax, cottage_type, time_of_day, total_amount) 
       VALUES (?, ?, ?, ?, ?)`,
-      [representativeName, numberOfPax, cottage, cottageNumber || null, amount]
+      [representativeName, numberOfPax, cottageType, timeOfDay, totalAmount]
     );
 
     console.log('✅ Day pass walk-in recorded successfully with ID:', result.insertId);
