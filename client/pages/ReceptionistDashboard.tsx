@@ -1288,6 +1288,7 @@ export default function ReceptionistDashboard() {
           console.warn('⚠️ [DAY PASS WALK-IN] No bookings returned from API');
         }
         setDayPassWalkInBookings(data.bookings || []);
+        console.log('🎯 [DAY PASS WALK-IN] State updated, new length should be:', data.bookings?.length || 0);
       } else {
         console.error('❌ [DAY PASS WALK-IN] API returned success: false');
       }
@@ -2469,9 +2470,10 @@ export default function ReceptionistDashboard() {
               {/* Day Pass Walk-In Table */}
               <div className="overflow-x-auto">
                 {(() => {
-                  console.log('[Table Debug] dayPassWalkInBookings:', dayPassWalkInBookings);
-                  console.log('[Table Debug] loading:', loading);
-                  console.log('[Table Debug] filtered count:', dayPassWalkInBookings.filter(w => 
+                  console.log('[Table Render] dayPassWalkInBookings length:', dayPassWalkInBookings.length);
+                  console.log('[Table Render] dayPassWalkInBookings:', dayPassWalkInBookings);
+                  console.log('[Table Render] loading:', loading);
+                  console.log('[Table Render] filtered count:', dayPassWalkInBookings.filter(w => 
                     !dayPassWalkInSearchTerm || 
                     w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
                     w.cottage_type?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())

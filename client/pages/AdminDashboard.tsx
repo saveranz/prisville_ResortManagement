@@ -385,11 +385,7 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'inventory') {
-      fetchInventory();
-      fetchInventoryTransactions();
-      fetchStockTransactions();
-    } else if (activeTab === 'audit') {
+    if (activeTab === 'audit') {
       fetchAuditLogs(1);
     }
   }, [activeTab]);
@@ -732,10 +728,14 @@ export default function AdminDashboard() {
             'Room Bookings',
             'Amenity Bookings',
             'Day Pass Bookings',
+            'Room Walk-In',
+            'Day Pass Walk-In',
             'Total Bookings',
             'Room Revenue',
             'Amenity Revenue',
             'Day Pass Revenue',
+            'Room Walk-In Revenue',
+            'Day Pass Walk-In Revenue',
             'Total Revenue'
           ],
           ...(reportData.data || []).map((row: any) => [
@@ -743,10 +743,14 @@ export default function AdminDashboard() {
             row.roomBookings || 0,
             row.amenityBookings || 0,
             row.dayPassBookings || 0,
+            row.roomWalkInBookings || 0,
+            row.dayPassWalkInBookings || 0,
             row.totalBookings || 0,
             Number(row.roomRevenue || 0).toFixed(2),
             Number(row.amenityRevenue || 0).toFixed(2),
             Number(row.dayPassRevenue || 0).toFixed(2),
+            Number(row.roomWalkInRevenue || 0).toFixed(2),
+            Number(row.dayPassWalkInRevenue || 0).toFixed(2),
             Number(row.totalRevenue || 0).toFixed(2)
           ])
         ]);
@@ -1406,19 +1410,6 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => { setActiveTab('guests'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
-              activeTab === 'guests'
-                ? 'bg-amber-800 text-white'
-                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-            }`}
-            title={!sidebarExpanded ? "Guests" : undefined}
-          >
-            <Users size={20} className="flex-shrink-0" />
-            {sidebarExpanded && <span className="text-sm font-medium">Guests</span>}
-          </button>
-
-          <button
             onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'reports'
@@ -1481,19 +1472,6 @@ export default function AdminDashboard() {
           >
             <Settings size={20} className="flex-shrink-0" />
             {sidebarExpanded && <span className="text-sm font-medium">Site Settings</span>}
-          </button>
-
-          <button
-            onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
-              activeTab === 'inventory'
-                ? 'bg-amber-800 text-white'
-                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-            }`}
-            title={!sidebarExpanded ? "Inventory" : undefined}
-          >
-            <Package size={20} className="flex-shrink-0" />
-            {sidebarExpanded && <span className="text-sm font-medium">Inventory</span>}
           </button>
 
           <button
@@ -1890,59 +1868,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Guests Tab - Part 1: Continue in next message due to length */}
-        {activeTab === 'guests' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-display font-bold text-gray-900">Guest Activity</h2>
-
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-primary to-accent">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Guest</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Email</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Phone</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Room Bookings</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Amenity Bookings</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Day Pass</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Last Booking</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {guests.map((guest) => (
-                      <tr key={guest.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                          {guest.name}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{guest.email}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{guest.phone || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{guest.total_room_bookings}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{guest.total_amenity_bookings}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{guest.total_daypass_bookings}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {guest.last_booking_date ? new Date(guest.last_booking_date).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-4 py-3">
-                          {guest.currently_checked_in > 0 ? (
-                            <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
-                              Checked In
-                            </span>
-                          ) : (
-                            <span className="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded-full">
-                              Not Staying
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Reports Tab */}
         {activeTab === 'reports' && (
@@ -3031,11 +2956,6 @@ export default function AdminDashboard() {
         {/* Inquiries & FAQ Tab */}
         {activeTab === 'inquiries' && (
           <AdminInquiries />
-        )}
-
-        {/* Inventory Tab */}
-        {activeTab === 'inventory' && (
-          <ReceptionistInventory embedded />
         )}
 
         {/* Audit Trail Tab */}

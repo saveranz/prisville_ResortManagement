@@ -11,6 +11,52 @@ import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBooki
 import { createWalkInBooking as createWalkIn, getAllWalkInBookings, updateWalkInBooking, archiveWalkInBooking } from "./routes/walkInBookings";
 import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
 import { insertDayPassHistoricalData } from "./routes/insertDayPassData";
+import { insertLinenInventory } from "./routes/insertInventoryData";
+
+// Temporary function to remove duplicates
+import { RequestHandler } from "express";
+const removeDayPassDuplicates: RequestHandler = async (req, res) => {
+  try {
+    if (!req.session.userId || (req.session.userRole !== 'admin' && req.session.userRole !== 'receptionist')) {
+      res.status(403).json({ success: false, message: 'Access denied' });
+      return;
+    }
+
+    const db = (await import('./db')).default;
+    
+    // Get count before
+    const [beforeCount] = await db.query('SELECT COUNT(*) as count FROM day_pass_walk_in');
+    const before = (beforeCount as any)[0].count;
+    
+    // Create temp table with unique records
+    await db.query(`
+      CREATE TEMPORARY TABLE temp_unique_records AS
+      SELECT MIN(id) as id
+      FROM day_pass_walk_in
+      GROUP BY representative_name, number_of_pax, cottage_type, time_of_day, total_amount, DATE(created_at)
+    `);
+    
+    // Delete duplicates
+    await db.query('DELETE FROM day_pass_walk_in WHERE id NOT IN (SELECT id FROM temp_unique_records)');
+    
+    // Drop temp table
+    await db.query('DROP TEMPORARY TABLE temp_unique_records');
+    
+    // Get count after
+    const [afterCount] = await db.query('SELECT COUNT(*) as count FROM day_pass_walk_in');
+    const after = (afterCount as any)[0].count;
+    
+    res.json({ 
+      success: true, 
+      message: `Removed ${before - after} duplicate records`,
+      before,
+      after
+    });
+  } catch (error) {
+    console.error('Error removing duplicates:', error);
+    res.status(500).json({ success: false, message: 'Failed to remove duplicates' });
+  }
+};
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability, createAmenityBookingByReceptionist } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
 import { setupDatabase, migrateRoomType, migrateUserStatus, setupFAQs, setupAllMissingTables, setupPaymentSettings } from "./routes/setup";
@@ -247,6 +293,9 @@ export function createServer() {
   
   // TEMPORARY: Insert historical data endpoint (DELETE AFTER USE!)
   app.post("/api/admin/insert-day-pass-data", requireStaff, insertDayPassHistoricalData);
+  
+  // TEMPORARY: Remove duplicate day pass walk-in records (DELETE AFTER USE!)
+  app.post("/api/admin/remove-day-pass-duplicates", requireStaff, removeDayPassDuplicates);
 
   // Amenity Booking routes
   app.get("/api/bookings/amenity/check-availability", checkAmenityAvailability);

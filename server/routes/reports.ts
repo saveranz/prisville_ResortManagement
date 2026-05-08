@@ -10,12 +10,12 @@ export const generateBookingReport: RequestHandler = async (req, res) => {
     const connection = await db.getConnection();
 
     try {
-      let query = '';
+      let queries: string[] = [];
       let params: any[] = [];
-      let createdAtColumn = '';
 
-      if (type === 'room' || !type) {
-        query = `
+      // Room bookings
+      if (!type || type === 'room') {
+        queries.push(`
           SELECT 
             'room' as booking_type,
             rb.id,
@@ -34,58 +34,117 @@ export const generateBookingReport: RequestHandler = async (req, res) => {
           FROM room_bookings rb
           LEFT JOIN users u ON u.id = rb.user_id
           WHERE 1=1
-        `;
-        createdAtColumn = 'rb.created_at';
-      } else if (type === 'amenity') {
-        query = `
+          ${startDate ? `AND DATE(rb.created_at) >= '${startDate}'` : ''}
+          ${endDate ? `AND DATE(rb.created_at) <= '${endDate}'` : ''}
+        `);
+      }
+
+      // Amenity bookings
+      if (!type || type === 'amenity') {
+        queries.push(`
           SELECT 
             'amenity' as booking_type,
             ab.id,
             COALESCE(u.name, ab.user_email) as user_name,
             ab.user_email,
             ab.amenity_name,
+            NULL as room_name,
             ab.booking_date,
             ab.booking_time,
             ab.number_of_pax,
             ab.total_amount,
             ab.status,
-            ab.created_at
+            ab.created_at,
+            NULL as actual_check_in,
+            NULL as actual_check_out
           FROM amenity_bookings ab
           LEFT JOIN users u ON u.id = ab.user_id
           WHERE 1=1
-        `;
-        createdAtColumn = 'ab.created_at';
-      } else if (type === 'daypass') {
-        query = `
+          ${startDate ? `AND DATE(ab.created_at) >= '${startDate}'` : ''}
+          ${endDate ? `AND DATE(ab.created_at) <= '${endDate}'` : ''}
+        `);
+      }
+
+      // Day pass bookings
+      if (!type || type === 'daypass') {
+        queries.push(`
           SELECT 
             'daypass' as booking_type,
             dpb.id,
             COALESCE(u.name, dpb.user_email) as user_name,
             dpb.user_email,
+            'Day Pass' as amenity_name,
+            NULL as room_name,
             dpb.booking_date,
+            NULL as booking_time,
+            dpb.number_of_pax,
             dpb.total_amount,
             dpb.status,
-            dpb.created_at
+            dpb.created_at,
+            NULL as actual_check_in,
+            NULL as actual_check_out
           FROM day_pass_bookings dpb
           LEFT JOIN users u ON u.id = dpb.user_id
           WHERE 1=1
-        `;
-        createdAtColumn = 'dpb.created_at';
+          ${startDate ? `AND DATE(dpb.created_at) >= '${startDate}'` : ''}
+          ${endDate ? `AND DATE(dpb.created_at) <= '${endDate}'` : ''}
+        `);
       }
 
-      if (startDate) {
-        query += ` AND DATE(${createdAtColumn}) >= ?`;
-        params.push(startDate);
+      // Room walk-in bookings
+      if (!type || type === 'room-walkin') {
+        queries.push(`
+          SELECT 
+            'room-walkin' as booking_type,
+            wb.id,
+            wb.guest_name as user_name,
+            wb.contact_number as user_email,
+            wb.room_number as room_name,
+            NULL as room_type,
+            NULL as check_in,
+            NULL as check_out,
+            wb.number_of_pax as guests,
+            wb.total_amount,
+            'approved' as status,
+            wb.created_at,
+            NULL as actual_check_in,
+            NULL as actual_check_out
+          FROM walk_in_bookings wb
+          WHERE wb.archived = 0
+          ${startDate ? `AND DATE(wb.created_at) >= '${startDate}'` : ''}
+          ${endDate ? `AND DATE(wb.created_at) <= '${endDate}'` : ''}
+        `);
       }
 
-      if (endDate) {
-        query += ` AND DATE(${createdAtColumn}) <= ?`;
-        params.push(endDate);
+      // Day pass walk-in bookings
+      if (!type || type === 'daypass-walkin') {
+        queries.push(`
+          SELECT 
+            'daypass-walkin' as booking_type,
+            dpw.id,
+            dpw.representative_name as user_name,
+            NULL as user_email,
+            CONCAT(dpw.cottage_type, ' - ', dpw.time_of_day) as amenity_name,
+            NULL as room_name,
+            dpw.created_at as booking_date,
+            NULL as booking_time,
+            dpw.number_of_pax,
+            dpw.total_amount,
+            'approved' as status,
+            dpw.created_at,
+            NULL as actual_check_in,
+            NULL as actual_check_out
+          FROM day_pass_walk_in dpw
+          WHERE 1=1
+          ${startDate ? `AND DATE(dpw.created_at) >= '${startDate}'` : ''}
+          ${endDate ? `AND DATE(dpw.created_at) <= '${endDate}'` : ''}
+        `);
       }
 
-      query += ` ORDER BY ${createdAtColumn} DESC`;
+      // Combine all queries with UNION
+      const query = queries.join(' UNION ALL ') + ' ORDER BY created_at DESC';
 
-      const [bookings] = await connection.query<RowDataPacket[]>(query, params);
+      const [bookings] = await connection.query<RowDataPacket[]>(query);
 
       // Calculate summary statistics
       const totalBookings = bookings.length;
@@ -96,7 +155,7 @@ export const generateBookingReport: RequestHandler = async (req, res) => {
       const totalRevenue = bookings
         .filter((b: any) => b.status === 'approved')
         .reduce((sum: number, b: any) => {
-          const amount = parseFloat(b.total_amount.replace(/[₱,]/g, '') || '0');
+          const amount = parseFloat(String(b.total_amount).replace(/[₱,]/g, '') || '0');
           return sum + amount;
         }, 0);
 
@@ -197,29 +256,67 @@ export const generateRevenueReport: RequestHandler = async (req, res) => {
         [startDate, endDate].filter(Boolean)
       );
 
+      // Room walk-in bookings revenue
+      const [roomWalkInRevenue] = await connection.query<RowDataPacket[]>(
+        `SELECT 
+          ${groupByClause} as period,
+          COUNT(*) as bookings,
+          SUM(CAST(REPLACE(REPLACE(total_amount, '₱', ''), ',', '') AS DECIMAL(10,2))) as revenue
+        FROM walk_in_bookings
+        WHERE archived = 0
+        ${startDate ? `AND DATE(created_at) >= ?` : ''}
+        ${endDate ? `AND DATE(created_at) <= ?` : ''}
+        GROUP BY period
+        ORDER BY period DESC`,
+        [startDate, endDate].filter(Boolean)
+      );
+
+      // Day pass walk-in bookings revenue
+      const [dayPassWalkInRevenue] = await connection.query<RowDataPacket[]>(
+        `SELECT 
+          ${groupByClause} as period,
+          COUNT(*) as bookings,
+          SUM(CAST(REPLACE(REPLACE(total_amount, '₱', ''), ',', '') AS DECIMAL(10,2))) as revenue
+        FROM day_pass_walk_in
+        WHERE 1=1
+        ${startDate ? `AND DATE(created_at) >= ?` : ''}
+        ${endDate ? `AND DATE(created_at) <= ?` : ''}
+        GROUP BY period
+        ORDER BY period DESC`,
+        [startDate, endDate].filter(Boolean)
+      );
+
       // Combine and calculate totals
       const allPeriods = new Set([
         ...roomRevenue.map((r: any) => r.period),
         ...amenityRevenue.map((r: any) => r.period),
-        ...dayPassRevenue.map((r: any) => r.period)
+        ...dayPassRevenue.map((r: any) => r.period),
+        ...roomWalkInRevenue.map((r: any) => r.period),
+        ...dayPassWalkInRevenue.map((r: any) => r.period)
       ]);
 
       const revenueByPeriod = Array.from(allPeriods).map(period => {
         const room = roomRevenue.find((r: any) => r.period === period);
         const amenity = amenityRevenue.find((r: any) => r.period === period);
         const dayPass = dayPassRevenue.find((r: any) => r.period === period);
+        const roomWalkIn = roomWalkInRevenue.find((r: any) => r.period === period);
+        const dayPassWalkIn = dayPassWalkInRevenue.find((r: any) => r.period === period);
 
         // Safely parse revenue values, handling NULL, undefined, and string values
         const roomRev = Number(room?.revenue) || 0;
         const amenityRev = Number(amenity?.revenue) || 0;
         const dayPassRev = Number(dayPass?.revenue) || 0;
+        const roomWalkInRev = Number(roomWalkIn?.revenue) || 0;
+        const dayPassWalkInRev = Number(dayPassWalkIn?.revenue) || 0;
 
-        const totalRevenue = roomRev + amenityRev + dayPassRev;
+        const totalRevenue = roomRev + amenityRev + dayPassRev + roomWalkInRev + dayPassWalkInRev;
 
         const totalBookings = 
           (room?.bookings || 0) +
           (amenity?.bookings || 0) +
-          (dayPass?.bookings || 0);
+          (dayPass?.bookings || 0) +
+          (roomWalkIn?.bookings || 0) +
+          (dayPassWalkIn?.bookings || 0);
 
         return {
           period,
@@ -229,6 +326,10 @@ export const generateRevenueReport: RequestHandler = async (req, res) => {
           amenityBookings: amenity?.bookings || 0,
           dayPassRevenue: dayPassRev,
           dayPassBookings: dayPass?.bookings || 0,
+          roomWalkInRevenue: roomWalkInRev,
+          roomWalkInBookings: roomWalkIn?.bookings || 0,
+          dayPassWalkInRevenue: dayPassWalkInRev,
+          dayPassWalkInBookings: dayPassWalkIn?.bookings || 0,
           totalRevenue,
           totalBookings
         };
