@@ -6,7 +6,8 @@ import path from "path";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 8081,
+    strictPort: false,
     fs: {
       allow: ["./", "./client", "./shared"],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
@@ -38,20 +39,19 @@ export default defineConfig(({ mode }) => ({
 function expressPlugin(): Plugin {
   return {
     name: "express-plugin",
-    apply: "serve", // Only apply during development (serve mode)
+    apply: "serve",
     async configureServer(server) {
-      const { createServer } = await import("./server"); // dynamic import — never runs during build
-      const app = createServer();
+      const { createServer } = await import("./server");
+      const expressApp = createServer();
 
-      // Use 'pre' hook to handle API routes BEFORE Vite's built-in middleware
+      // Add logging middleware to debug
       server.middlewares.use((req, res, next) => {
-        // Only pass API requests to Express
-        if (req.url?.startsWith('/api/')) {
-          app(req as any, res as any, next);
-        } else {
-          next();
-        }
+        console.log(`[Vite] ${req.method} ${req.url}`);
+        next();
       });
+
+      // Add Express middleware BEFORE Vite's internal middleware
+      server.middlewares.use(expressApp);
     },
   };
 }

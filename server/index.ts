@@ -12,6 +12,7 @@ import { createWalkInBooking as createWalkIn, getAllWalkInBookings, updateWalkIn
 import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
 import { insertDayPassHistoricalData } from "./routes/insertDayPassData";
 import { insertLinenInventory } from "./routes/insertInventoryData";
+import { deleteLinenInventory } from "./routes/deleteLinenInventory";
 
 // Temporary function to remove duplicates
 import { RequestHandler } from "express";
@@ -71,7 +72,7 @@ import { createBookingIssue, getAllBookingIssues, getUserBookingIssues, getBooki
 import { getUserNotifications, getUnreadCount, markAsRead, markAllAsRead, createNotification, deleteNotification } from "./routes/notifications";
 import { getAnnouncements, getAllAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, markAnnouncementViewed, toggleAnnouncementStatus } from "./routes/announcements";
 import { getDashboardStats, getAllUsers, updateUserRole, getGuestActivity, getRoomOccupancy, getBookingIssues, getUserActivityAnalytics, lockUser, unlockUser, deleteUser, uploadGcashQr } from "./routes/admin";
-import { generateBookingReport, generateRevenueReport, generateOccupancyReport, generateGuestReport } from "./routes/reports";
+import { generateBookingReport, generateRevenueReport, generateOccupancyReport, generateGuestReport, generateRoomBookingsReport, generateAmenityBookingsReport, generateDayPassBookingsReport, generateRoomWalkInsReport, generateDayPassWalkInsReport } from "./routes/reports";
 import { getAllRooms, getAllAmenities, getDayPassStats, getRoomAvailabilityCalendar, createRoom, updateRoom, deleteRoom, getRoomExtraItems, addRoomExtraItem, updateRoomExtraItem, deleteRoomExtraItem } from "./routes/facilities";
 import { getAllSettings, updateSetting, updateMultipleSettings, resetSettings } from "./routes/siteSettings";
 import { getPaymentSettings, updatePaymentSettings } from "./routes/paymentSettings";
@@ -139,6 +140,14 @@ export function createServer() {
   }));
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+  
+  // Add cache control headers for API routes to prevent browser caching
+  app.use('/api', (req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    next();
+  });
   
   // Session middleware with MySQL store (using existing pool)
   const sessionStore = new MySQLStore({
@@ -294,6 +303,12 @@ export function createServer() {
   // TEMPORARY: Insert historical data endpoint (DELETE AFTER USE!)
   app.post("/api/admin/insert-day-pass-data", requireStaff, insertDayPassHistoricalData);
   
+  // TEMPORARY: Insert linen inventory data (DELETE AFTER USE!)
+  app.post("/api/admin/insert-linen-inventory", requireStaff, insertLinenInventory);
+  
+  // TEMPORARY: Delete linen inventory data (DELETE AFTER USE!)
+  app.delete("/api/admin/delete-linen-inventory", requireStaff, deleteLinenInventory);
+  
   // TEMPORARY: Remove duplicate day pass walk-in records (DELETE AFTER USE!)
   app.post("/api/admin/remove-day-pass-duplicates", requireStaff, removeDayPassDuplicates);
 
@@ -397,6 +412,13 @@ export function createServer() {
   app.get("/api/reports/revenue", requireAdmin, generateRevenueReport);
   app.get("/api/reports/occupancy", requireAdmin, generateOccupancyReport);
   app.get("/api/reports/guests", requireAdmin, generateGuestReport);
+  
+  // New specific report routes
+  app.get("/api/reports/room-bookings", requireAdmin, generateRoomBookingsReport);
+  app.get("/api/reports/amenity-bookings", requireAdmin, generateAmenityBookingsReport);
+  app.get("/api/reports/daypass-bookings", requireAdmin, generateDayPassBookingsReport);
+  app.get("/api/reports/room-walkins", requireAdmin, generateRoomWalkInsReport);
+  app.get("/api/reports/daypass-walkins", requireAdmin, generateDayPassWalkInsReport);
   
   // Facilities routes
   app.get("/api/facilities/rooms", getAllRooms);

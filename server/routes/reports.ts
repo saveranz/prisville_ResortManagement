@@ -515,3 +515,349 @@ export const generateGuestReport: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// Generate room bookings report
+export const generateRoomBookingsReport: RequestHandler = async (req, res) => {
+  console.log('📊 Room bookings report requested');
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Date range:', { startDate, endDate });
+
+    const connection = await db.getConnection();
+
+    try {
+      const [bookings] = await connection.query<RowDataPacket[]>(
+        `SELECT 
+          rb.id,
+          COALESCE(u.name, rb.user_email) as user_name,
+          rb.user_email,
+          rb.room_name,
+          rb.room_type,
+          rb.check_in,
+          rb.check_out,
+          rb.guests,
+          rb.total_amount,
+          rb.status,
+          rb.created_at
+        FROM room_bookings rb
+        LEFT JOIN users u ON u.id = rb.user_id
+        WHERE 1=1
+        ${startDate ? `AND DATE(rb.created_at) >= ?` : ''}
+        ${endDate ? `AND DATE(rb.created_at) <= ?` : ''}
+        ORDER BY rb.created_at DESC`,
+        [startDate, endDate].filter(Boolean)
+      );
+
+      const totalRecords = bookings.length;
+      const approvedCount = bookings.filter((b: any) => b.status === 'approved').length;
+      const pendingCount = bookings.filter((b: any) => b.status === 'pending').length;
+      const totalRevenue = bookings
+        .filter((b: any) => b.status === 'approved')
+        .reduce((sum: number, b: any) => {
+          const amount = parseFloat(String(b.total_amount).replace(/[₱,]/g, '') || '0');
+          return sum + amount;
+        }, 0);
+
+      connection.release();
+
+      res.json({
+        success: true,
+        report: {
+          period: {
+            startDate: startDate || 'All time',
+            endDate: endDate || 'Present'
+          },
+          summary: {
+            totalRecords,
+            approvedCount,
+            pendingCount,
+            totalRevenue: totalRevenue.toFixed(2)
+          },
+          bookings
+        }
+      });
+
+    } catch (error) {
+      connection.release();
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('❌ Error generating room bookings report:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to generate room bookings report' 
+    });
+  }
+};
+
+// Generate amenity bookings report
+export const generateAmenityBookingsReport: RequestHandler = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const connection = await db.getConnection();
+
+    try {
+      const [bookings] = await connection.query<RowDataPacket[]>(
+        `SELECT 
+          ab.id,
+          COALESCE(u.name, ab.user_email) as user_name,
+          ab.user_email,
+          ab.amenity_name,
+          ab.booking_date,
+          ab.number_of_pax,
+          ab.total_amount,
+          ab.status,
+          ab.created_at
+        FROM amenity_bookings ab
+        LEFT JOIN users u ON u.id = ab.user_id
+        WHERE 1=1
+        ${startDate ? `AND DATE(ab.created_at) >= ?` : ''}
+        ${endDate ? `AND DATE(ab.created_at) <= ?` : ''}
+        ORDER BY ab.created_at DESC`,
+        [startDate, endDate].filter(Boolean)
+      );
+
+      const totalRecords = bookings.length;
+      const approvedCount = bookings.filter((b: any) => b.status === 'approved').length;
+      const pendingCount = bookings.filter((b: any) => b.status === 'pending').length;
+      const totalRevenue = bookings
+        .filter((b: any) => b.status === 'approved')
+        .reduce((sum: number, b: any) => {
+          const amount = parseFloat(String(b.total_amount).replace(/[₱,]/g, '') || '0');
+          return sum + amount;
+        }, 0);
+
+      connection.release();
+
+      res.json({
+        success: true,
+        report: {
+          period: {
+            startDate: startDate || 'All time',
+            endDate: endDate || 'Present'
+          },
+          summary: {
+            totalRecords,
+            approvedCount,
+            pendingCount,
+            totalRevenue: totalRevenue.toFixed(2)
+          },
+          bookings
+        }
+      });
+
+    } catch (error) {
+      connection.release();
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('❌ Error generating amenity bookings report:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to generate amenity bookings report' 
+    });
+  }
+};
+
+// Generate day pass bookings report
+export const generateDayPassBookingsReport: RequestHandler = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const connection = await db.getConnection();
+
+    try {
+      const [bookings] = await connection.query<RowDataPacket[]>(
+        `SELECT 
+          dpb.id,
+          COALESCE(u.name, dpb.user_email) as user_name,
+          dpb.user_email,
+          dpb.booking_date,
+          dpb.number_of_pax as number_of_guests,
+          dpb.total_amount,
+          dpb.status,
+          dpb.created_at
+        FROM day_pass_bookings dpb
+        LEFT JOIN users u ON u.id = dpb.user_id
+        WHERE 1=1
+        ${startDate ? `AND DATE(dpb.created_at) >= ?` : ''}
+        ${endDate ? `AND DATE(dpb.created_at) <= ?` : ''}
+        ORDER BY dpb.created_at DESC`,
+        [startDate, endDate].filter(Boolean)
+      );
+
+      const totalRecords = bookings.length;
+      const approvedCount = bookings.filter((b: any) => b.status === 'approved').length;
+      const pendingCount = bookings.filter((b: any) => b.status === 'pending').length;
+      const totalRevenue = bookings
+        .filter((b: any) => b.status === 'approved')
+        .reduce((sum: number, b: any) => {
+          const amount = parseFloat(String(b.total_amount).replace(/[₱,]/g, '') || '0');
+          return sum + amount;
+        }, 0);
+
+      connection.release();
+
+      res.json({
+        success: true,
+        report: {
+          period: {
+            startDate: startDate || 'All time',
+            endDate: endDate || 'Present'
+          },
+          summary: {
+            totalRecords,
+            approvedCount,
+            pendingCount,
+            totalRevenue: totalRevenue.toFixed(2)
+          },
+          bookings
+        }
+      });
+
+    } catch (error) {
+      connection.release();
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('❌ Error generating day pass bookings report:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to generate day pass bookings report',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+// Generate room walk-ins report
+export const generateRoomWalkInsReport: RequestHandler = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const connection = await db.getConnection();
+
+    try {
+      const [walkIns] = await connection.query<RowDataPacket[]>(
+        `SELECT 
+          wb.id,
+          wb.guest_name,
+          wb.room_number,
+          wb.contact_number,
+          wb.number_of_pax,
+          wb.total_amount,
+          wb.down_payment,
+          wb.balance,
+          wb.payment_status,
+          wb.created_at
+        FROM walk_in_bookings wb
+        WHERE wb.archived = 0
+        ${startDate ? `AND DATE(wb.created_at) >= ?` : ''}
+        ${endDate ? `AND DATE(wb.created_at) <= ?` : ''}
+        ORDER BY wb.created_at DESC`,
+        [startDate, endDate].filter(Boolean)
+      );
+
+      const totalRecords = walkIns.length;
+      const totalRevenue = walkIns.reduce((sum: number, w: any) => {
+        const amount = parseFloat(String(w.total_amount).replace(/[₱,]/g, '') || '0');
+        return sum + amount;
+      }, 0);
+
+      connection.release();
+
+      res.json({
+        success: true,
+        report: {
+          period: {
+            startDate: startDate || 'All time',
+            endDate: endDate || 'Present'
+          },
+          summary: {
+            totalRecords,
+            totalRevenue: totalRevenue.toFixed(2)
+          },
+          walkIns
+        }
+      });
+
+    } catch (error) {
+      connection.release();
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('❌ Error generating room walk-ins report:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to generate room walk-ins report' 
+    });
+  }
+};
+
+// Generate day pass walk-ins report
+export const generateDayPassWalkInsReport: RequestHandler = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const connection = await db.getConnection();
+
+    try {
+      const [walkIns] = await connection.query<RowDataPacket[]>(
+        `SELECT 
+          dpw.id,
+          dpw.representative_name as guest_name,
+          dpw.number_of_pax,
+          dpw.cottage_type,
+          dpw.time_of_day,
+          dpw.total_amount,
+          dpw.created_at
+        FROM day_pass_walk_in dpw
+        WHERE 1=1
+        ${startDate ? `AND DATE(dpw.created_at) >= ?` : ''}
+        ${endDate ? `AND DATE(dpw.created_at) <= ?` : ''}
+        ORDER BY dpw.created_at DESC`,
+        [startDate, endDate].filter(Boolean)
+      );
+
+      const totalRecords = walkIns.length;
+      const totalRevenue = walkIns.reduce((sum: number, w: any) => {
+        const amount = Number(w.total_amount) || 0;
+        return sum + amount;
+      }, 0);
+
+      connection.release();
+
+      res.json({
+        success: true,
+        report: {
+          period: {
+            startDate: startDate || 'All time',
+            endDate: endDate || 'Present'
+          },
+          summary: {
+            totalRecords,
+            totalRevenue: totalRevenue.toFixed(2)
+          },
+          walkIns
+        }
+      });
+
+    } catch (error) {
+      connection.release();
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('❌ Error generating day pass walk-ins report:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to generate day pass walk-ins report' 
+    });
+  }
+};

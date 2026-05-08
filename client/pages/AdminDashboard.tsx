@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { 
@@ -174,18 +174,6 @@ interface StockTransaction {
   created_at: string;
 }
 
-interface AuditLog {
-  id: number;
-  user_id: number;
-  user_name: string;
-  action: string;
-  entity_type: string;
-  entity_id: string;
-  details: string;
-  ip_address: string;
-  created_at: string;
-}
-
 interface StayHistory {
   id: number;
   booking_id: number;
@@ -248,7 +236,7 @@ const DEFAULT_ROOM_FORM: RoomFormState = {
   room_type: 'Standard Room (Aircon)',
   room_numbers: '',
   capacity: '2',
-  price_per_night: 'â‚±1600',
+  price_per_night: '₱1600',
   amenities: '',
   description: '',
   special_requests: '',
@@ -340,15 +328,6 @@ export default function AdminDashboard() {
   const [inventoryPage, setInventoryPage] = useState(1);
   const [transactionPage, setTransactionPage] = useState(1);
 
-  // Audit trail state
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [auditLoading, setAuditLoading] = useState(false);
-  const [auditPage, setAuditPage] = useState(1);
-  const [auditTotalPages, setAuditTotalPages] = useState(1);
-  const [auditActionFilter, setAuditActionFilter] = useState('');
-  const [auditStartDate, setAuditStartDate] = useState('');
-  const [auditEndDate, setAuditEndDate] = useState('');
-  
   // REMOVED - Operational filters for receptionist
   // const [roomSearchTerm, setRoomSearchTerm] = useState('');
   // const [roomStatusFilter, setRoomStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
@@ -374,7 +353,7 @@ export default function AdminDashboard() {
   const [bookingIssues, setBookingIssues] = useState<BookingIssue[]>([]);
   
   // Report filters
-  const [reportType, setReportType] = useState('bookings');
+  const [reportType, setReportType] = useState('room-bookings');
   const [reportStartDate, setReportStartDate] = useState('');
   const [reportEndDate, setReportEndDate] = useState('');
   const [reportData, setReportData] = useState<any>(null);
@@ -383,12 +362,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     checkAuth();
   }, []);
-
-  useEffect(() => {
-    if (activeTab === 'audit') {
-      fetchAuditLogs(1);
-    }
-  }, [activeTab]);
 
   useEffect(() => {
     setInventoryPage(1);
@@ -615,27 +588,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchAuditLogs = async (page = 1) => {
-    setAuditLoading(true);
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: '20' });
-      if (auditActionFilter) params.append('action', auditActionFilter);
-      if (auditStartDate) params.append('startDate', auditStartDate);
-      if (auditEndDate) params.append('endDate', auditEndDate);
-      const res = await fetch(`/api/admin/audit-logs?${params}`, { credentials: 'include' });
-      const data = await res.json();
-      if (data.success) {
-        setAuditLogs(data.logs || []);
-        setAuditTotalPages(data.pagination?.totalPages || 1);
-        setAuditPage(page);
-      }
-    } catch (error) {
-      console.error('Failed to fetch audit logs:', error);
-    } finally {
-      setAuditLoading(false);
-    }
-  };
-
   // Filtered bookings using useMemo
   // REMOVED: Booking management functions - these are operational tasks for receptionist
   // Admin should only view analytics, not manage individual bookings
@@ -648,6 +600,10 @@ export default function AdminDashboard() {
 
   const generateReport = async () => {
     setGeneratingReport(true);
+    console.log('=== GENERATE REPORT CALLED - NEW VERSION ===');
+    console.log('Report Type:', reportType);
+    console.log('Start Date:', reportStartDate);
+    console.log('End Date:', reportEndDate);
     try {
       let url = '';
       const params = new URLSearchParams();
@@ -656,34 +612,87 @@ export default function AdminDashboard() {
       if (reportEndDate) params.append('endDate', reportEndDate);
 
       switch (reportType) {
-        case 'bookings':
-          url = `/api/reports/bookings?${params}`;
+        case 'room-bookings':
+          url = `/api/reports/room-bookings?${params}`;
           break;
-        case 'revenue':
-          params.append('groupBy', 'day');
-          url = `/api/reports/revenue?${params}`;
+        case 'amenity-bookings':
+          url = `/api/reports/amenity-bookings?${params}`;
           break;
-        case 'occupancy':
-          url = `/api/reports/occupancy?${params}`;
+        case 'daypass-bookings':
+          url = `/api/reports/daypass-bookings?${params}`;
           break;
-        case 'guests':
-          url = `/api/reports/guests?${params}`;
+        case 'room-walkins':
+          url = `/api/reports/room-walkins?${params}`;
+          break;
+        case 'daypass-walkins':
+          url = `/api/reports/daypass-walkins?${params}`;
           break;
       }
 
-      const response = await fetch(url, { credentials: 'include' });
+      console.log('=== CONSTRUCTED URL:', url);
+      // Add timestamp to prevent caching - force reload
+      const cacheBuster = url.includes('?') ? `&_t=${Date.now()}` : `?_t=${Date.now()}`;
+      console.log('=== CACHE BUSTER:', cacheBuster);
+      console.log('=== FINAL URL WITH CACHE BUSTER:', url + cacheBuster);
+      
+      const response = await fetch(url + cacheBuster, { 
+        credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      console.log('=== RESPONSE RECEIVED ===');
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      console.log('Response type:', response.type);
+      console.log('Response url:', response.url);
+      console.log('Response headers:');
+      response.headers.forEach((value, key) => {
+        console.log(`  ${key}: ${value}`);
+      });
+      
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('=== SERVER ERROR RESPONSE (first 500 chars):', errorText.substring(0, 500));
+        showNotification('error', 'Report Generation Failed', `Server returned ${response.status} error. Check console for details.`);
+        return;
+      }
+
+      const contentType = response.headers.get('content-type');
+      console.log('=== CONTENT-TYPE:', contentType);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('=== EXPECTED JSON BUT GOT (first 500 chars):', text.substring(0, 500));
+        console.error('=== FULL CONTENT TYPE:', contentType);
+        console.error('=== THIS MEANS THE BROWSER IS SERVING CACHED HTML OR THE REQUEST DID NOT REACH EXPRESS ===');
+        showNotification('error', 'Report Generation Failed', 'Server returned non-JSON response. Check console for details.');
+        return;
+      }
+
       const data = await response.json();
+      console.log('=== JSON PARSED SUCCESSFULLY ===');
+      console.log('Data:', data);
 
       if (data.success) {
         setReportData(data.report);
+        console.log('=== REPORT DATA SET ===');
       } else {
-        showNotification('error', 'Report Generation Failed', 'Failed to generate report');
+        console.error('=== REPORT GENERATION FAILED:', data.message);
+        showNotification('error', 'Report Generation Failed', data.message || 'Failed to generate report');
       }
     } catch (error) {
-      console.error('Failed to generate report:', error);
-      showNotification('error', 'Report Generation Failed', 'Failed to generate report');
+      console.error('=== EXCEPTION CAUGHT ===');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
+      console.error('Full error:', error);
+      showNotification('error', 'Report Generation Failed', error instanceof Error ? error.message : 'Failed to generate report');
     } finally {
       setGeneratingReport(false);
+      console.log('=== GENERATE REPORT FINISHED ===');
     }
   };
 
@@ -702,98 +711,94 @@ export default function AdminDashboard() {
 
     let csvContent = '';
     let filename = '';
+    const dateStr = new Date().toISOString().split('T')[0];
 
     switch (reportType) {
-      case 'bookings':
-        filename = `bookings_report_${new Date().toISOString().split('T')[0]}.csv`;
+      case 'room-bookings':
+        filename = `room_bookings_${dateStr}.csv`;
         csvContent = toCsv([
-          ['Booking ID', 'Type', 'Guest', 'Item', 'Date', 'Status', 'Amount'],
+          ['Booking ID', 'Guest Name', 'Email', 'Room', 'Check-in Date', 'Check-out Date', 'Guests', 'Total Amount', 'Status', 'Booking Date'],
           ...(reportData.bookings || []).map((booking: any) => [
             `#${booking.id}`,
-            booking.booking_type || '-',
-            booking.user_name || booking.user_email || '-',
-            booking.room_name || booking.amenity_name || 'Day Pass',
-            booking.created_at ? formatDate(booking.created_at) : '-',
+            booking.user_name || '-',
+            booking.user_email || '-',
+            booking.room_name || '-',
+            booking.check_in_date ? formatDate(booking.check_in_date) : '-',
+            booking.check_out_date ? formatDate(booking.check_out_date) : '-',
+            booking.guests || 0,
+            booking.total_amount || '₱0.00',
             booking.status || '-',
-            booking.total_amount || 'â‚±0.00'
+            booking.created_at ? formatDateTime(booking.created_at) : '-'
           ])
         ]);
         break;
         
-      case 'revenue':
-        filename = `revenue_report_${new Date().toISOString().split('T')[0]}.csv`;
+      case 'amenity-bookings':
+        filename = `amenity_bookings_${dateStr}.csv`;
         csvContent = toCsv([
-          [
-            'Period',
-            'Room Bookings',
-            'Amenity Bookings',
-            'Day Pass Bookings',
-            'Room Walk-In',
-            'Day Pass Walk-In',
-            'Total Bookings',
-            'Room Revenue',
-            'Amenity Revenue',
-            'Day Pass Revenue',
-            'Room Walk-In Revenue',
-            'Day Pass Walk-In Revenue',
-            'Total Revenue'
-          ],
-          ...(reportData.data || []).map((row: any) => [
-            row.period,
-            row.roomBookings || 0,
-            row.amenityBookings || 0,
-            row.dayPassBookings || 0,
-            row.roomWalkInBookings || 0,
-            row.dayPassWalkInBookings || 0,
-            row.totalBookings || 0,
-            Number(row.roomRevenue || 0).toFixed(2),
-            Number(row.amenityRevenue || 0).toFixed(2),
-            Number(row.dayPassRevenue || 0).toFixed(2),
-            Number(row.roomWalkInRevenue || 0).toFixed(2),
-            Number(row.dayPassWalkInRevenue || 0).toFixed(2),
-            Number(row.totalRevenue || 0).toFixed(2)
+          ['Booking ID', 'Guest Name', 'Email', 'Amenity', 'Booking Date', 'Number of Pax', 'Total Amount', 'Status', 'Created At'],
+          ...(reportData.bookings || []).map((booking: any) => [
+            `#${booking.id}`,
+            booking.user_name || '-',
+            booking.user_email || '-',
+            booking.amenity_name || '-',
+            booking.booking_date ? formatDate(booking.booking_date) : '-',
+            booking.number_of_pax || 0,
+            booking.total_amount || '₱0.00',
+            booking.status || '-',
+            booking.created_at ? formatDateTime(booking.created_at) : '-'
           ])
         ]);
         break;
 
-      case 'occupancy':
-        filename = `occupancy_report_${new Date().toISOString().split('T')[0]}.csv`;
-        csvContent = [
-          toCsv([
-            ['Daily Occupancy'],
-            ['Date', 'Occupied Rooms', 'Total Rooms', 'Occupancy Rate'],
-            ...(reportData.dailyOccupancy || []).map((row: any) => [
-              row.date ? formatDate(row.date) : '-',
-              row.occupied_rooms || 0,
-              row.total_rooms || 0,
-              `${row.occupancyRate || '0'}%`
-            ])
-          ]),
-          '',
-          toCsv([
-            ['Room Type Breakdown'],
-            ['Room Type', 'Total Bookings', 'Check-ins'],
-            ...(reportData.roomTypeBreakdown || []).map((row: any) => [
-              row.room_type || 'N/A',
-              row.total_bookings || 0,
-              row.check_ins || 0
-            ])
+      case 'daypass-bookings':
+        filename = `daypass_bookings_${dateStr}.csv`;
+        csvContent = toCsv([
+          ['Booking ID', 'Guest Name', 'Email', 'Booking Date', 'Number of Guests', 'Total Amount', 'Status', 'Created At'],
+          ...(reportData.bookings || []).map((booking: any) => [
+            `#${booking.id}`,
+            booking.user_name || '-',
+            booking.user_email || '-',
+            booking.booking_date ? formatDate(booking.booking_date) : '-',
+            booking.number_of_guests || 0,
+            booking.total_amount || '₱0.00',
+            booking.status || '-',
+            booking.created_at ? formatDateTime(booking.created_at) : '-'
           ])
-        ].join('\r\n');
+        ]);
         break;
 
-      case 'guests':
-        filename = `guests_report_${new Date().toISOString().split('T')[0]}.csv`;
+      case 'room-walkins':
+        filename = `room_walkins_${dateStr}.csv`;
         csvContent = toCsv([
-          ['Guest Name', 'Email', 'Phone', 'Total Bookings', 'Total Spent', 'First Booking', 'Last Booking'],
-          ...(reportData.guests || []).map((guest: any) => [
-            guest.name || '-',
-            guest.email || '-',
-            guest.phone || '-',
-            guest.total_bookings || 0,
-            Number(guest.total_spent || 0).toFixed(2),
-            guest.first_booking_date ? formatDate(guest.first_booking_date) : '-',
-            guest.last_booking_date ? formatDate(guest.last_booking_date) : '-'
+          ['Walk-in ID', 'Guest Name', 'Room Number', 'Contact Number', 'Number of Pax', 'Total Amount', 'Down Payment', 'Balance', 'Payment Status', 'Created At'],
+          ...(reportData.walkIns || []).map((walkIn: any) => [
+            `#${walkIn.id}`,
+            walkIn.guest_name || '-',
+            walkIn.room_number || '-',
+            walkIn.contact_number || '-',
+            walkIn.number_of_pax || 0,
+            walkIn.total_amount || '₱0.00',
+            walkIn.down_payment || '₱0.00',
+            walkIn.balance || '₱0.00',
+            walkIn.payment_status || '-',
+            walkIn.created_at ? formatDateTime(walkIn.created_at) : '-'
+          ])
+        ]);
+        break;
+
+      case 'daypass-walkins':
+        filename = `daypass_walkins_${dateStr}.csv`;
+        csvContent = toCsv([
+          ['Walk-in ID', 'Representative Name', 'Number of Pax', 'Cottage Type', 'Time of Day', 'Total Amount', 'Created At'],
+          ...(reportData.walkIns || []).map((walkIn: any) => [
+            `#${walkIn.id}`,
+            walkIn.guest_name || walkIn.representative_name || '-',
+            walkIn.number_of_pax || 0,
+            walkIn.cottage_type || '-',
+            walkIn.time_of_day || '-',
+            `₱${Number(walkIn.total_amount || 0).toFixed(2)}`,
+            walkIn.created_at ? formatDateTime(walkIn.created_at) : '-'
           ])
         ]);
         break;
@@ -1473,19 +1478,6 @@ export default function AdminDashboard() {
             <Settings size={20} className="flex-shrink-0" />
             {sidebarExpanded && <span className="text-sm font-medium">Site Settings</span>}
           </button>
-
-          <button
-            onClick={() => { setActiveTab('audit'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
-              activeTab === 'audit'
-                ? 'bg-amber-800 text-white'
-                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-            }`}
-            title={!sidebarExpanded ? "Audit Trail" : undefined}
-          >
-            <ShieldCheck size={20} className="flex-shrink-0" />
-            {sidebarExpanded && <span className="text-sm font-medium">Audit Trail</span>}
-          </button>
         </nav>
 
         {/* User Profile and Actions */}
@@ -1569,7 +1561,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Total Revenue</p>
-                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">₱{parseFloat(stats.totalRevenue).toLocaleString()}</p>
+                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">?{parseFloat(stats.totalRevenue).toLocaleString()}</p>
                     <p className="text-xs text-gray-500 mt-1">Approved bookings</p>
                   </div>
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-700 to-amber-800 flex items-center justify-center">
@@ -1702,7 +1694,7 @@ export default function AdminDashboard() {
                     disabled={activityRefreshing}
                     className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors font-sans text-sm disabled:opacity-50"
                   >
-                    {activityRefreshing ? 'Loadingâ€¦' : 'Refresh'}
+                    {activityRefreshing ? 'Loading…' : 'Refresh'}
                   </button>
                 </div>
               </div>
@@ -1883,10 +1875,11 @@ export default function AdminDashboard() {
                     onChange={(e) => setReportType(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
-                    <option value="bookings">Bookings Report</option>
-                    <option value="revenue">Revenue Report</option>
-                    <option value="occupancy">Occupancy Report</option>
-                    <option value="guests">Guest Report</option>
+                    <option value="room-bookings">Room Bookings</option>
+                    <option value="amenity-bookings">Amenity Bookings</option>
+                    <option value="daypass-bookings">Day Pass Bookings</option>
+                    <option value="room-walkins">Room Walk-ins</option>
+                    <option value="daypass-walkins">Day Pass Walk-ins</option>
                   </select>
                 </div>
                 <div>
@@ -1940,6 +1933,40 @@ export default function AdminDashboard() {
                   <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Report Summary</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {/* New report types */}
+                      {(reportType === 'room-bookings' || reportType === 'amenity-bookings' || reportType === 'daypass-bookings') && (
+                        <>
+                          <div>
+                            <p className="text-sm text-gray-600">Total Records</p>
+                            <p className="text-xl font-bold text-gray-900">{reportData.summary?.totalRecords || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Approved</p>
+                            <p className="text-xl font-bold text-green-600">{reportData.summary?.approvedCount || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Pending</p>
+                            <p className="text-xl font-bold text-orange-600">{reportData.summary?.pendingCount || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Total Revenue</p>
+                            <p className="text-xl font-bold text-green-600">₱{parseFloat(reportData.summary?.totalRevenue || '0').toLocaleString()}</p>
+                          </div>
+                        </>
+                      )}
+                      {(reportType === 'room-walkins' || reportType === 'daypass-walkins') && (
+                        <>
+                          <div>
+                            <p className="text-sm text-gray-600">Total Records</p>
+                            <p className="text-xl font-bold text-gray-900">{reportData.summary?.totalRecords || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Total Revenue</p>
+                            <p className="text-xl font-bold text-green-600">₱{parseFloat(reportData.summary?.totalRevenue || '0').toLocaleString()}</p>
+                          </div>
+                        </>
+                      )}
+                      {/* Old report types */}
                       {reportType === 'bookings' && (
                         <>
                           <div>
@@ -1956,7 +1983,7 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Revenue</p>
-                            <p className="text-xl font-bold text-primary">â‚±{parseFloat(reportData.summary.totalRevenue).toLocaleString()}</p>
+                            <p className="text-xl font-bold text-primary">₱{parseFloat(reportData.summary.totalRevenue).toLocaleString()}</p>
                           </div>
                         </>
                       )}
@@ -1964,7 +1991,7 @@ export default function AdminDashboard() {
                         <>
                           <div>
                             <p className="text-sm text-gray-600">Grand Total</p>
-                            <p className="text-xl font-bold text-green-600">â‚±{parseFloat(reportData.summary.grandTotal).toLocaleString()}</p>
+                            <p className="text-xl font-bold text-green-600">₱{parseFloat(reportData.summary.grandTotal).toLocaleString()}</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Total Bookings</p>
@@ -1986,11 +2013,11 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Total Spent</p>
-                            <p className="text-xl font-bold text-green-600">â‚±{parseFloat(reportData.summary.totalSpent).toLocaleString()}</p>
+                            <p className="text-xl font-bold text-green-600">₱{parseFloat(reportData.summary.totalSpent).toLocaleString()}</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Avg per Guest</p>
-                            <p className="text-xl font-bold text-gray-900">â‚±{parseFloat(reportData.summary.avgSpentPerGuest).toLocaleString()}</p>
+                            <p className="text-xl font-bold text-gray-900">₱{parseFloat(reportData.summary.avgSpentPerGuest).toLocaleString()}</p>
                           </div>
                         </>
                       )}
@@ -2000,6 +2027,231 @@ export default function AdminDashboard() {
                   <div className="text-sm text-gray-600 mb-2">
                     Period: {reportData.period.startDate} to {reportData.period.endDate}
                   </div>
+
+                  {/* Room Bookings Report */}
+                  {reportType === 'room-bookings' && (
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[1000px]">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">ID</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guest</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Room</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Check-in</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Check-out</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guests</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {reportData.bookings?.length ? reportData.bookings.map((booking: any) => (
+                              <tr key={booking.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm text-gray-900">#{booking.id}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.user_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.room_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.check_in ? formatDate(booking.check_in) : '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.check_out ? formatDate(booking.check_out) : '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.guests || 0}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{booking.total_amount || '₱0.00'}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    booking.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                    booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                    'bg-red-100 text-red-700'
+                                  }`}>
+                                    {booking.status || '-'}
+                                  </span>
+                                </td>
+                              </tr>
+                            )) : (
+                              <tr>
+                                <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">No room bookings found.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Amenity Bookings Report */}
+                  {reportType === 'amenity-bookings' && (
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[900px]">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">ID</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guest</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amenity</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Pax</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {reportData.bookings?.length ? reportData.bookings.map((booking: any) => (
+                              <tr key={booking.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm text-gray-900">#{booking.id}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.user_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.amenity_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.booking_date ? formatDate(booking.booking_date) : '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.number_of_pax || 0}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{booking.total_amount || '₱0.00'}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    booking.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                    booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                    'bg-red-100 text-red-700'
+                                  }`}>
+                                    {booking.status || '-'}
+                                  </span>
+                                </td>
+                              </tr>
+                            )) : (
+                              <tr>
+                                <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">No amenity bookings found.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Day Pass Bookings Report */}
+                  {reportType === 'daypass-bookings' && (
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[800px]">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">ID</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guest</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guests</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {reportData.bookings?.length ? reportData.bookings.map((booking: any) => (
+                              <tr key={booking.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm text-gray-900">#{booking.id}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.user_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.booking_date ? formatDate(booking.booking_date) : '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{booking.number_of_guests || 0}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{booking.total_amount || '₱0.00'}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    booking.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                    booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                    'bg-red-100 text-red-700'
+                                  }`}>
+                                    {booking.status || '-'}
+                                  </span>
+                                </td>
+                              </tr>
+                            )) : (
+                              <tr>
+                                <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">No day pass bookings found.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Room Walk-ins Report */}
+                  {reportType === 'room-walkins' && (
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[1000px]">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">ID</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guest</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Room</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Contact</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Pax</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Down Payment</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Balance</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {reportData.walkIns?.length ? reportData.walkIns.map((walkIn: any) => (
+                              <tr key={walkIn.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm text-gray-900">#{walkIn.id}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.guest_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.room_number || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.contact_number || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.number_of_pax || 0}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{walkIn.total_amount || '₱0.00'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.down_payment || '₱0.00'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.balance || '₱0.00'}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    walkIn.payment_status === 'paid' ? 'bg-green-100 text-green-700' :
+                                    'bg-yellow-100 text-yellow-700'
+                                  }`}>
+                                    {walkIn.payment_status || '-'}
+                                  </span>
+                                </td>
+                              </tr>
+                            )) : (
+                              <tr>
+                                <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">No room walk-ins found.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Day Pass Walk-ins Report */}
+                  {reportType === 'daypass-walkins' && (
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[800px]">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">ID</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Representative</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Pax</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Cottage Type</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Time</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {reportData.walkIns?.length ? reportData.walkIns.map((walkIn: any) => (
+                              <tr key={walkIn.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm text-gray-900">#{walkIn.id}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.guest_name || walkIn.representative_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.number_of_pax || 0}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700 capitalize">{walkIn.cottage_type || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700 capitalize">{walkIn.time_of_day || '-'}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">₱{Number(walkIn.total_amount || 0).toFixed(2)}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.created_at ? formatDate(walkIn.created_at) : '-'}</td>
+                              </tr>
+                            )) : (
+                              <tr>
+                                <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">No day pass walk-ins found.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
 
                   {reportType === 'bookings' && (
                     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
@@ -2025,7 +2277,7 @@ export default function AdminDashboard() {
                                 <td className="px-4 py-3 text-sm text-gray-700">{booking.room_name || booking.amenity_name || 'Day Pass'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{formatDate(booking.created_at)}</td>
                                 <td className="px-4 py-3 text-sm capitalize text-gray-700">{booking.status || '-'}</td>
-                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{booking.total_amount || 'â‚±0.00'}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{booking.total_amount || '₱0.00'}</td>
                               </tr>
                             )) : (
                               <tr>
@@ -2063,10 +2315,10 @@ export default function AdminDashboard() {
                                 <td className="px-4 py-3 text-sm text-gray-700">{row.amenityBookings || 0}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{row.dayPassBookings || 0}</td>
                                 <td className="px-4 py-3 text-sm font-semibold text-gray-900">{row.totalBookings || 0}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">â‚±{Number(row.roomRevenue || 0).toLocaleString()}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">â‚±{Number(row.amenityRevenue || 0).toLocaleString()}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">â‚±{Number(row.dayPassRevenue || 0).toLocaleString()}</td>
-                                <td className="px-4 py-3 text-sm font-semibold text-green-700">â‚±{Number(row.totalRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">₱{Number(row.roomRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">₱{Number(row.amenityRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">₱{Number(row.dayPassRevenue || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-green-700">₱{Number(row.totalRevenue || 0).toLocaleString()}</td>
                               </tr>
                             )) : (
                               <tr>
@@ -2167,7 +2419,7 @@ export default function AdminDashboard() {
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.email || '-'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.phone || '-'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.total_bookings || 0}</td>
-                                <td className="px-4 py-3 text-sm font-semibold text-green-700">â‚±{Number(guest.total_spent || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-green-700">₱{Number(guest.total_spent || 0).toLocaleString()}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.first_booking_date ? formatDate(guest.first_booking_date) : '-'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{guest.last_booking_date ? formatDate(guest.last_booking_date) : '-'}</td>
                               </tr>
@@ -2443,7 +2695,7 @@ export default function AdminDashboard() {
                               setRoomFormErrors({ ...roomFormErrors, price_per_night: '' });
                             }
                           }}
-                          placeholder={roomFormErrors.price_per_night || 'e.g. ₱1600'}
+                          placeholder={roomFormErrors.price_per_night || 'e.g. ?1600'}
                           className={`w-full px-3 py-2 border rounded-lg ${
                             roomFormErrors.price_per_night ? 'border-red-500 bg-red-50' : 'border-gray-300'
                           }`}
@@ -2485,7 +2737,7 @@ export default function AdminDashboard() {
                       {/* Extra Items Management Section - Available for both new and edit */}
                       <div className="md:col-span-2">
                         <div className="border-t-2 border-gray-200 pt-4 mt-2">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">📦 Extra Items / Add-ons</h4>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">?? Extra Items / Add-ons</h4>
                           <p className="text-xs text-gray-600 mb-4">Add items that guests can include in their booking (e.g., Extra Pillow, Extra Towel, Late Check-out)</p>
                           
                           {/* Add Item Form */}
@@ -2507,7 +2759,7 @@ export default function AdminDashboard() {
                                   type="text"
                                   value={extraItemForm.price}
                                   onChange={(e) => setExtraItemForm({ ...extraItemForm, price: e.target.value })}
-                                  placeholder="e.g. ₱50"
+                                  placeholder="e.g. ?50"
                                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                                 />
                               </div>
@@ -2735,7 +2987,7 @@ export default function AdminDashboard() {
                             type="text"
                             value={extraItemForm.price}
                             onChange={(e) => setExtraItemForm({ ...extraItemForm, price: e.target.value })}
-                            placeholder="e.g. â‚±150"
+                            placeholder="e.g. ₱150"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                           />
                         </div>
@@ -2956,96 +3208,6 @@ export default function AdminDashboard() {
         {/* Inquiries & FAQ Tab */}
         {activeTab === 'inquiries' && (
           <AdminInquiries />
-        )}
-
-        {/* Audit Trail Tab */}
-        {activeTab === 'audit' && (
-          <div className="space-y-6">
-            {/* Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <div className="flex flex-wrap gap-3 items-end">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Action</label>
-                  <select value={auditActionFilter} onChange={e => setAuditActionFilter(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                    <option value="">All Actions</option>
-                    <option value="LOCK_USER">Lock User</option>
-                    <option value="UNLOCK_USER">Unlock User</option>
-                    <option value="DELETE_USER">Delete User</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
-                  <input type="date" value={auditStartDate} onChange={e => setAuditStartDate(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">End Date</label>
-                  <input type="date" value={auditEndDate} onChange={e => setAuditEndDate(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                </div>
-                <button onClick={() => fetchAuditLogs(1)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm">
-                  <RefreshCw size={14} className={auditLoading ? 'animate-spin' : ''} />
-                  Filter
-                </button>
-              </div>
-            </div>
-
-            {/* Logs table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              {auditLoading ? (
-                <div className="p-8 text-center text-gray-400">Loading audit logs...</div>
-              ) : auditLogs.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">No audit logs found.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                      <tr>
-                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Date & Time</th>
-                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Admin</th>
-                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Action</th>
-                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Target</th>
-                        <th className="text-left px-4 py-3 font-semibold text-gray-700">Details</th>
-                        <th className="text-left px-4 py-3 font-semibold text-gray-700">IP Address</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {auditLogs.map(log => (
-                        <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
-                          <td className="px-4 py-3 font-medium text-gray-900">{log.user_name}</td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-                              log.action === 'LOCK_USER' ? 'bg-yellow-100 text-yellow-800' :
-                              log.action === 'UNLOCK_USER' ? 'bg-green-100 text-green-700' :
-                              log.action === 'DELETE_USER' ? 'bg-red-100 text-red-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                              {log.action.replace(/_/g, ' ')}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-700">{log.entity_type} #{log.entity_id}</td>
-                          <td className="px-4 py-3 text-gray-600">{log.details}</td>
-                          <td className="px-4 py-3 text-gray-500 font-mono text-xs">{log.ip_address || 'â€”'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* Pagination */}
-            {auditTotalPages > 1 && (
-              <div className="flex items-center justify-center gap-2">
-                <button onClick={() => fetchAuditLogs(auditPage - 1)} disabled={auditPage <= 1 || auditLoading} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-40 hover:bg-gray-50 transition-colors">
-                  Previous
-                </button>
-                <span className="text-sm text-gray-600">Page {auditPage} of {auditTotalPages}</span>
-                <button onClick={() => fetchAuditLogs(auditPage + 1)} disabled={auditPage >= auditTotalPages || auditLoading} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-40 hover:bg-gray-50 transition-colors">
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
         )}
 
         </div>
