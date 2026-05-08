@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import db from "../db";
 
-// Remove duplicate day pass walk-ins (admin only)
+// Remove duplicate walk-ins (admin only)
 export const removeDayPassDuplicates: RequestHandler = async (req, res) => {
   try {
     // Check if user is admin
@@ -13,12 +13,29 @@ export const removeDayPassDuplicates: RequestHandler = async (req, res) => {
       return;
     }
 
-    // Get count before
-    const [beforeCount] = await db.query('SELECT COUNT(*) as count FROM day_pass_walk_in');
-    const before = (beforeCount as any)[0].count;
+    // Get counts before
+    const [walkInBefore] = await db.query('SELECT COUNT(*) as count FROM walk_in_bookings WHERE archived = 0');
+    const [dayPassBefore] = await db.query('SELECT COUNT(*) as count FROM day_pass_walk_in');
+    const walkInBeforeCount = (walkInBefore as any)[0].count;
+    const dayPassBeforeCount = (dayPassBefore as any)[0].count;
 
-    // Find and keep only the first occurrence of each duplicate
-    // Duplicates are defined as same: representative_name, number_of_pax, cottage_type, time_of_day, total_amount, and same date (not time)
+    // Remove walk-in room booking duplicates
+    await db.query(`
+      DELETE t1 FROM walk_in_bookings t1
+      INNER JOIN walk_in_bookings t2 
+      WHERE 
+        t1.id > t2.id
+        AND t1.guest_name = t2.guest_name
+        AND t1.room_number = t2.room_number
+        AND t1.contact_number = t2.contact_number
+        AND t1.number_of_pax = t2.number_of_pax
+        AND t1.total_amount = t2.total_amount
+        AND DATE(t1.created_at) = DATE(t2.created_at)
+        AND t1.archived = 0
+        AND t2.archived = 0
+    `);
+
+    // Remove day pass walk-in duplicates
     await db.query(`
       DELETE t1 FROM day_pass_walk_in t1
       INNER JOIN day_pass_walk_in t2 
@@ -32,16 +49,25 @@ export const removeDayPassDuplicates: RequestHandler = async (req, res) => {
         AND DATE(t1.created_at) = DATE(t2.created_at)
     `);
 
-    // Get count after
-    const [afterCount] = await db.query('SELECT COUNT(*) as count FROM day_pass_walk_in');
-    const after = (afterCount as any)[0].count;
+    // Get counts after
+    const [walkInAfter] = await db.query('SELECT COUNT(*) as count FROM walk_in_bookings WHERE archived = 0');
+    const [dayPassAfter] = await db.query('SELECT COUNT(*) as count FROM day_pass_walk_in');
+    const walkInAfterCount = (walkInAfter as any)[0].count;
+    const dayPassAfterCount = (dayPassAfter as any)[0].count;
 
     res.json({ 
       success: true, 
       message: 'Duplicates removed successfully',
-      before,
-      after,
-      removed: before - after
+      walkInBookings: {
+        before: walkInBeforeCount,
+        after: walkInAfterCount,
+        removed: walkInBeforeCount - walkInAfterCount
+      },
+      dayPassWalkIns: {
+        before: dayPassBeforeCount,
+        after: dayPassAfterCount,
+        removed: dayPassBeforeCount - dayPassAfterCount
+      }
     });
   } catch (error) {
     console.error('Remove duplicates error:', error);
