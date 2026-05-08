@@ -56,9 +56,13 @@ export const insertRealWalkInData: RequestHandler = async (req, res) => {
 
     // First, add archived column if it doesn't exist
     try {
-      await db.query('ALTER TABLE walk_in_bookings ADD COLUMN IF NOT EXISTS archived TINYINT(1) DEFAULT 0');
-    } catch (error) {
-      // Column might already exist, ignore error
+      await db.query('ALTER TABLE walk_in_bookings ADD COLUMN archived TINYINT(1) DEFAULT 0');
+      console.log('Added archived column');
+    } catch (error: any) {
+      // Column might already exist
+      if (error.code !== 'ER_DUP_FIELDNAME') {
+        console.error('Error adding archived column:', error);
+      }
     }
 
     // Insert walk-in bookings
@@ -91,17 +95,27 @@ export const insertRealWalkInData: RequestHandler = async (req, res) => {
       }
     }
 
-    // Get final counts
-    const [walkInCount] = await db.query('SELECT COUNT(*) as count FROM walk_in_bookings WHERE archived = 0');
+    // Get final counts - check if archived column exists first
+    let walkInTotal = 0;
+    try {
+      const [walkInCount] = await db.query('SELECT COUNT(*) as count FROM walk_in_bookings WHERE archived = 0');
+      walkInTotal = (walkInCount as any)[0].count;
+    } catch (error) {
+      // If archived column doesn't exist, just count all
+      const [walkInCount] = await db.query('SELECT COUNT(*) as count FROM walk_in_bookings');
+      walkInTotal = (walkInCount as any)[0].count;
+    }
+    
     const [dayPassCount] = await db.query('SELECT COUNT(*) as count FROM day_pass_walk_in');
+    const dayPassTotal = (dayPassCount as any)[0].count;
 
     res.json({ 
       success: true, 
       message: 'Real data inserted successfully',
       walkInInserted,
       dayPassInserted,
-      walkInTotal: (walkInCount as any)[0].count,
-      dayPassTotal: (dayPassCount as any)[0].count
+      walkInTotal,
+      dayPassTotal
     });
   } catch (error) {
     console.error('Insert real data error:', error);
