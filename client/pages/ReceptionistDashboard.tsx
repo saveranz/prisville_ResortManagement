@@ -1941,18 +1941,11 @@ export default function ReceptionistDashboard() {
           {activeTab === 'rooms' && (
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-x-auto">
               {/* Title Header */}
-              <div className="px-3 pt-4 pb-2 sm:px-6 sm:pt-6 sm:pb-4 border-b border-gray-100 flex justify-between items-center">
+              <div className="px-3 pt-4 pb-2 sm:px-6 sm:pt-6 sm:pb-4 border-b border-gray-100">
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">Room Booking Reservations</h3>
                   <p className="text-sm text-gray-600 mt-1">Manage and review all room booking requests</p>
                 </div>
-                <button
-                  onClick={() => setShowWalkInModal(true)}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg text-sm whitespace-nowrap"
-                >
-                  <LogIn size={18} />
-                  Walk-In
-                </button>
               </div>
               
               {/* Search and Filter UI */}
@@ -2328,18 +2321,11 @@ export default function ReceptionistDashboard() {
           {activeTab === 'daypass' && (
             <div className="bg-white rounded-2xl shadow-md border border-gray-200">
               {/* Title Header */}
-              <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+              <div className="px-6 pt-6 pb-4 border-b border-gray-100">
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">Day Pass Reservations</h3>
                   <p className="text-sm text-gray-600 mt-1">Manage and review all day pass booking requests</p>
                 </div>
-                <button
-                  onClick={() => setShowDayPassWalkInModal(true)}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg text-sm whitespace-nowrap"
-                >
-                  <LogIn size={18} />
-                  Walk-In
-                </button>
               </div>
               
               {/* Search and Filter UI */}
