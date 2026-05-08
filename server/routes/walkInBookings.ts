@@ -115,6 +115,9 @@ export const getAllWalkInBookings: RequestHandler = async (req, res) => {
        ORDER BY created_at DESC`
     );
 
+    console.log('[Walk-In API] Fetched bookings count:', bookings.length);
+    console.log('[Walk-In API] Sample booking:', bookings[0]);
+
     res.json({ 
       success: true, 
       bookings

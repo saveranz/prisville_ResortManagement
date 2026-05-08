@@ -1198,13 +1198,19 @@ export default function ReceptionistDashboard() {
 
   const fetchWalkInBookings = async () => {
     try {
+      console.log('[Frontend] Fetching walk-in bookings...');
       const response = await fetch('/api/bookings/walk-in', { credentials: 'include' });
+      console.log('[Frontend] Response status:', response.status);
       const data = await response.json();
+      console.log('[Frontend] Response data:', data);
       if (data.success) {
+        console.log('[Frontend] Setting walk-in bookings, count:', data.bookings?.length);
         setWalkInBookings(data.bookings);
+      } else {
+        console.error('[Frontend] API returned success: false', data);
       }
     } catch (error) {
-      console.error('Error fetching walk-in bookings:', error);
+      console.error('[Frontend] Error fetching walk-in bookings:', error);
     }
   };
 
