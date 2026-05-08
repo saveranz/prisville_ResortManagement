@@ -1263,18 +1263,36 @@ export default function ReceptionistDashboard() {
 
   const fetchDayPassWalkInBookings = async () => {
     try {
-      console.log('[Frontend] Fetching day pass walk-in bookings...');
+      console.log('🔍 [DAY PASS WALK-IN] Starting fetch...');
       const response = await fetch('/api/bookings/day-pass-walk-in', { credentials: 'include' });
-      console.log('[Frontend] Response status:', response.status);
+      console.log('🔍 [DAY PASS WALK-IN] Response status:', response.status);
       const data = await response.json();
-      console.log('[Frontend] Response data:', data);
+      console.log('🔍 [DAY PASS WALK-IN] Full response data:', JSON.stringify(data, null, 2));
+      console.log('🔍 [DAY PASS WALK-IN] Success flag:', data.success);
+      console.log('🔍 [DAY PASS WALK-IN] Bookings array:', data.bookings);
+      console.log('🔍 [DAY PASS WALK-IN] Bookings count:', data.bookings?.length || 0);
+      
       if (data.success) {
-        console.log('[Frontend] Setting walk-in bookings, count:', data.bookings?.length);
-        console.log('[Frontend] Sample booking:', data.bookings[0]);
-        setDayPassWalkInBookings(data.bookings);
+        if (data.bookings && data.bookings.length > 0) {
+          console.log('✅ [DAY PASS WALK-IN] Setting', data.bookings.length, 'bookings');
+          console.log('✅ [DAY PASS WALK-IN] First booking:', JSON.stringify(data.bookings[0], null, 2));
+          console.log('✅ [DAY PASS WALK-IN] All bookings:', data.bookings.map((b: any) => ({
+            id: b.id,
+            name: b.representative_name,
+            pax: b.number_of_pax,
+            cottage: b.cottage_type,
+            time: b.time_of_day,
+            amount: b.total_amount
+          })));
+        } else {
+          console.warn('⚠️ [DAY PASS WALK-IN] No bookings returned from API');
+        }
+        setDayPassWalkInBookings(data.bookings || []);
+      } else {
+        console.error('❌ [DAY PASS WALK-IN] API returned success: false');
       }
     } catch (error) {
-      console.error('Error fetching day pass walk-in bookings:', error);
+      console.error('❌ [DAY PASS WALK-IN] Fetch error:', error);
     }
   };
 

@@ -90,6 +90,7 @@ export const getAllDayPassWalkIns: RequestHandler = async (req, res) => {
   try {
     // Check if user is logged in and is receptionist or admin
     if (!req.session.userId) {
+      console.log('❌ [DAY PASS WALK-IN API] Unauthorized - no userId in session');
       res.status(401).json({ 
         success: false, 
         message: 'Please login' 
@@ -98,6 +99,7 @@ export const getAllDayPassWalkIns: RequestHandler = async (req, res) => {
     }
 
     if (req.session.userRole !== 'admin' && req.session.userRole !== 'receptionist') {
+      console.log('❌ [DAY PASS WALK-IN API] Forbidden - user role:', req.session.userRole);
       res.status(403).json({ 
         success: false, 
         message: 'Unauthorized access' 
@@ -105,19 +107,37 @@ export const getAllDayPassWalkIns: RequestHandler = async (req, res) => {
       return;
     }
 
-    console.log('[Day Pass Walk-In API] Fetching all day pass walk-ins...');
+    console.log('🔍 [DAY PASS WALK-IN API] Fetching all day pass walk-ins...');
+    console.log('🔍 [DAY PASS WALK-IN API] User:', req.session.userId, 'Role:', req.session.userRole);
+    
     const [bookings] = await db.query<DayPassWalkIn[]>(
       `SELECT * FROM day_pass_walk_in ORDER BY created_at DESC`
     );
-    console.log('[Day Pass Walk-In API] Fetched bookings count:', bookings.length);
-    console.log('[Day Pass Walk-In API] Sample booking:', bookings[0]);
+    
+    console.log('✅ [DAY PASS WALK-IN API] Query executed successfully');
+    console.log('✅ [DAY PASS WALK-IN API] Fetched bookings count:', bookings.length);
+    
+    if (bookings.length > 0) {
+      console.log('✅ [DAY PASS WALK-IN API] First booking:', JSON.stringify(bookings[0], null, 2));
+      console.log('✅ [DAY PASS WALK-IN API] All booking IDs:', bookings.map(b => b.id));
+    } else {
+      console.warn('⚠️ [DAY PASS WALK-IN API] No bookings found in database');
+      console.log('⚠️ [DAY PASS WALK-IN API] Please verify:');
+      console.log('   1. Table exists: SELECT * FROM day_pass_walk_in LIMIT 1;');
+      console.log('   2. Data inserted: SELECT COUNT(*) FROM day_pass_walk_in;');
+      console.log('   3. Table structure: DESCRIBE day_pass_walk_in;');
+    }
 
     res.json({ 
       success: true, 
       bookings
     });
   } catch (error) {
-    console.error('[Day Pass Walk-In API] ❌ Get day pass walk-ins error:', error);
+    console.error('❌ [DAY PASS WALK-IN API] Database error:', error);
+    console.error('❌ [DAY PASS WALK-IN API] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     res.status(500).json({ 
       success: false, 
       message: 'Failed to fetch day pass walk-ins',
