@@ -11,6 +11,7 @@ import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBooki
 import { createWalkInBooking as createWalkIn, getAllWalkInBookings, updateWalkInBooking, archiveWalkInBooking } from "./routes/walkInBookings";
 import { clearAllWalkInData } from "./routes/clearWalkInData";
 import { insertRealWalkInData } from "./routes/insertRealWalkInData";
+import { removeDayPassDuplicates } from "./routes/removeDayPassDuplicates";
 import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
 import { insertDayPassHistoricalData } from "./routes/insertDayPassData";
 import { insertLinenInventory } from "./routes/insertInventoryData";
@@ -316,6 +317,9 @@ export function createServer() {
   
   // TEMPORARY: Insert real walk-in data (ADMIN ONLY - DELETE AFTER USE!)
   app.post("/api/admin/insert-real-walk-in-data", insertRealWalkInData);
+  
+  // TEMPORARY: Remove day pass duplicates (ADMIN ONLY - DELETE AFTER USE!)
+  app.post("/api/admin/remove-day-pass-duplicates", removeDayPassDuplicates);
   
   // TEMPORARY: Remove duplicate day pass walk-in records (DELETE AFTER USE!)
   app.post("/api/admin/remove-day-pass-duplicates", requireStaff, removeDayPassDuplicates);
