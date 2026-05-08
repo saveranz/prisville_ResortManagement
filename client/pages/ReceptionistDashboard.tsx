@@ -1263,9 +1263,14 @@ export default function ReceptionistDashboard() {
 
   const fetchDayPassWalkInBookings = async () => {
     try {
+      console.log('[Frontend] Fetching day pass walk-in bookings...');
       const response = await fetch('/api/bookings/day-pass-walk-in', { credentials: 'include' });
+      console.log('[Frontend] Response status:', response.status);
       const data = await response.json();
+      console.log('[Frontend] Response data:', data);
       if (data.success) {
+        console.log('[Frontend] Setting walk-in bookings, count:', data.bookings?.length);
+        console.log('[Frontend] Sample booking:', data.bookings[0]);
         setDayPassWalkInBookings(data.bookings);
       }
     } catch (error) {
@@ -2445,6 +2450,16 @@ export default function ReceptionistDashboard() {
 
               {/* Day Pass Walk-In Table */}
               <div className="overflow-x-auto">
+                {(() => {
+                  console.log('[Table Debug] dayPassWalkInBookings:', dayPassWalkInBookings);
+                  console.log('[Table Debug] loading:', loading);
+                  console.log('[Table Debug] filtered count:', dayPassWalkInBookings.filter(w => 
+                    !dayPassWalkInSearchTerm || 
+                    w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
+                    w.cottage_type?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
+                  ).length);
+                  return null;
+                })()}
                 {loading ? (
                   <div className="text-center py-16">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
