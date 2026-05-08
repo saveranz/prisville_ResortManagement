@@ -246,7 +246,7 @@ export function createServer() {
   app.get("/api/bookings/day-pass-walk-in", requireStaff, getAllDayPassWalkIns);
   
   // TEMPORARY: Insert historical data endpoint (DELETE AFTER USE!)
-  app.post("/api/admin/insert-day-pass-data", requireAdmin, insertDayPassHistoricalData);
+  app.post("/api/admin/insert-day-pass-data", requireStaff, insertDayPassHistoricalData);
 
   // Amenity Booking routes
   app.get("/api/bookings/amenity/check-availability", checkAmenityAvailability);

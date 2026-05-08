@@ -6,11 +6,11 @@ import { ResultSetHeader } from "mysql2";
 // DELETE THIS FILE after data is inserted!
 export const insertDayPassHistoricalData: RequestHandler = async (req, res) => {
   try {
-    // Only allow admin to run this
-    if (!req.session.userId || req.session.userRole !== 'admin') {
+    // Only allow admin or receptionist to run this
+    if (!req.session.userId || (req.session.userRole !== 'admin' && req.session.userRole !== 'receptionist')) {
       res.status(403).json({ 
         success: false, 
-        message: 'Admin access required' 
+        message: 'Admin or receptionist access required' 
       });
       return;
     }
