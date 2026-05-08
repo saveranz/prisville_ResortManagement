@@ -3866,8 +3866,8 @@ export default function ReceptionistDashboard() {
                 required
               >
                 <option value="">Select time</option>
-                <option value="day">Day (100/head, Concrete +500)</option>
-                <option value="night">Night (150/head, Concrete +600)</option>
+                <option value="day">Day</option>
+                <option value="night">Night</option>
               </select>
             </div>
 
