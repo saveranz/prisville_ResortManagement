@@ -10,6 +10,7 @@ import { register, login, getCurrentUser, logout, requestPasswordReset, verifyRe
 import { createRoomBooking, getUserRoomBookings, getAllRoomBookings, updateBookingStatus, checkRoomAvailability, getUnavailableDates, createWalkInBooking } from "./routes/bookings";
 import { createWalkInBooking as createWalkIn, getAllWalkInBookings, updateWalkInBooking, archiveWalkInBooking } from "./routes/walkInBookings";
 import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
+import { insertDayPassHistoricalData } from "./routes/insertDayPassData";
 import { createAmenityBooking, getUserAmenityBookings, getAllAmenityBookings, updateAmenityBookingStatus, checkAmenityAvailability, createAmenityBookingByReceptionist } from "./routes/amenityBookings";
 import { createDayPassBooking, getUserDayPassBookings, getAllDayPassBookings, updateDayPassBookingStatus, checkDayPassAvailability } from "./routes/dayPassBookings";
 import { setupDatabase, migrateRoomType, migrateUserStatus, setupFAQs, setupAllMissingTables, setupPaymentSettings } from "./routes/setup";
@@ -243,6 +244,9 @@ export function createServer() {
   // Day pass walk-in routes
   app.post("/api/bookings/day-pass-walk-in", requireStaff, createDayPassWalkIn);
   app.get("/api/bookings/day-pass-walk-in", requireStaff, getAllDayPassWalkIns);
+  
+  // TEMPORARY: Insert historical data endpoint (DELETE AFTER USE!)
+  app.post("/api/admin/insert-day-pass-data", requireAdmin, insertDayPassHistoricalData);
 
   // Amenity Booking routes
   app.get("/api/bookings/amenity/check-availability", checkAmenityAvailability);
