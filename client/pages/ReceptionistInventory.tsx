@@ -527,24 +527,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
               <Package size={20} />
               Inventory Items
             </button>
-            <button
-              onClick={() => setActiveTab('stock-log')}
-              className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'stock-log' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <ArrowDownToLine size={20} />
-              Stock Log
-            </button>
-            <button
-              onClick={() => setActiveTab('transactions')}
-              className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'transactions' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <DollarSign size={20} />
-              Financial Transactions
-            </button>
+            {/* Stock Log and Financial Transactions tabs removed */}
           </nav>
         </div>
       </div>

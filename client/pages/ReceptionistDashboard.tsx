@@ -133,8 +133,8 @@ export default function ReceptionistDashboard() {
   });
   const [viewingProof, setViewingProof] = useState<string | null>(null);
   
-  // Inventory management states
-  const [inventoryTab, setInventoryTab] = useState<'inventory' | 'transactions'>('inventory');
+  // Inventory management states - removed stock log and financial transactions
+  // const [inventoryTab, setInventoryTab] = useState<'inventory' | 'transactions'>('inventory');
   
   // Check-in/Check-out sub-tab state
   const [checkInTab, setCheckInTab] = useState<'checkin' | 'checkout'>('checkin');
@@ -1739,23 +1739,7 @@ export default function ReceptionistDashboard() {
             {sidebarExpanded && <span className="text-sm font-medium">Room Status</span>}
           </button>
 
-          <button
-            onClick={() => { setActiveTab('issues'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all relative ${
-              activeTab === 'issues'
-                ? 'bg-amber-800 text-white'
-                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-            }`}
-            title={!sidebarExpanded ? "Issues" : undefined}
-          >
-            <AlertCircle size={20} className="flex-shrink-0" />
-            {sidebarExpanded && <span className="text-sm font-medium">Issues</span>}
-            {bookingIssues.filter(i => i.status === 'open').length > 0 && (
-              <span className={`${sidebarExpanded ? 'ml-auto' : 'absolute -top-1 -right-1'} bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold`}>
-                {bookingIssues.filter(i => i.status === 'open').length}
-              </span>
-            )}
-          </button>
+          {/* Issues button removed */}
         </nav>
 
         {/* User Profile Icon */}
@@ -2789,7 +2773,7 @@ export default function ReceptionistDashboard() {
                 <p className="text-xs sm:text-sm text-gray-600">Monitor and update room availability</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {roomStatuses.map((room: RoomStatus) => (
+                {roomStatuses.slice(0, 8).map((room: RoomStatus) => (
                   <div
                     key={room.room_numbers}
                     className={`border-2 rounded-xl p-4 transition-all ${
