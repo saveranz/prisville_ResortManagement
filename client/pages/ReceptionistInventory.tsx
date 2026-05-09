@@ -69,7 +69,7 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [inventoryPage, setInventoryPage] = useState(1);
-  const inventoryItemsPerPage = 20;
+  const inventoryItemsPerPage = 10;
   const [inventorySearchTerm, setInventorySearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'expiring'>('all');
@@ -592,16 +592,16 @@ export default function ReceptionistInventory({ embedded = false }: { embedded?:
               <table className="w-full">
                 <thead className="bg-primary/5 border-b-2 border-primary/20">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">ID</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Item Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Category</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Stock</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">PAR Level</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Unit Price</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Supplier</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Expiry</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">Item Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">Category</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">Stock</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">PAR Level</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">Unit Price</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">Supplier</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">Expiry</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
