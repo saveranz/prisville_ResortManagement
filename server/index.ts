@@ -16,6 +16,7 @@ import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkI
 import { insertDayPassHistoricalData } from "./routes/insertDayPassData";
 import { insertLinenInventory } from "./routes/insertInventoryData";
 import { deleteLinenInventory } from "./routes/deleteLinenInventory";
+import { insertInventoryData } from "./routes/insertInventoryData";
 
 // Temporary function to remove duplicates
 import { RequestHandler } from "express";
@@ -311,6 +312,9 @@ export function createServer() {
   
   // TEMPORARY: Delete linen inventory data (DELETE AFTER USE!)
   app.delete("/api/admin/delete-linen-inventory", requireStaff, deleteLinenInventory);
+  
+  // TEMPORARY: Insert inventory data (ADMIN ONLY - DELETE AFTER USE!)
+  app.post("/api/admin/insert-inventory-data", insertInventoryData);
   
   // TEMPORARY: Clear all walk-in data (ADMIN ONLY - DELETE AFTER USE!)
   app.post("/api/admin/clear-walk-in-data", clearAllWalkInData);
