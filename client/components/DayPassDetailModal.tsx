@@ -41,8 +41,11 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [formData, setFormData] = useState({
+    representativeName: "",
     bookingDate: "",
     numberOfPax: "",
+    cottageType: "",
+    timeOfDay: "",
     contactNumber: "",
     specialRequests: "",
     paymentProof: null as File | null,
@@ -136,8 +139,21 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
 
   const calculateTotalAmount = () => {
     const pax = parseInt(formData.numberOfPax) || 0;
-    const priceNum = parseInt(pricePerPax.replace(/[₱,]/g, '')) || 0;
-    return pax * priceNum;
+    const cottageType = formData.cottageType;
+    const timeOfDay = formData.timeOfDay;
+    
+    if (!cottageType || !timeOfDay || pax === 0) return 0;
+    
+    let total = 0;
+    if (timeOfDay === 'day') {
+      // Day: Concrete = 500 + (100 * pax), Kubo = 100 * pax
+      total = cottageType === 'concrete' ? 500 + (100 * pax) : 100 * pax;
+    } else {
+      // Night: Concrete = 600 + (150 * pax), Kubo = 150 * pax
+      total = cottageType === 'concrete' ? 600 + (150 * pax) : 150 * pax;
+    }
+    
+    return total;
   };
 
   // Calculate reservation fee (50% of total)
@@ -174,7 +190,7 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
     });
 
     // Validate form
-    if (!formData.bookingDate || !formData.numberOfPax || !formData.contactNumber) {
+    if (!formData.representativeName || !formData.bookingDate || !formData.numberOfPax || !formData.cottageType || !formData.timeOfDay || !formData.contactNumber) {
       console.error("❌ Validation failed: Missing required fields");
       setError("Please fill in all required fields");
       return;
@@ -231,8 +247,11 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
       setLoadingMessage("Submitting booking...");
 
       const bookingPayload = {
+          representativeName: formData.representativeName,
           bookingDate: formData.bookingDate,
           numberOfPax: parseInt(formData.numberOfPax),
+          cottageType: formData.cottageType,
+          timeOfDay: formData.timeOfDay,
           contactNumber: formData.contactNumber,
           specialRequests: formData.specialRequests,
           totalAmount: `₱${totalAmount.toLocaleString()}`,
@@ -265,8 +284,11 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
             onClose();
             setShowBookingForm(false);
             setFormData({
+              representativeName: "",
               bookingDate: "",
               numberOfPax: "",
+              cottageType: "",
+              timeOfDay: "",
               contactNumber: "",
               specialRequests: "",
               paymentProof: null,
@@ -428,6 +450,20 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Representative Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.representativeName}
+                    onChange={(e) => setFormData({ ...formData, representativeName: e.target.value })}
+                    placeholder="Main contact person"
+                    className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Date *
                   </label>
                   <input
@@ -452,11 +488,43 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
                     className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base"
                     required
                   />
-                  {formData.numberOfPax && (
+                  {formData.numberOfPax && formData.cottageType && formData.timeOfDay && (
                     <p className="mt-2 text-sm text-gray-600">
                       Total Amount: <span className="font-bold text-yellow-700">₱{calculateTotalAmount().toLocaleString()}</span>
                     </p>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Cottage Type *
+                  </label>
+                  <select
+                    value={formData.cottageType}
+                    onChange={(e) => setFormData({ ...formData, cottageType: e.target.value })}
+                    className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base bg-white"
+                    required
+                  >
+                    <option value="">Select cottage type</option>
+                    <option value="concrete">Concrete</option>
+                    <option value="kubo">Kubo</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Time of Day *
+                  </label>
+                  <select
+                    value={formData.timeOfDay}
+                    onChange={(e) => setFormData({ ...formData, timeOfDay: e.target.value })}
+                    className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base bg-white"
+                    required
+                  >
+                    <option value="">Select time</option>
+                    <option value="day">Day</option>
+                    <option value="night">Night</option>
+                  </select>
                 </div>
 
                 <div>
