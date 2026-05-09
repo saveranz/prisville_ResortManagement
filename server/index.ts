@@ -14,7 +14,7 @@ import { insertRealWalkInData } from "./routes/insertRealWalkInData";
 import { removeDayPassDuplicates } from "./routes/removeDayPassDuplicates";
 import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
 import { insertDayPassHistoricalData } from "./routes/insertDayPassData";
-import { insertLinenInventory } from "./routes/insertInventoryData";
+import { insertLinenInventory } from "./routes/insertLinenInventory";
 import { deleteLinenInventory } from "./routes/deleteLinenInventory";
 import { insertInventoryData } from "./routes/insertInventoryData";
 
