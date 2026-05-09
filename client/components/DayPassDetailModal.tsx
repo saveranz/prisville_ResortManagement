@@ -139,18 +139,17 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
 
   const calculateTotalAmount = () => {
     const pax = parseInt(formData.numberOfPax) || 0;
-    const cottageType = formData.cottageType;
     const timeOfDay = formData.timeOfDay;
     
-    if (!cottageType || !timeOfDay || pax === 0) return 0;
+    if (!timeOfDay || pax === 0) return 0;
     
     let total = 0;
     if (timeOfDay === 'day') {
-      // Day: Concrete = 500 + (100 * pax), Kubo = 100 * pax
-      total = cottageType === 'concrete' ? 500 + (100 * pax) : 100 * pax;
+      // Day: 500 per cottage + 100 per pax
+      total = 500 + (100 * pax);
     } else {
-      // Night: Concrete = 600 + (150 * pax), Kubo = 150 * pax
-      total = cottageType === 'concrete' ? 600 + (150 * pax) : 150 * pax;
+      // Night: 600 per cottage + 150 per pax
+      total = 600 + (150 * pax);
     }
     
     return total;
@@ -488,7 +487,7 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
                     className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 text-base"
                     required
                   />
-                  {formData.numberOfPax && formData.cottageType && formData.timeOfDay && (
+                  {formData.numberOfPax && formData.timeOfDay && (
                     <p className="mt-2 text-sm text-gray-600">
                       Total Amount: <span className="font-bold text-yellow-700">₱{calculateTotalAmount().toLocaleString()}</span>
                     </p>

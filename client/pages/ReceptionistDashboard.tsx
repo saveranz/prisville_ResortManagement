@@ -3903,17 +3903,16 @@ export default function ReceptionistDashboard() {
                 value={dayPassWalkInForm.numberOfPax}
                 onChange={(e) => {
                   const pax = parseInt(e.target.value) || 0;
-                  const cottageType = dayPassWalkInForm.cottageType;
                   const timeOfDay = dayPassWalkInForm.timeOfDay;
                   
                   let total = 0;
-                  if (cottageType && timeOfDay) {
+                  if (timeOfDay) {
                     if (timeOfDay === 'day') {
-                      // Day: Concrete = 500 + (100 * pax), Kubo = 100 * pax
-                      total = cottageType === 'concrete' ? 500 + (100 * pax) : 100 * pax;
+                      // Day: 500 per cottage + 100 per pax
+                      total = 500 + (100 * pax);
                     } else {
-                      // Night: Concrete = 600 + (150 * pax), Kubo = 150 * pax
-                      total = cottageType === 'concrete' ? 600 + (150 * pax) : 150 * pax;
+                      // Night: 600 per cottage + 150 per pax
+                      total = 600 + (150 * pax);
                     }
                   }
                   
@@ -3940,9 +3939,11 @@ export default function ReceptionistDashboard() {
                   let total = 0;
                   if (pax > 0 && timeOfDay) {
                     if (timeOfDay === 'day') {
-                      total = cottageType === 'concrete' ? 500 + (100 * pax) : 100 * pax;
+                      // Day: 500 per cottage + 100 per pax
+                      total = 500 + (100 * pax);
                     } else {
-                      total = cottageType === 'concrete' ? 600 + (150 * pax) : 150 * pax;
+                      // Night: 600 per cottage + 150 per pax
+                      total = 600 + (150 * pax);
                     }
                   }
                   
@@ -3968,14 +3969,15 @@ export default function ReceptionistDashboard() {
                 onChange={(e) => {
                   const timeOfDay = e.target.value;
                   const pax = parseInt(dayPassWalkInForm.numberOfPax) || 0;
-                  const cottageType = dayPassWalkInForm.cottageType;
                   
                   let total = 0;
-                  if (pax > 0 && cottageType) {
+                  if (pax > 0) {
                     if (timeOfDay === 'day') {
-                      total = cottageType === 'concrete' ? 500 + (100 * pax) : 100 * pax;
+                      // Day: 500 per cottage + 100 per pax
+                      total = 500 + (100 * pax);
                     } else {
-                      total = cottageType === 'concrete' ? 600 + (150 * pax) : 150 * pax;
+                      // Night: 600 per cottage + 150 per pax
+                      total = 600 + (150 * pax);
                     }
                   }
                   
