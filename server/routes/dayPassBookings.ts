@@ -55,8 +55,11 @@ export const createDayPassBooking: RequestHandler = async (req, res) => {
     }
 
     const {
+      representativeName,
       bookingDate,
       numberOfPax,
+      cottageType,
+      timeOfDay,
       contactNumber,
       specialRequests,
       totalAmount,
@@ -65,10 +68,13 @@ export const createDayPassBooking: RequestHandler = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!bookingDate || !numberOfPax || !contactNumber || !totalAmount || !paymentProof) {
+    if (!representativeName || !bookingDate || !numberOfPax || !cottageType || !timeOfDay || !contactNumber || !totalAmount || !paymentProof) {
       const missingFields = [];
+      if (!representativeName) missingFields.push('representativeName');
       if (!bookingDate) missingFields.push('bookingDate');
       if (!numberOfPax) missingFields.push('numberOfPax');
+      if (!cottageType) missingFields.push('cottageType');
+      if (!timeOfDay) missingFields.push('timeOfDay');
       if (!contactNumber) missingFields.push('contactNumber');
       if (!totalAmount) missingFields.push('totalAmount');
       if (!paymentProof) missingFields.push('paymentProof');
@@ -96,15 +102,18 @@ export const createDayPassBooking: RequestHandler = async (req, res) => {
     // Insert the booking
     const [result] = await db.query<ResultSetHeader>(
       `INSERT INTO day_pass_bookings 
-       (user_id, user_email, booking_date, number_of_pax, contact_number, 
-        special_requests, total_amount, payment_proof, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       (user_id, user_email, representative_name, booking_date, number_of_pax, contact_number, 
+        cottage_type, time_of_day, special_requests, total_amount, payment_proof, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         req.session.userId,
         req.session.userEmail,
+        representativeName,
         bookingDate,
         numberOfPax,
         contactNumber,
+        cottageType,
+        timeOfDay,
         specialRequests || null,
         totalAmount,
         paymentProof,
