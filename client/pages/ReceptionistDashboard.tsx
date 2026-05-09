@@ -228,6 +228,8 @@ export default function ReceptionistDashboard() {
   });
   const [walkInLoading, setWalkInLoading] = useState(false);
   const [walkInSearchTerm, setWalkInSearchTerm] = useState('');
+  const [walkInPage, setWalkInPage] = useState(1);
+  const walkInPerPage = 10;
   
   // Walk-in edit states
   const [editingWalkIn, setEditingWalkIn] = useState<any>(null);
@@ -245,6 +247,8 @@ export default function ReceptionistDashboard() {
   });
   const [dayPassWalkInLoading, setDayPassWalkInLoading] = useState(false);
   const [dayPassWalkInSearchTerm, setDayPassWalkInSearchTerm] = useState('');
+  const [dayPassWalkInPage, setDayPassWalkInPage] = useState(1);
+  const dayPassWalkInPerPage = 10;
   
   // Sidebar submenu expansion states
   const [roomsMenuExpanded, setRoomsMenuExpanded] = useState(false);
@@ -517,6 +521,48 @@ export default function ReceptionistDashboard() {
       guest.booking_id?.toString().includes(searchLower)
     );
   }, [checkedInGuests, checkOutSearchTerm]);
+
+  // Filtered walk-in bookings
+  const filteredWalkInBookings = useMemo(() => {
+    if (!walkInSearchTerm) return walkInBookings;
+    
+    const searchLower = walkInSearchTerm.toLowerCase();
+    return walkInBookings.filter(w =>
+      w.guest_name?.toLowerCase().includes(searchLower) ||
+      w.contact_number?.toLowerCase().includes(searchLower) ||
+      w.room_number?.toLowerCase().includes(searchLower) ||
+      w.address?.toLowerCase().includes(searchLower)
+    );
+  }, [walkInBookings, walkInSearchTerm]);
+
+  // Paginated walk-in bookings
+  const paginatedWalkInBookings = useMemo(() => {
+    const startIndex = (walkInPage - 1) * walkInPerPage;
+    const endIndex = startIndex + walkInPerPage;
+    return filteredWalkInBookings.slice(startIndex, endIndex);
+  }, [filteredWalkInBookings, walkInPage, walkInPerPage]);
+
+  const totalWalkInPages = Math.ceil(filteredWalkInBookings.length / walkInPerPage);
+
+  // Filtered day pass walk-in bookings
+  const filteredDayPassWalkInBookings = useMemo(() => {
+    if (!dayPassWalkInSearchTerm) return dayPassWalkInBookings;
+    
+    const searchLower = dayPassWalkInSearchTerm.toLowerCase();
+    return dayPassWalkInBookings.filter(w =>
+      w.representative_name?.toLowerCase().includes(searchLower) ||
+      w.cottage_type?.toLowerCase().includes(searchLower)
+    );
+  }, [dayPassWalkInBookings, dayPassWalkInSearchTerm]);
+
+  // Paginated day pass walk-in bookings
+  const paginatedDayPassWalkInBookings = useMemo(() => {
+    const startIndex = (dayPassWalkInPage - 1) * dayPassWalkInPerPage;
+    const endIndex = startIndex + dayPassWalkInPerPage;
+    return filteredDayPassWalkInBookings.slice(startIndex, endIndex);
+  }, [filteredDayPassWalkInBookings, dayPassWalkInPage, dayPassWalkInPerPage]);
+
+  const totalDayPassWalkInPages = Math.ceil(filteredDayPassWalkInBookings.length / dayPassWalkInPerPage);
 
   useEffect(() => {
     checkAuth();
@@ -2079,11 +2125,8 @@ export default function ReceptionistDashboard() {
                   )}
                 </div>
                 <div className="mt-2 text-xs sm:text-sm text-gray-600">
-                  Showing <span className="font-semibold text-primary">{walkInBookings.filter(w => 
-                    !walkInSearchTerm || 
-                    w.guest_name?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
-                    w.contact_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase())
-                  ).length}</span> of {walkInBookings.length} walk-ins
+                  Showing <span className="font-semibold text-primary">{paginatedWalkInBookings.length}</span> of {filteredWalkInBookings.length} walk-ins
+                  {filteredWalkInBookings.length !== walkInBookings.length && ` (filtered from ${walkInBookings.length} total)`}
                 </div>
               </div>
 
@@ -2094,12 +2137,7 @@ export default function ReceptionistDashboard() {
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                     <p className="mt-4 text-gray-600">Loading walk-ins...</p>
                   </div>
-                ) : walkInBookings.filter(w => 
-                    !walkInSearchTerm || 
-                    w.guest_name?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
-                    w.contact_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
-                    w.address?.toLowerCase().includes(walkInSearchTerm.toLowerCase())
-                  ).length === 0 ? (
+                ) : filteredWalkInBookings.length === 0 ? (
                   <div className="text-center py-20">
                     <Users size={64} className="mx-auto mb-4 text-gray-300" />
                     <p className="text-lg text-gray-500">{walkInSearchTerm ? 'No walk-ins found matching your search' : 'No walk-ins recorded yet'}</p>
@@ -2121,12 +2159,7 @@ export default function ReceptionistDashboard() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
-                      {walkInBookings.filter(w => 
-                        !walkInSearchTerm || 
-                        w.guest_name?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
-                        w.contact_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase()) ||
-                        w.room_number?.toLowerCase().includes(walkInSearchTerm.toLowerCase())
-                      ).map((walkIn: any) => (
+                      {paginatedWalkInBookings.map((walkIn: any) => (
                         <tr key={walkIn.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
                             {formatDateTime(walkIn.created_at)}
@@ -2212,6 +2245,48 @@ export default function ReceptionistDashboard() {
                   </table>
                 )}
               </div>
+
+              {/* Pagination Controls */}
+              {!loading && filteredWalkInBookings.length > 0 && (
+                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {((walkInPage - 1) * walkInPerPage) + 1} to {Math.min(walkInPage * walkInPerPage, filteredWalkInBookings.length)} of {filteredWalkInBookings.length} results
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setWalkInPage(p => Math.max(1, p - 1))}
+                      disabled={walkInPage === 1}
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      <ChevronLeft size={16} />
+                      Previous
+                    </button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalWalkInPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => setWalkInPage(page)}
+                          className={`px-3 py-1.5 text-sm rounded-lg ${
+                            page === walkInPage
+                              ? 'bg-primary text-white'
+                              : 'border border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setWalkInPage(p => Math.min(totalWalkInPages, p + 1))}
+                      disabled={walkInPage === totalWalkInPages}
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      Next
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
@@ -2459,11 +2534,8 @@ export default function ReceptionistDashboard() {
                   )}
                 </div>
                 <div className="mt-2 text-xs sm:text-sm text-gray-600">
-                  Showing <span className="font-semibold text-primary">{dayPassWalkInBookings.filter(w => 
-                    !dayPassWalkInSearchTerm || 
-                    w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
-                    w.cottage_type?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
-                  ).length}</span> of {dayPassWalkInBookings.length} walk-ins
+                  Showing <span className="font-semibold text-primary">{paginatedDayPassWalkInBookings.length}</span> of {filteredDayPassWalkInBookings.length} walk-ins
+                  {filteredDayPassWalkInBookings.length !== dayPassWalkInBookings.length && ` (filtered from ${dayPassWalkInBookings.length} total)`}
                 </div>
               </div>
 
@@ -2485,11 +2557,7 @@ export default function ReceptionistDashboard() {
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                     <p className="mt-4 text-gray-600">Loading walk-ins...</p>
                   </div>
-                ) : dayPassWalkInBookings.filter(w => 
-                    !dayPassWalkInSearchTerm || 
-                    w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
-                    w.cottage_type?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
-                  ).length === 0 ? (
+                ) : filteredDayPassWalkInBookings.length === 0 ? (
                   <div className="text-center py-20">
                     <Users size={64} className="mx-auto mb-4 text-gray-300" />
                     <p className="text-lg text-gray-500">{dayPassWalkInSearchTerm ? 'No walk-ins found matching your search' : 'No day pass walk-ins recorded yet'}</p>
@@ -2507,11 +2575,7 @@ export default function ReceptionistDashboard() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
-                      {dayPassWalkInBookings.filter(w => 
-                        !dayPassWalkInSearchTerm || 
-                        w.representative_name?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase()) ||
-                        w.cottage_type?.toLowerCase().includes(dayPassWalkInSearchTerm.toLowerCase())
-                      ).map((walkIn: any) => (
+                      {paginatedDayPassWalkInBookings.map((walkIn: any) => (
                         <tr key={walkIn.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
                             {formatDateTime(walkIn.created_at)}
@@ -2552,6 +2616,48 @@ export default function ReceptionistDashboard() {
                   </table>
                 )}
               </div>
+
+              {/* Pagination Controls */}
+              {!loading && filteredDayPassWalkInBookings.length > 0 && (
+                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {((dayPassWalkInPage - 1) * dayPassWalkInPerPage) + 1} to {Math.min(dayPassWalkInPage * dayPassWalkInPerPage, filteredDayPassWalkInBookings.length)} of {filteredDayPassWalkInBookings.length} results
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setDayPassWalkInPage(p => Math.max(1, p - 1))}
+                      disabled={dayPassWalkInPage === 1}
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      <ChevronLeft size={16} />
+                      Previous
+                    </button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalDayPassWalkInPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => setDayPassWalkInPage(page)}
+                          className={`px-3 py-1.5 text-sm rounded-lg ${
+                            page === dayPassWalkInPage
+                              ? 'bg-primary text-white'
+                              : 'border border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setDayPassWalkInPage(p => Math.min(totalDayPassWalkInPages, p + 1))}
+                      disabled={dayPassWalkInPage === totalDayPassWalkInPages}
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      Next
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
