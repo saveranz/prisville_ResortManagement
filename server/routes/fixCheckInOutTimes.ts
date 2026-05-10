@@ -51,7 +51,7 @@ export const fixCheckInOutTimes: RequestHandler = async (req, res) => {
         DATE_FORMAT(actual_check_in, '%Y-%m-%d %h:%i %p') as check_in_time,
         DATE_FORMAT(actual_check_out, '%Y-%m-%d %h:%i %p') as check_out_time
       FROM stay_history
-      WHERE booking_type = 'room'
+      WHERE actual_check_in IS NOT NULL
       ORDER BY actual_check_in DESC
       LIMIT 10
     `);
