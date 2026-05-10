@@ -3196,13 +3196,7 @@ export default function AdminDashboard() {
 
         {/* Site Settings Tab */}
         {activeTab === 'settings' && (
-          <>
-            <AdminSiteSettings />
-            <div className="mt-8">
-              <h3 className="text-lg font-bold mb-2">Reservation Payment Settings</h3>
-              <PaymentSettingsEditor isAdmin={true} />
-            </div>
-          </>
+          <AdminSiteSettings />
         )}
 
         {/* Inquiries & FAQ Tab */}
