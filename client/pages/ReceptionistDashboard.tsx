@@ -545,7 +545,9 @@ export default function ReceptionistDashboard() {
     return filteredWalkInBookings.slice(startIndex, endIndex);
   }, [filteredWalkInBookings, walkInPage, walkInPerPage]);
 
-  const totalWalkInPages = Math.max(1, Math.ceil(filteredWalkInBookings.length / walkInPerPage));
+  const totalWalkInPages = useMemo(() => {
+    return Math.max(1, Math.ceil(filteredWalkInBookings.length / walkInPerPage));
+  }, [filteredWalkInBookings.length, walkInPerPage]);
   
   // Debug pagination
   console.log('[Walk-In Pagination]', {
@@ -554,7 +556,8 @@ export default function ReceptionistDashboard() {
     currentPage: walkInPage,
     perPage: walkInPerPage,
     totalPages: totalWalkInPages,
-    showing: paginatedWalkInBookings.length
+    showing: paginatedWalkInBookings.length,
+    calculation: `${filteredWalkInBookings.length} / ${walkInPerPage} = ${filteredWalkInBookings.length / walkInPerPage}, ceil = ${Math.ceil(filteredWalkInBookings.length / walkInPerPage)}`
   });
 
   // Filtered day pass walk-in bookings
