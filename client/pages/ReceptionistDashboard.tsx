@@ -726,7 +726,7 @@ export default function ReceptionistDashboard() {
 
   useEffect(() => {
     calculateStats();
-  }, [roomBookings, amenityBookings, dayPassBookings, transactions]);
+  }, [roomBookings, amenityBookings, dayPassBookings, walkInBookings, dayPassWalkInBookings, stayHistory]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -742,22 +742,62 @@ export default function ReceptionistDashboard() {
   }, []);
 
   const calculateStats = () => {
-    const allBookings = [...roomBookings, ...amenityBookings, ...dayPassBookings];
+    // Include ALL bookings: online + walk-ins
+    const allOnlineBookings = [...roomBookings, ...amenityBookings, ...dayPassBookings];
+    const allWalkIns = [...walkInBookings, ...dayPassWalkInBookings];
     const today = new Date().toISOString().split('T')[0];
     
-    const totalBookings = allBookings.length;
-    const pendingBookings = allBookings.filter(b => b.status === 'pending').length;
-    const approvedToday = allBookings.filter(b => 
+    // Total bookings = online bookings + walk-ins
+    const totalBookings = allOnlineBookings.length + allWalkIns.length;
+    
+    // Pending bookings (only online bookings can be pending)
+    const pendingBookings = allOnlineBookings.filter(b => b.status === 'pending').length;
+    
+    // Approved today (online bookings approved today)
+    const approvedToday = allOnlineBookings.filter(b => 
       b.status === 'approved' && 
       new Date(b.created_at).toISOString().split('T')[0] === today
     ).length;
     
-    // Calculate total revenue from transaction history (income transactions only)
-    const totalRevenue = transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[?,]/g, '')), 0);
+    // Walk-ins created today
+    const walkInsToday = allWalkIns.filter(w => 
+      new Date(w.created_at).toISOString().split('T')[0] === today
+    ).length;
+    
+    // Calculate total revenue from multiple sources
+    let totalRevenue = 0;
+    
+    // 1. Revenue from completed online bookings (approved/checked out)
+    const onlineRevenue = allOnlineBookings
+      .filter(b => b.status === 'approved' || b.status === 'checked_out')
+      .reduce((sum, b) => sum + parseFloat(b.total_amount || '0'), 0);
+    
+    // 2. Revenue from walk-in room bookings
+    const walkInRoomRevenue = walkInBookings
+      .reduce((sum, w) => sum + parseFloat(w.total_amount || w.amount || '0'), 0);
+    
+    // 3. Revenue from day pass walk-ins
+    const walkInDayPassRevenue = dayPassWalkInBookings
+      .reduce((sum, w) => sum + parseFloat(w.total_amount || '0'), 0);
+    
+    // 4. Revenue from stay history (completed stays)
+    const historyRevenue = stayHistory
+      .reduce((sum, s) => sum + parseFloat(s.total_spent || '0'), 0);
+    
+    // Use the highest revenue source (to avoid double counting)
+    // Typically stay_history will have the most accurate completed revenue
+    totalRevenue = Math.max(
+      onlineRevenue,
+      historyRevenue,
+      walkInRoomRevenue + walkInDayPassRevenue
+    );
 
-    setStats({ totalBookings, pendingBookings, approvedToday, totalRevenue });
+    setStats({ 
+      totalBookings, 
+      pendingBookings, 
+      approvedToday: approvedToday + walkInsToday, // Include walk-ins in "approved today"
+      totalRevenue 
+    });
   };
 
   const checkAuth = async () => {
@@ -2040,7 +2080,7 @@ export default function ReceptionistDashboard() {
                       <FileText size={24} />
                     </div>
                   </div>
-                  <p className="text-amber-200 text-sm">+{stats.totalBookings > 0 ? '2,031' : '0'}</p>
+                  <p className="text-amber-200 text-sm">Online + Walk-ins</p>
                 </div>
 
                 {/* Light Card - Total Revenue */}
@@ -2048,13 +2088,13 @@ export default function ReceptionistDashboard() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <p className="text-gray-600 text-sm font-medium mb-1">Total Revenue</p>
-                      <p className="text-4xl font-bold text-gray-900">₱{stats.totalRevenue.toLocaleString()}</p>
+                      <p className="text-4xl font-bold text-gray-900">₱{stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
                       <DollarSign size={24} className="text-gray-700" />
                     </div>
                   </div>
-                  <p className="text-gray-500 text-sm">+$2,201</p>
+                  <p className="text-gray-500 text-sm">All completed bookings</p>
                 </div>
 
                 {/* Light Card - Pending */}
@@ -2068,7 +2108,7 @@ export default function ReceptionistDashboard() {
                       <Clock size={24} className="text-gray-700" />
                     </div>
                   </div>
-                  <p className="text-gray-500 text-sm">+3,392</p>
+                  <p className="text-gray-500 text-sm">Awaiting approval</p>
                 </div>
 
                 {/* Light Card - Approved Today */}
@@ -2082,7 +2122,7 @@ export default function ReceptionistDashboard() {
                       <CheckCircle size={24} className="text-gray-700" />
                     </div>
                   </div>
-                  <p className="text-gray-500 text-sm">-1.2%</p>
+                  <p className="text-gray-500 text-sm">Today's bookings</p>
                 </div>
               </div>
 
@@ -2096,7 +2136,7 @@ export default function ReceptionistDashboard() {
                     <Settings size={18} className="text-gray-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">Room Bookings</h3>
-                  <p className="text-3xl font-bold text-gray-900 mb-4">{roomBookings.length}</p>
+                  <p className="text-3xl font-bold text-gray-900 mb-4">{roomBookings.length + walkInBookings.length}</p>
                   <button
                     onClick={() => setActiveTab('rooms')}
                     className="w-full bg-amber-800 hover:bg-amber-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
@@ -2130,7 +2170,7 @@ export default function ReceptionistDashboard() {
                     <Settings size={18} className="text-gray-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">Day Pass</h3>
-                  <p className="text-3xl font-bold text-gray-900 mb-4">{dayPassBookings.length}</p>
+                  <p className="text-3xl font-bold text-gray-900 mb-4">{dayPassBookings.length + dayPassWalkInBookings.length}</p>
                   <button
                     onClick={() => setActiveTab('daypass')}
                     className="w-full bg-amber-800 hover:bg-amber-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
