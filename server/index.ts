@@ -86,6 +86,7 @@ import { getAnnouncements, getAllAnnouncements, createAnnouncement, updateAnnoun
 import { getDashboardStats, getAllUsers, updateUserRole, getGuestActivity, getRoomOccupancy, getBookingIssues, getUserActivityAnalytics, lockUser, unlockUser, deleteUser, uploadGcashQr } from "./routes/admin";
 import { getBookingAnalytics } from "./routes/bookingAnalytics";
 import { generateBookingReport, generateRevenueReport, generateOccupancyReport, generateGuestReport, generateRoomBookingsReport, generateAmenityBookingsReport, generateDayPassBookingsReport, generateRoomWalkInsReport, generateDayPassWalkInsReport } from "./routes/reports";
+import { generateStayHistoryReport } from "./routes/stayHistoryReport";
 import { getAllRooms, getAllAmenities, getDayPassStats, getRoomAvailabilityCalendar, createRoom, updateRoom, deleteRoom, getRoomExtraItems, addRoomExtraItem, updateRoomExtraItem, deleteRoomExtraItem } from "./routes/facilities";
 import { getAllSettings, updateSetting, updateMultipleSettings, resetSettings } from "./routes/siteSettings";
 import { getPaymentSettings, updatePaymentSettings } from "./routes/paymentSettings";
@@ -470,6 +471,7 @@ export function createServer() {
   app.get("/api/reports/daypass-bookings", requireAdmin, generateDayPassBookingsReport);
   app.get("/api/reports/room-walkins", requireAdmin, generateRoomWalkInsReport);
   app.get("/api/reports/daypass-walkins", requireAdmin, generateDayPassWalkInsReport);
+  app.get("/api/reports/stay-history", requireAdmin, generateStayHistoryReport);
   
   // Facilities routes
   app.get("/api/facilities/rooms", getAllRooms);

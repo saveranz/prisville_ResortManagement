@@ -627,6 +627,9 @@ export default function AdminDashboard() {
         case 'daypass-walkins':
           url = `/api/reports/daypass-walkins?${params}`;
           break;
+        case 'stay-history':
+          url = `/api/reports/stay-history?${params}`;
+          break;
       }
 
       console.log('=== CONSTRUCTED URL:', url);
@@ -799,6 +802,28 @@ export default function AdminDashboard() {
             walkIn.time_of_day || '-',
             `₱${Number(walkIn.total_amount || 0).toFixed(2)}`,
             walkIn.created_at ? formatDateTime(walkIn.created_at) : '-'
+          ])
+        ]);
+        break;
+
+      case 'stay-history':
+        filename = `stay_history_${dateStr}.csv`;
+        csvContent = toCsv([
+          ['ID', 'Guest Name', 'Email', 'Phone', 'Booking Type', 'Room/Amenity', 'Check-In', 'Check-Out', 'Nights', 'Guests', 'Total Spent', 'Payment Status', 'Rating'],
+          ...(reportData.records || []).map((record: any) => [
+            `#${record.id}`,
+            record.guest_name || '-',
+            record.user_email || '-',
+            record.guest_phone || '-',
+            record.booking_type || '-',
+            record.room_name || record.amenity_name || '-',
+            record.actual_check_in ? formatDateTime(record.actual_check_in) : '-',
+            record.actual_check_out ? formatDateTime(record.actual_check_out) : '-',
+            record.nights_stayed || 0,
+            record.guests || 0,
+            `₱${Number(record.total_spent || 0).toFixed(2)}`,
+            record.payment_status || '-',
+            record.rating || '-'
           ])
         ]);
         break;
@@ -1740,6 +1765,7 @@ export default function AdminDashboard() {
                     <option value="daypass-bookings">Day Pass Bookings</option>
                     <option value="room-walkins">Room Walk-ins</option>
                     <option value="daypass-walkins">Day Pass Walk-ins</option>
+                    <option value="stay-history">Stay History</option>
                   </select>
                 </div>
                 <div>
@@ -2105,6 +2131,60 @@ export default function AdminDashboard() {
                             )) : (
                               <tr>
                                 <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">No day pass walk-ins found.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Stay History Report */}
+                  {reportType === 'stay-history' && (
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[1200px]">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">ID</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guest Name</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Email</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Type</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Room/Amenity</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Check-In</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Check-Out</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Nights</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Guests</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total Spent</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {reportData.records?.length ? reportData.records.map((record: any) => (
+                              <tr key={record.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm text-gray-900">#{record.id}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{record.guest_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{record.user_email || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700 capitalize">{record.booking_type || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{record.room_name || record.amenity_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{record.actual_check_in ? formatDateTime(record.actual_check_in) : '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{record.actual_check_out ? formatDateTime(record.actual_check_out) : '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{record.nights_stayed || 0}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{record.guests || 0}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">₱{Number(record.total_spent || 0).toFixed(2)}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    record.payment_status === 'completed' ? 'bg-green-100 text-green-700' :
+                                    record.payment_status === 'partial' ? 'bg-yellow-100 text-yellow-700' :
+                                    'bg-gray-100 text-gray-700'
+                                  }`}>
+                                    {record.payment_status || 'pending'}
+                                  </span>
+                                </td>
+                              </tr>
+                            )) : (
+                              <tr>
+                                <td colSpan={11} className="px-4 py-8 text-center text-sm text-gray-500">No stay history records found.</td>
                               </tr>
                             )}
                           </tbody>
