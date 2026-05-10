@@ -1995,19 +1995,6 @@ export default function ReceptionistDashboard() {
             {sidebarExpanded && <span className="text-sm font-medium">History</span>}
           </button>
 
-          <button
-            onClick={() => { setActiveTab('roomstatus'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
-              activeTab === 'roomstatus'
-                ? 'bg-amber-800 text-white'
-                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-            }`}
-            title={!sidebarExpanded ? "Room Status" : undefined}
-          >
-            <Settings size={20} className="flex-shrink-0" />
-            {sidebarExpanded && <span className="text-sm font-medium">Room Status</span>}
-          </button>
-
           {/* Issues button removed */}
         </nav>
 
