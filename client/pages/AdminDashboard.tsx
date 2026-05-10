@@ -513,7 +513,7 @@ export default function AdminDashboard() {
   const fetchActivityAnalytics = async (range: 'week' | 'month' | 'year') => {
     setActivityRefreshing(true);
     try {
-      const res = await fetch(`/api/admin/activity-analytics?range=${range}`, { credentials: 'include' });
+      const res = await fetch(`/api/admin/booking-analytics?range=${range}`, { credentials: 'include' });
       const data = await res.json();
       if (data.success) setActivityAnalytics(data.analytics);
     } catch (error) {
@@ -1670,8 +1670,8 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 space-y-6 border border-slate-100">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-sans font-semibold tracking-tight text-slate-900">Tracked User Activities</h3>
-                  <p className="text-sm font-sans text-slate-500">Booking funnel visibility across room, amenity, and day pass interests.</p>
+                  <h3 className="text-xl font-sans font-semibold tracking-tight text-slate-900">Booking Analytics</h3>
+                  <p className="text-sm font-sans text-slate-500">Real booking data across rooms, amenities, and day pass (online + walk-ins).</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="flex items-center gap-0.5 p-1 bg-slate-100 rounded-xl">
@@ -1701,38 +1701,38 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
                 <div className="rounded-2xl p-4 border border-slate-200 bg-gradient-to-br from-white to-slate-50">
-                  <p className="text-xs uppercase tracking-wide text-slate-500 font-medium">Total Tracked Events</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-500 font-medium">Total Bookings</p>
                   <p className="text-2xl font-semibold text-slate-900 mt-2">{activityAnalytics?.totalActivities ?? 0}</p>
                 </div>
                 <div className="rounded-2xl p-4 border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
                   <p className="text-xs uppercase tracking-wide text-emerald-700 font-medium">
-                    {activityRange === 'week' ? 'Events (7d)' : activityRange === 'month' ? 'Events (30d)' : 'Events (1yr)'}
+                    {activityRange === 'week' ? 'Bookings (7d)' : activityRange === 'month' ? 'Bookings (30d)' : 'Bookings (1yr)'}
                   </p>
                   <p className="text-2xl font-semibold text-emerald-700 mt-2">{activityAnalytics?.activitiesLast7Days ?? 0}</p>
                 </div>
                 <div className="rounded-2xl p-4 border border-sky-200 bg-gradient-to-br from-sky-50 to-white">
                   <p className="text-xs uppercase tracking-wide text-sky-700 font-medium">
-                    Room Views ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
+                    Room Bookings ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
                   </p>
                   <p className="text-2xl font-semibold text-sky-700 mt-2">{activityAnalytics?.bookingViewFrequency?.roomViews ?? 0}</p>
                 </div>
                 <div className="rounded-2xl p-4 border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white">
                   <p className="text-xs uppercase tracking-wide text-cyan-700 font-medium">
-                    Amenity Views ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
+                    Amenity Bookings ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
                   </p>
                   <p className="text-2xl font-semibold text-cyan-700 mt-2">{activityAnalytics?.bookingViewFrequency?.amenityViews ?? 0}</p>
                 </div>
                 <div className="rounded-2xl p-4 border border-amber-200 bg-gradient-to-br from-amber-50 to-white">
                   <p className="text-xs uppercase tracking-wide text-amber-700 font-medium">
-                    Day Pass Views ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
+                    Day Pass Bookings ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
                   </p>
                   <p className="text-2xl font-semibold text-amber-700 mt-2">{activityAnalytics?.bookingViewFrequency?.dayPassViews ?? 0}</p>
                 </div>
                 <div className="rounded-2xl p-4 border border-violet-200 bg-gradient-to-br from-violet-50 to-white">
                   <p className="text-xs uppercase tracking-wide text-violet-700 font-medium">
-                    View Time ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
+                    Completed Stays ({activityRange === 'week' ? '7d' : activityRange === 'month' ? '30d' : '1yr'})
                   </p>
-                  <p className="text-2xl font-semibold text-violet-700 mt-2">{formatSeconds(activityAnalytics?.bookingViewFrequency?.totalBookingViewTime ?? 0)}</p>
+                  <p className="text-2xl font-semibold text-violet-700 mt-2">{activityAnalytics?.bookingViewFrequency?.totalBookingViewTime ?? 0}</p>
                 </div>
               </div>
 
@@ -1770,9 +1770,9 @@ export default function AdminDashboard() {
                           contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)' }}
                         />
                         <Legend wrapperStyle={{ fontSize: '12px' }} />
-                        <Area type="monotone" dataKey="roomViews" name="Room" stroke="#0284c7" fill="url(#roomViewsGradient)" strokeWidth={2.25} />
-                        <Area type="monotone" dataKey="amenityViews" name="Amenity" stroke="#0f766e" fill="url(#amenityViewsGradient)" strokeWidth={2.25} />
-                        <Area type="monotone" dataKey="dayPassViews" name="Day Pass" stroke="#d97706" fill="url(#dayPassViewsGradient)" strokeWidth={2.25} />
+                        <Area type="monotone" dataKey="Room" name="Room" stroke="#0284c7" fill="url(#roomViewsGradient)" strokeWidth={2.25} />
+                        <Area type="monotone" dataKey="Amenity" name="Amenity" stroke="#0f766e" fill="url(#amenityViewsGradient)" strokeWidth={2.25} />
+                        <Area type="monotone" dataKey="Day Pass" name="Day Pass" stroke="#d97706" fill="url(#dayPassViewsGradient)" strokeWidth={2.25} />
                       </AreaChart>
                     </ResponsiveContainer>
                   )}
@@ -1780,15 +1780,15 @@ export default function AdminDashboard() {
 
                 <div className="border border-slate-200 rounded-2xl p-6 bg-gradient-to-b from-white to-slate-50/70">
                   <h4 className="text-sm font-semibold text-slate-900 mb-4 tracking-tight">
-                    Top Viewed Booking Interests ({activityRange === 'week' ? 'Last 7 Days' : activityRange === 'month' ? 'Last 30 Days' : 'Last 12 Months'})
+                    Most Booked Rooms ({activityRange === 'week' ? 'Last 7 Days' : activityRange === 'month' ? 'Last 30 Days' : 'Last 12 Months'})
                   </h4>
-                  {(activityAnalytics?.topViewedItems || []).length === 0 ? (
+                  {(activityAnalytics?.topBookingInterests || []).length === 0 ? (
                     <div className="flex items-center justify-center h-72 text-slate-500">
-                      <p>No top-viewed booking data available.</p>
+                      <p>No booking data available.</p>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={activityAnalytics?.topViewedItems || []} margin={{ top: 8, right: 12, left: -12, bottom: 50 }}>
+                      <BarChart data={activityAnalytics?.topBookingInterests || []} margin={{ top: 8, right: 12, left: -12, bottom: 50 }}>
                         <defs>
                           <linearGradient id="topItemsBarGradient" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="#10b981" stopOpacity={0.95} />
@@ -1797,7 +1797,7 @@ export default function AdminDashboard() {
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#dbe3ec" vertical={false} />
                         <XAxis
-                          dataKey="label"
+                          dataKey="name"
                           stroke="#64748b"
                           angle={-30}
                           textAnchor="end"
@@ -1808,14 +1808,11 @@ export default function AdminDashboard() {
                         <YAxis stroke="#64748b" tick={{ fontSize: 12 }} allowDecimals={false} />
                         <Tooltip
                           formatter={(value, name) => {
-                            if (name === 'total_time') {
-                              return [formatSeconds(Number(value)), 'Total View Time'];
-                            }
-                            return [value, name === 'count' ? 'Views' : name];
+                            return [value, 'Bookings'];
                           }}
                           contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)' }}
                         />
-                        <Bar dataKey="count" fill="url(#topItemsBarGradient)" radius={[10, 10, 0, 0]} />
+                        <Bar dataKey="value" fill="url(#topItemsBarGradient)" radius={[10, 10, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}

@@ -83,6 +83,7 @@ import { createBookingIssue, getAllBookingIssues, getUserBookingIssues, getBooki
 import { getUserNotifications, getUnreadCount, markAsRead, markAllAsRead, createNotification, deleteNotification } from "./routes/notifications";
 import { getAnnouncements, getAllAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, markAnnouncementViewed, toggleAnnouncementStatus } from "./routes/announcements";
 import { getDashboardStats, getAllUsers, updateUserRole, getGuestActivity, getRoomOccupancy, getBookingIssues, getUserActivityAnalytics, lockUser, unlockUser, deleteUser, uploadGcashQr } from "./routes/admin";
+import { getBookingAnalytics } from "./routes/bookingAnalytics";
 import { generateBookingReport, generateRevenueReport, generateOccupancyReport, generateGuestReport, generateRoomBookingsReport, generateAmenityBookingsReport, generateDayPassBookingsReport, generateRoomWalkInsReport, generateDayPassWalkInsReport } from "./routes/reports";
 import { getAllRooms, getAllAmenities, getDayPassStats, getRoomAvailabilityCalendar, createRoom, updateRoom, deleteRoom, getRoomExtraItems, addRoomExtraItem, updateRoomExtraItem, deleteRoomExtraItem } from "./routes/facilities";
 import { getAllSettings, updateSetting, updateMultipleSettings, resetSettings } from "./routes/siteSettings";
@@ -449,6 +450,7 @@ export function createServer() {
   app.get("/api/admin/room-occupancy", requireAdmin, getRoomOccupancy);
   app.get("/api/admin/booking-issues", requireAdmin, getBookingIssues);
   app.get("/api/admin/activity-analytics", requireAdmin, getUserActivityAnalytics);
+  app.get("/api/admin/booking-analytics", requireAdmin, getBookingAnalytics);
   app.post("/api/admin/upload-gcash-qr", requireAdmin, upload.single('gcashQr'), uploadGcashQr);
   
   // Reports routes - Require admin authorization
