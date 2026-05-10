@@ -2693,6 +2693,13 @@ export default function ReceptionistDashboard() {
                     <LogOutIcon size={20} className="inline mr-2" />
                     Check-Out
                   </button>
+                  <button
+                    onClick={() => setActiveTab('history')}
+                    className={`px-6 py-3 font-semibold text-sm rounded-t-xl transition-all text-gray-600 hover:text-gray-900 hover:bg-gray-50`}
+                  >
+                    <History size={20} className="inline mr-2" />
+                    History
+                  </button>
                 </nav>
               </div>
 
