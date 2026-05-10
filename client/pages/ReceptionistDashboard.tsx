@@ -2289,7 +2289,6 @@ export default function ReceptionistDashboard() {
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Contact No.</th>
                         <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">No. of Pax</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Total Amount</th>
-                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Down Payment</th>
                         <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase whitespace-nowrap">Balance</th>
                         <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Status</th>
                         <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase whitespace-nowrap">Actions</th>
@@ -2322,9 +2321,6 @@ export default function ReceptionistDashboard() {
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
                             ₱{parseFloat(walkIn.total_amount || walkIn.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap text-xs text-green-700 font-semibold">
-                            ₱{parseFloat(walkIn.down_payment || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap text-xs font-semibold">
                             <span className={parseFloat(walkIn.balance || 0) > 0 ? 'text-orange-600' : 'text-green-600'}>
