@@ -354,7 +354,8 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
             />
             <div className="p-8">
               <h2 className="font-serif text-3xl text-gray-900 mb-4">Day Pass</h2>
-              <p className="text-yellow-700 text-3xl font-bold mb-6">{pricePerPax} per person</p>
+              <p className="text-yellow-700 text-3xl font-bold mb-2">{pricePerPax} per person</p>
+              <p className="text-sm text-gray-600 mb-6">Plus cottage fee</p>
 
               <div className="space-y-4 mb-8">
                 <div className="flex items-center gap-3">
@@ -377,6 +378,26 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
                     <p className="font-semibold text-gray-900">Operating Hours</p>
                     <p className="text-gray-600">8:00 AM - 6:00 PM</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Pricing Information */}
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-gray-900 mb-3">💰 Pricing</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">Day Time (8AM - 6PM):</span>
+                    <span className="font-semibold text-gray-900">₱500 cottage + ₱100/person</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">Night Time (6PM onwards):</span>
+                    <span className="font-semibold text-gray-900">₱600 cottage + ₱150/person</span>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-blue-300">
+                  <p className="text-xs text-gray-600">
+                    <strong>Example:</strong> Day pass for 5 people during day time = ₱500 + (₱100 × 5) = ₱1,000
+                  </p>
                 </div>
               </div>
 
