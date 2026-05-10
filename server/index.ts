@@ -16,6 +16,7 @@ import { fixWalkInTimes } from "./routes/fixWalkInTimes";
 import { checkHistoryTimes } from "./routes/checkHistoryTimes";
 import { clearHistory } from "./routes/clearHistory";
 import { fixDayPassAmounts } from "./routes/fixDayPassAmounts";
+import { checkDataCounts } from "./routes/checkDataCounts";
 import { insertRealWalkInData } from "./routes/insertRealWalkInData";
 import { removeDayPassDuplicates } from "./routes/removeDayPassDuplicates";
 import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
@@ -342,6 +343,9 @@ export function createServer() {
   
   // TEMPORARY: Check history times (ADMIN ONLY - DELETE AFTER USE!)
   app.get("/api/admin/check-history-times", checkHistoryTimes);
+  
+  // TEMPORARY: Check data counts (ADMIN ONLY - DELETE AFTER USE!)
+  app.get("/api/admin/check-data-counts", checkDataCounts);
   
   // TEMPORARY: Insert real walk-in data (ADMIN ONLY - DELETE AFTER USE!)
   app.post("/api/admin/insert-real-walk-in-data", insertRealWalkInData);
