@@ -383,20 +383,20 @@ export default function DayPassDetailModal({ isOpen, onClose, isLoggedIn, onLogi
 
               {/* Pricing Information */}
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3">💰 Pricing</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">🌙 Night Differential</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Day Time (8AM - 6PM):</span>
-                    <span className="font-semibold text-gray-900">₱500 cottage + ₱100/person</span>
+                    <span className="text-gray-700">Cottage Fee:</span>
+                    <span className="font-semibold text-gray-900">₱600</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Night Time (6PM onwards):</span>
-                    <span className="font-semibold text-gray-900">₱600 cottage + ₱150/person</span>
+                    <span className="text-gray-700">Per Person:</span>
+                    <span className="font-semibold text-gray-900">₱150</span>
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-blue-300">
                   <p className="text-xs text-gray-600">
-                    <strong>Example:</strong> Day pass for 5 people during day time = ₱500 + (₱100 × 5) = ₱1,000
+                    Night time rates apply from 6:00 PM onwards
                   </p>
                 </div>
               </div>
