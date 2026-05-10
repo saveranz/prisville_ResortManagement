@@ -4,6 +4,28 @@ function formatPeso(value: string | number) {
   if (isNaN(num)) return '-';
   return "\u20b1" + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+// Utility to format dates in Philippine timezone
+function formatPhilippineDateTime(dateString: string | undefined) {
+  if (!dateString) return '-';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    
+    return date.toLocaleString('en-US', {
+      timeZone: 'Asia/Manila',
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch {
+    return dateString;
+  }
+}
+
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Users, Home, Package, LogOut, CheckCircle, XCircle, TrendingUp, Clock, DollarSign, FileText, Plus, Minus, TrendingDown, Image as ImageIcon, X, LogIn, LogOutIcon, AlertCircle, History, Settings, MessageSquare, Filter, Menu, ChevronLeft, ChevronRight, ChevronDown, Maximize2, Minimize2, ArrowDownToLine, ArrowUpFromLine, ExternalLink, Edit, Archive } from "lucide-react";
@@ -3192,10 +3214,10 @@ export default function ReceptionistDashboard() {
                               {stay.room_numbers || '-'}
                             </td>
                             <td className="px-4 py-3 text-sm text-black">
-                              {stay.actual_check_in ? new Date(stay.actual_check_in).toLocaleString() : '-'}
+                              {formatPhilippineDateTime(stay.actual_check_in)}
                             </td>
                             <td className="px-4 py-3 text-sm text-black">
-                              {stay.actual_check_out ? new Date(stay.actual_check_out).toLocaleString() : '-'}
+                              {formatPhilippineDateTime(stay.actual_check_out)}
                             </td>
                             <td className="px-4 py-3 text-sm font-semibold text-black">{stay.nights_stayed || '-'}</td>
                             <td className="px-4 py-3 text-sm font-bold text-green-600">
