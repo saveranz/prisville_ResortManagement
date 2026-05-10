@@ -305,6 +305,82 @@ export default function ReceptionistDashboard() {
     );
   }, [stayHistory, stayHistorySearch]);
 
+  // Combined room history (stay_history + walk_in_bookings)
+  const combinedRoomHistory = useMemo(() => {
+    // Get room bookings from stay_history
+    const roomStayHistory = filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'room');
+    
+    // Convert walk-in bookings to history format
+    const walkInHistory = walkInBookings.map((walkIn: any) => ({
+      id: `walkin-${walkIn.id}`,
+      guest_name: walkIn.guest_name,
+      user_email: '',
+      booking_type: 'walk-in',
+      room_name: '',
+      room_numbers: walkIn.room_number,
+      amenity_name: null,
+      check_in_date: null,
+      actual_check_in: walkIn.created_at,
+      actual_check_out: walkIn.created_at, // Walk-ins are considered checked out
+      nights_stayed: 0,
+      total_spent: walkIn.total_amount || walkIn.amount || '0',
+      rating: null,
+      staff_notes: null,
+      created_at: walkIn.created_at
+    }));
+    
+    // Filter walk-ins by search term
+    const filteredWalkIns = stayHistorySearch.trim() 
+      ? walkInHistory.filter((walkIn: any) =>
+          (walkIn.guest_name && walkIn.guest_name.toLowerCase().includes(stayHistorySearch.toLowerCase())) ||
+          (walkIn.room_numbers && walkIn.room_numbers.toLowerCase().includes(stayHistorySearch.toLowerCase()))
+        )
+      : walkInHistory;
+    
+    // Combine and sort by date (most recent first)
+    return [...roomStayHistory, ...filteredWalkIns].sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [filteredStayHistory, walkInBookings, stayHistorySearch]);
+
+  // Combined day pass history (stay_history + day_pass_walk_in_bookings)
+  const combinedDayPassHistory = useMemo(() => {
+    // Get day pass bookings from stay_history
+    const dayPassStayHistory = filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'day_pass');
+    
+    // Convert day pass walk-in bookings to history format
+    const dayPassWalkInHistory = dayPassWalkInBookings.map((walkIn: any) => ({
+      id: `daypass-walkin-${walkIn.id}`,
+      guest_name: walkIn.representative_name,
+      user_email: '',
+      booking_type: 'day-pass-walk-in',
+      room_name: null,
+      room_numbers: null,
+      amenity_name: null,
+      check_in_date: null,
+      actual_check_in: walkIn.created_at,
+      actual_check_out: walkIn.created_at, // Walk-ins are considered checked out
+      nights_stayed: 0,
+      total_spent: walkIn.total_amount || '0',
+      rating: null,
+      staff_notes: `${walkIn.cottage_type} cottage, ${walkIn.time_of_day} time, ${walkIn.number_of_pax} pax`,
+      created_at: walkIn.created_at
+    }));
+    
+    // Filter walk-ins by search term
+    const filteredDayPassWalkIns = stayHistorySearch.trim()
+      ? dayPassWalkInHistory.filter((walkIn: any) =>
+          (walkIn.guest_name && walkIn.guest_name.toLowerCase().includes(stayHistorySearch.toLowerCase())) ||
+          (walkIn.staff_notes && walkIn.staff_notes.toLowerCase().includes(stayHistorySearch.toLowerCase()))
+        )
+      : dayPassWalkInHistory;
+    
+    // Combine and sort by date (most recent first)
+    return [...dayPassStayHistory, ...filteredDayPassWalkIns].sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [filteredStayHistory, dayPassWalkInBookings, stayHistorySearch]);
+
   // Helper function to format dates
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
@@ -3071,7 +3147,7 @@ export default function ReceptionistDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'room').map((stay: StayHistory) => (
+                        {combinedRoomHistory.map((stay: any) => (
                           <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-4 py-3">
                               <div className="min-w-0">
@@ -3098,7 +3174,9 @@ export default function ReceptionistDashboard() {
                               {formatPeso(stay.total_spent)}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {stay.actual_check_out ? (
+                              {stay.booking_type === 'walk-in' ? (
+                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Paid</span>
+                              ) : stay.actual_check_out ? (
                                 <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Checked Out</span>
                               ) : (
                                 <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Checked In</span>
@@ -3108,7 +3186,7 @@ export default function ReceptionistDashboard() {
                         ))}
                       </tbody>
                     </table>
-                    {filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'room').length === 0 && (
+                    {combinedRoomHistory.length === 0 && (
                       <div className="text-center py-12 text-gray-500">
                         <p>No room booking history records</p>
                       </div>
@@ -3147,12 +3225,12 @@ export default function ReceptionistDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'day_pass').map((stay: StayHistory) => (
+                        {combinedDayPassHistory.map((stay: any) => (
                           <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-4 py-3">
                               <div className="min-w-0">
                                 <p className="text-sm font-semibold text-black truncate max-w-[180px]">{stay.guest_name || stay.user_email}</p>
-                                <p className="text-[10px] text-gray-400">Day Pass</p>
+                                <p className="text-[10px] text-gray-400">{stay.staff_notes || 'Day Pass'}</p>
                               </div>
                             </td>
                             <td className="px-4 py-3">
@@ -3173,7 +3251,9 @@ export default function ReceptionistDashboard() {
                               {formatPeso(stay.total_spent)}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {stay.actual_check_out ? (
+                              {stay.booking_type === 'day-pass-walk-in' ? (
+                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Paid</span>
+                              ) : stay.actual_check_out ? (
                                 <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Checked Out</span>
                               ) : (
                                 <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Checked In</span>
@@ -3183,7 +3263,7 @@ export default function ReceptionistDashboard() {
                         ))}
                       </tbody>
                     </table>
-                    {filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'day_pass').length === 0 && (
+                    {combinedDayPassHistory.length === 0 && (
                       <div className="text-center py-12 text-gray-500">
                         <p>No day pass booking history records</p>
                       </div>
