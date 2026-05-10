@@ -363,15 +363,20 @@ export default function ReceptionistDashboard() {
       nights_stayed: 0,
       total_spent: walkIn.total_amount || '0',
       rating: null,
-      staff_notes: `${walkIn.cottage_type} cottage, ${walkIn.time_of_day} time, ${walkIn.number_of_pax} pax`,
-      created_at: walkIn.created_at
+      staff_notes: null,
+      created_at: walkIn.created_at,
+      // Additional fields for day pass walk-ins
+      cottage_type: walkIn.cottage_type,
+      time_of_day: walkIn.time_of_day,
+      number_of_pax: walkIn.number_of_pax
     }));
     
     // Filter walk-ins by search term
     const filteredDayPassWalkIns = stayHistorySearch.trim()
       ? dayPassWalkInHistory.filter((walkIn: any) =>
           (walkIn.guest_name && walkIn.guest_name.toLowerCase().includes(stayHistorySearch.toLowerCase())) ||
-          (walkIn.staff_notes && walkIn.staff_notes.toLowerCase().includes(stayHistorySearch.toLowerCase()))
+          (walkIn.cottage_type && walkIn.cottage_type.toLowerCase().includes(stayHistorySearch.toLowerCase())) ||
+          (walkIn.time_of_day && walkIn.time_of_day.toLowerCase().includes(stayHistorySearch.toLowerCase()))
         )
       : dayPassWalkInHistory;
     
@@ -3215,52 +3220,76 @@ export default function ReceptionistDashboard() {
                     <table className="w-full">
                       <thead>
                         <tr className="bg-primary/20 border-b-2 border-primary/30">
-                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Guest</th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Type</th>
                           <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Date</th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-In</th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-Out</th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Total</th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Representative Name</th>
+                          <th className="px-4 py-3 text-center text-xs font-bold text-accent uppercase">No. of Pax</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Cottage Type</th>
+                          <th className="px-4 py-3 text-center text-xs font-bold text-accent uppercase">Time</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Amount</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {combinedDayPassHistory.map((stay: any) => (
-                          <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-3">
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-black truncate max-w-[180px]">{stay.guest_name || stay.user_email}</p>
-                                <p className="text-[10px] text-gray-400">{stay.staff_notes || 'Day Pass'}</p>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className="px-2 py-1 bg-accent/20 text-accent border border-accent/30 text-xs font-semibold rounded-full">
-                                {stay.booking_type}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-black">
-                              {stay.actual_check_in ? new Date(stay.actual_check_in).toLocaleDateString() : '-'}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-black">
-                              {stay.actual_check_in ? new Date(stay.actual_check_in).toLocaleString() : '-'}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-black">
-                              {stay.actual_check_out ? new Date(stay.actual_check_out).toLocaleString() : '-'}
-                            </td>
-                            <td className="px-4 py-3 text-sm font-bold text-green-600">
-                              {formatPeso(stay.total_spent)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {stay.booking_type === 'day-pass-walk-in' ? (
-                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Paid</span>
-                              ) : stay.actual_check_out ? (
-                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Checked Out</span>
-                              ) : (
-                                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Checked In</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
+                        {combinedDayPassHistory.map((stay: any) => {
+                          // Get cottage type, time, and pax from the record
+                          const cottageType = stay.cottage_type 
+                            ? (stay.cottage_type === 'concrete' ? 'Concrete' : 'Kubo')
+                            : '-';
+                          const timeOfDay = stay.time_of_day
+                            ? (stay.time_of_day === 'day' ? 'Day' : 'Night')
+                            : '-';
+                          const numberOfPax = stay.number_of_pax || '-';
+                          
+                          return (
+                            <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-black">
+                                {stay.created_at ? new Date(stay.created_at).toLocaleDateString() : '-'}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-full bg-accent/10 border-2 border-accent/30 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                    <span className="text-accent text-xs font-bold">
+                                      {(stay.guest_name || stay.user_email || '?').charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-black truncate">{stay.guest_name || stay.user_email}</p>
+                                    <p className="text-[10px] text-gray-400">
+                                      {stay.booking_type === 'day-pass-walk-in' ? 'Walk-In' : 'Online Booking'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-black text-center">
+                                {numberOfPax}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                {cottageType !== '-' ? (
+                                  <span className={`px-2 py-1 rounded-full font-semibold text-xs ${
+                                    cottageType === 'Concrete' ? 'bg-gray-100 text-gray-700' : 'bg-amber-100 text-amber-700'
+                                  }`}>
+                                    {cottageType}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400">-</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                {timeOfDay !== '-' ? (
+                                  <span className={`px-2 py-1 rounded-full font-semibold text-xs ${
+                                    timeOfDay === 'Day' ? 'bg-yellow-100 text-yellow-700' : 'bg-indigo-100 text-indigo-700'
+                                  }`}>
+                                    {timeOfDay}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400">-</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-green-600">
+                                {formatPeso(stay.total_spent)}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                     {combinedDayPassHistory.length === 0 && (
