@@ -2607,7 +2607,7 @@ export default function ReceptionistDashboard() {
                       {paginatedDayPassWalkInBookings.map((walkIn: any) => (
                         <tr key={walkIn.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-700">
-                            {formatDateTime(walkIn.created_at)}
+                            {formatDate(walkIn.created_at)}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-2">
