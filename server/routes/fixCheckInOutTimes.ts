@@ -36,8 +36,8 @@ export const fixCheckInOutTimes: RequestHandler = async (req, res) => {
       // Set check-out time based on ID (around 11:00 AM Philippine time = 03:00 UTC)
       let checkOutDateStr = null;
       if (checkOutDate) {
-        const checkOutHour = [2, 2, 3, 3, 3][record.id % 5]; // 10:45, 10:55, 11:00, 11:05, 11:10 PH = 02:45, 02:55, 03:00, 03:05, 03:10 UTC
-        const checkOutMinute = [45, 55, 0, 5, 10][record.id % 5];
+        const checkOutHour = [2, 2, 3, 2, 2][record.id % 5]; // 10:30, 10:45, 11:00, 10:50, 10:55 PH = 02:30, 02:45, 03:00, 02:50, 02:55 UTC
+        const checkOutMinute = [30, 45, 0, 50, 55][record.id % 5];
         checkOutDate.setUTCHours(checkOutHour, checkOutMinute, 0, 0);
         checkOutDateStr = checkOutDate.toISOString().slice(0, 19).replace('T', ' ');
       }
