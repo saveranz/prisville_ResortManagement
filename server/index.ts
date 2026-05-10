@@ -12,6 +12,7 @@ import { createWalkInBooking as createWalkIn, getAllWalkInBookings, updateWalkIn
 import { clearAllWalkInData } from "./routes/clearWalkInData";
 import { clearTestBookings } from "./routes/clearTestBookings";
 import { fixCheckInOutTimes } from "./routes/fixCheckInOutTimes";
+import { fixWalkInTimes } from "./routes/fixWalkInTimes";
 import { insertRealWalkInData } from "./routes/insertRealWalkInData";
 import { removeDayPassDuplicates } from "./routes/removeDayPassDuplicates";
 import { createDayPassWalkIn, getAllDayPassWalkIns } from "./routes/dayPassWalkIn";
@@ -326,6 +327,9 @@ export function createServer() {
   
   // TEMPORARY: Fix check-in/out times (ADMIN ONLY - DELETE AFTER USE!)
   app.post("/api/admin/fix-checkin-times", fixCheckInOutTimes);
+  
+  // TEMPORARY: Fix walk-in times (ADMIN ONLY - DELETE AFTER USE!)
+  app.post("/api/admin/fix-walkin-times", fixWalkInTimes);
   
   // TEMPORARY: Insert real walk-in data (ADMIN ONLY - DELETE AFTER USE!)
   app.post("/api/admin/insert-real-walk-in-data", insertRealWalkInData);
