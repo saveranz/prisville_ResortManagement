@@ -46,9 +46,8 @@ export const fixCheckInOutTimes: RequestHandler = async (req, res) => {
     const [sampleRecords] = await db.query(`
       SELECT 
         id,
-        guest_name,
+        user_email,
         booking_type,
-        room_numbers,
         DATE_FORMAT(actual_check_in, '%Y-%m-%d %h:%i %p') as check_in_time,
         DATE_FORMAT(actual_check_out, '%Y-%m-%d %h:%i %p') as check_out_time
       FROM stay_history
