@@ -118,6 +118,9 @@ export default function ReceptionistDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'walkin' | 'amenities' | 'daypass' | 'daypasswalkin' | 'inventory' | 'checkin' | 'roomstatus' | 'history' | 'issues'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // History sub-tab state
+  const [historyTab, setHistoryTab] = useState<'rooms' | 'daypass'>('rooms');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [roomBookings, setRoomBookings] = useState<Booking[]>([]);
@@ -1786,7 +1789,7 @@ export default function ReceptionistDashboard() {
           <button
             onClick={() => { setActiveTab('checkin'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
-              activeTab === 'checkin' || activeTab === 'history'
+              activeTab === 'checkin'
                 ? 'bg-amber-800 text-white'
                 : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
             }`}
@@ -1794,6 +1797,19 @@ export default function ReceptionistDashboard() {
           >
             <LogIn size={20} className="flex-shrink-0" />
             {sidebarExpanded && <span className="text-sm font-medium">Check-In / Out</span>}
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('history'); setMobileMenuOpen(false); }}
+            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
+              activeTab === 'history'
+                ? 'bg-amber-800 text-white'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+            }`}
+            title={!sidebarExpanded ? "History" : undefined}
+          >
+            <History size={20} className="flex-shrink-0" />
+            {sidebarExpanded && <span className="text-sm font-medium">History</span>}
           </button>
 
           <button
@@ -2693,13 +2709,6 @@ export default function ReceptionistDashboard() {
                     <LogOutIcon size={20} className="inline mr-2" />
                     Check-Out
                   </button>
-                  <button
-                    onClick={() => setActiveTab('history')}
-                    className={`px-6 py-3 font-semibold text-sm rounded-t-xl transition-all text-gray-600 hover:text-gray-900 hover:bg-gray-50`}
-                  >
-                    <History size={20} className="inline mr-2" />
-                    History
-                  </button>
                 </nav>
               </div>
 
@@ -2989,80 +2998,187 @@ export default function ReceptionistDashboard() {
 
           {/* Stay History Tab */}
           {activeTab === 'history' && (
-            <div className="bg-white rounded-xl shadow-md border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-display font-bold text-gray-900">Check-In / Check-Out History</h3>
-                <p className="text-sm text-gray-600 mt-1">Complete record of all guest check-ins and check-outs</p>
-                <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="Search guest, room, or type..."
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-64"
-                    value={stayHistorySearch || ''}
-                    onChange={e => setStayHistorySearch(e.target.value)}
-                  />
-                </div>
+            <>
+              {/* Sub-tabs Navigation */}
+              <div className="border-b border-gray-200 mb-6">
+                <nav className="flex gap-2">
+                  <button
+                    onClick={() => setHistoryTab('rooms')}
+                    className={`px-6 py-3 font-semibold text-sm rounded-t-xl transition-all ${
+                      historyTab === 'rooms'
+                        ? 'bg-white text-primary border-t-2 border-x-2 border-primary border-b-0'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Home size={20} className="inline mr-2" />
+                    Room Bookings
+                  </button>
+                  <button
+                    onClick={() => setHistoryTab('daypass')}
+                    className={`px-6 py-3 font-semibold text-sm rounded-t-xl transition-all ${
+                      historyTab === 'daypass'
+                        ? 'bg-white text-primary border-t-2 border-x-2 border-primary border-b-0'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Users size={20} className="inline mr-2" />
+                    Day Pass Bookings
+                  </button>
+                </nav>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-primary/20 border-b-2 border-primary/30">
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Guest</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Type</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Room #</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-In</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-Out</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Nights</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Total</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
-                    {filteredStayHistory.map((stay: StayHistory) => (
-                      <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-black truncate max-w-[180px]">{stay.guest_name || stay.user_email}</p>
-                            <p className="text-[10px] text-gray-400">{stay.room_name || stay.amenity_name || 'Day Pass'}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="px-2 py-1 bg-accent/20 text-accent border border-accent/30 text-xs font-semibold rounded-full">
-                            {stay.booking_type}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm font-semibold text-black">
-                          {stay.room_numbers ? `Room ${stay.room_numbers}` : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-black">
-                          {stay.actual_check_in ? new Date(stay.actual_check_in).toLocaleString() : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-black">
-                          {stay.actual_check_out ? new Date(stay.actual_check_out).toLocaleString() : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-semibold text-black">{stay.nights_stayed || '-'}</td>
-                        <td className="px-4 py-3 text-sm font-bold text-green-600">
-                          {formatPeso(stay.total_spent)}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          {stay.actual_check_out ? (
-                            <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Checked Out</span>
-                          ) : (
-                            <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Checked In</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {filteredStayHistory.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <p>No check-in/check-out history records</p>
-                  </div>
-                )}
-              </div>
-            </div>
 
+              {/* Room Bookings History */}
+              {historyTab === 'rooms' && (
+                <div className="bg-white rounded-xl shadow-md border border-gray-200">
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-display font-bold text-gray-900">Room Bookings History</h3>
+                    <p className="text-sm text-gray-600 mt-1">Check-in/check-out history for room bookings (online & walk-ins)</p>
+                    <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Search guest, room, or type..."
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-64"
+                        value={stayHistorySearch || ''}
+                        onChange={e => setStayHistorySearch(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-primary/20 border-b-2 border-primary/30">
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Guest</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Type</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Room #</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-In</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-Out</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Nights</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Total</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'room').map((stay: StayHistory) => (
+                          <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-black truncate max-w-[180px]">{stay.guest_name || stay.user_email}</p>
+                                <p className="text-[10px] text-gray-400">{stay.room_name || 'Room Booking'}</p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-1 bg-accent/20 text-accent border border-accent/30 text-xs font-semibold rounded-full">
+                                {stay.booking_type}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-semibold text-black">
+                              {stay.room_numbers ? `Room ${stay.room_numbers}` : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-black">
+                              {stay.actual_check_in ? new Date(stay.actual_check_in).toLocaleString() : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-black">
+                              {stay.actual_check_out ? new Date(stay.actual_check_out).toLocaleString() : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-semibold text-black">{stay.nights_stayed || '-'}</td>
+                            <td className="px-4 py-3 text-sm font-bold text-green-600">
+                              {formatPeso(stay.total_spent)}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {stay.actual_check_out ? (
+                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Checked Out</span>
+                              ) : (
+                                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Checked In</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'room').length === 0 && (
+                      <div className="text-center py-12 text-gray-500">
+                        <p>No room booking history records</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Day Pass History */}
+              {historyTab === 'daypass' && (
+                <div className="bg-white rounded-xl shadow-md border border-gray-200">
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-display font-bold text-gray-900">Day Pass Bookings History</h3>
+                    <p className="text-sm text-gray-600 mt-1">History for day pass bookings (online & walk-ins)</p>
+                    <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Search guest or type..."
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-64"
+                        value={stayHistorySearch || ''}
+                        onChange={e => setStayHistorySearch(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-primary/20 border-b-2 border-primary/30">
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Guest</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Type</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-In</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Check-Out</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Total</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-accent uppercase">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'day_pass').map((stay: StayHistory) => (
+                          <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-black truncate max-w-[180px]">{stay.guest_name || stay.user_email}</p>
+                                <p className="text-[10px] text-gray-400">Day Pass</p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-1 bg-accent/20 text-accent border border-accent/30 text-xs font-semibold rounded-full">
+                                {stay.booking_type}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-black">
+                              {stay.actual_check_in ? new Date(stay.actual_check_in).toLocaleDateString() : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-black">
+                              {stay.actual_check_in ? new Date(stay.actual_check_in).toLocaleString() : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-black">
+                              {stay.actual_check_out ? new Date(stay.actual_check_out).toLocaleString() : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-bold text-green-600">
+                              {formatPeso(stay.total_spent)}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {stay.actual_check_out ? (
+                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Checked Out</span>
+                              ) : (
+                                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Checked In</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {filteredStayHistory.filter((stay: StayHistory) => stay.booking_type === 'day_pass').length === 0 && (
+                      <div className="text-center py-12 text-gray-500">
+                        <p>No day pass booking history records</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Booking Issues Tab */}
