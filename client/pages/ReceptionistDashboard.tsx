@@ -545,7 +545,17 @@ export default function ReceptionistDashboard() {
     return filteredWalkInBookings.slice(startIndex, endIndex);
   }, [filteredWalkInBookings, walkInPage, walkInPerPage]);
 
-  const totalWalkInPages = Math.ceil(filteredWalkInBookings.length / walkInPerPage);
+  const totalWalkInPages = Math.max(1, Math.ceil(filteredWalkInBookings.length / walkInPerPage));
+  
+  // Debug pagination
+  console.log('[Walk-In Pagination]', {
+    totalBookings: walkInBookings.length,
+    filteredBookings: filteredWalkInBookings.length,
+    currentPage: walkInPage,
+    perPage: walkInPerPage,
+    totalPages: totalWalkInPages,
+    showing: paginatedWalkInBookings.length
+  });
 
   // Filtered day pass walk-in bookings
   const filteredDayPassWalkInBookings = useMemo(() => {
