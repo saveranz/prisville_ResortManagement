@@ -246,7 +246,7 @@ const DEFAULT_ROOM_FORM: RoomFormState = {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('reports');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -1389,19 +1389,6 @@ export default function AdminDashboard() {
         {/* Navigation Icons */}
         <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
           <button
-            onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
-            className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
-              activeTab === 'overview'
-                ? 'bg-amber-800 text-white'
-                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-            }`}
-            title={!sidebarExpanded ? "Overview" : undefined}
-          >
-            <BarChart3 size={20} className="flex-shrink-0" />
-            {sidebarExpanded && <span className="text-sm font-medium">Overview</span>}
-          </button>
-
-          <button
             onClick={() => { setActiveTab('reservations'); setMobileMenuOpen(false); }}
             className={`w-full h-12 flex items-center ${sidebarExpanded ? 'justify-start px-4 gap-3' : 'justify-center'} rounded-lg transition-all ${
               activeTab === 'reservations'
@@ -1538,133 +1525,6 @@ export default function AdminDashboard() {
         <div className="p-4 sm:p-6 lg:p-8 bg-gray-50">
 
         {/* Overview Tab */}
-        {activeTab === 'overview' && stats && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-display font-bold text-gray-900">Dashboard Overview</h2>
-            
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-600">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Total Bookings</p>
-                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.totalBookings}</p>
-                    <p className="text-xs text-gray-500 mt-1">All time</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
-                    <Calendar className="text-white" size={24} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-700">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Total Revenue</p>
-                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">?{parseFloat(stats.totalRevenue).toLocaleString()}</p>
-                    <p className="text-xs text-gray-500 mt-1">Approved bookings</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-700 to-amber-800 flex items-center justify-center">
-                    <DollarSign className="text-white" size={24} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-600">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Pending Approvals</p>
-                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.pendingApprovals}</p>
-                    <p className="text-xs text-gray-500 mt-1">Require attention</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
-                    <Clock className="text-white" size={24} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-700">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Checked-In Guests</p>
-                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.checkedInGuests}</p>
-                    <p className="text-xs text-gray-500 mt-1">Currently staying</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-700 to-amber-800 flex items-center justify-center">
-                    <UserCheck className="text-white" size={24} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-600">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Total Users</p>
-                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.totalUsers}</p>
-                    <p className="text-xs text-gray-500 mt-1">{stats.activeUsers} active</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
-                    <Users className="text-white" size={24} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-700">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Room Bookings</p>
-                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.roomBookings}</p>
-                    <p className="text-xs text-gray-500 mt-1">Total rooms</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-700 to-amber-800 flex items-center justify-center">
-                    <BedDouble className="text-white" size={24} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-600">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Recent Bookings</p>
-                    <p className="text-3xl font-display font-bold text-amber-800 mt-1">{stats.recentBookings}</p>
-                    <p className="text-xs text-gray-500 mt-1">Last 7 days</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
-                    <Activity className="text-white" size={24} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Booking Status Breakdown */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-display font-bold text-gray-900 mb-4">Booking Status Breakdown</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {stats.statusBreakdown.map((status: any) => (
-                  <div key={status.status} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600 capitalize">{status.status}</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">{status.count}</p>
-                      </div>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        status.status === 'approved' ? 'bg-green-100' :
-                        status.status === 'pending' ? 'bg-orange-100' :
-                        'bg-red-100'
-                      }`}>
-                        {status.status === 'approved' && <CheckCircle className="text-green-600" size={20} />}
-                        {status.status === 'pending' && <Clock className="text-orange-600" size={20} />}
-                        {status.status === 'rejected' && <XCircle className="text-red-600" size={20} />}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Reservations Tab */}
         {activeTab === 'reservations' && (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 space-y-6 border border-slate-100">
