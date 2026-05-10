@@ -288,6 +288,11 @@ export default function ReceptionistDashboard() {
   const inventoryItemsPerPage = 20;
   const [inventorySearchTerm, setInventorySearchTerm] = useState('');
   
+  // Pagination for history
+  const [roomHistoryPage, setRoomHistoryPage] = useState(1);
+  const [dayPassHistoryPage, setDayPassHistoryPage] = useState(1);
+  const historyItemsPerPage = 10;
+  
 
   const navigate = useNavigate();
 
@@ -385,6 +390,28 @@ export default function ReceptionistDashboard() {
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   }, [filteredStayHistory, dayPassWalkInBookings, stayHistorySearch]);
+
+  // Paginated room history
+  const paginatedRoomHistory = useMemo(() => {
+    const startIndex = (roomHistoryPage - 1) * historyItemsPerPage;
+    const endIndex = startIndex + historyItemsPerPage;
+    return combinedRoomHistory.slice(startIndex, endIndex);
+  }, [combinedRoomHistory, roomHistoryPage, historyItemsPerPage]);
+
+  const totalRoomHistoryPages = useMemo(() => {
+    return Math.max(1, Math.ceil(combinedRoomHistory.length / historyItemsPerPage));
+  }, [combinedRoomHistory.length, historyItemsPerPage]);
+
+  // Paginated day pass history
+  const paginatedDayPassHistory = useMemo(() => {
+    const startIndex = (dayPassHistoryPage - 1) * historyItemsPerPage;
+    const endIndex = startIndex + historyItemsPerPage;
+    return combinedDayPassHistory.slice(startIndex, endIndex);
+  }, [combinedDayPassHistory, dayPassHistoryPage, historyItemsPerPage]);
+
+  const totalDayPassHistoryPages = useMemo(() => {
+    return Math.max(1, Math.ceil(combinedDayPassHistory.length / historyItemsPerPage));
+  }, [combinedDayPassHistory.length, historyItemsPerPage]);
 
   // Helper function to format dates
   const formatDate = (dateString: string | undefined) => {
@@ -3152,7 +3179,7 @@ export default function ReceptionistDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {combinedRoomHistory.map((stay: any) => (
+                        {paginatedRoomHistory.map((stay: any) => (
                           <tr key={stay.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-4 py-3">
                               <div className="min-w-0">
@@ -3197,6 +3224,48 @@ export default function ReceptionistDashboard() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* Pagination Controls */}
+                  {combinedRoomHistory.length > 0 && (
+                    <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Showing {((roomHistoryPage - 1) * historyItemsPerPage) + 1} to {Math.min(roomHistoryPage * historyItemsPerPage, combinedRoomHistory.length)} of {combinedRoomHistory.length} results
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setRoomHistoryPage(p => Math.max(1, p - 1))}
+                          disabled={roomHistoryPage === 1}
+                          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                        >
+                          <ChevronLeft size={16} />
+                          Previous
+                        </button>
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: totalRoomHistoryPages }, (_, i) => i + 1).map(page => (
+                            <button
+                              key={page}
+                              onClick={() => setRoomHistoryPage(page)}
+                              className={`px-3 py-1.5 text-sm rounded-lg ${
+                                page === roomHistoryPage
+                                  ? 'bg-primary text-white'
+                                  : 'border border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => setRoomHistoryPage(p => Math.min(totalRoomHistoryPages, p + 1))}
+                          disabled={roomHistoryPage === totalRoomHistoryPages}
+                          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                        >
+                          Next
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -3229,7 +3298,7 @@ export default function ReceptionistDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {combinedDayPassHistory.map((stay: any) => {
+                        {paginatedDayPassHistory.map((stay: any) => {
                           // Get cottage type, time, and pax from the record
                           const cottageType = stay.cottage_type 
                             ? (stay.cottage_type === 'concrete' ? 'Concrete' : 'Kubo')
@@ -3298,6 +3367,48 @@ export default function ReceptionistDashboard() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* Pagination Controls */}
+                  {combinedDayPassHistory.length > 0 && (
+                    <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Showing {((dayPassHistoryPage - 1) * historyItemsPerPage) + 1} to {Math.min(dayPassHistoryPage * historyItemsPerPage, combinedDayPassHistory.length)} of {combinedDayPassHistory.length} results
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setDayPassHistoryPage(p => Math.max(1, p - 1))}
+                          disabled={dayPassHistoryPage === 1}
+                          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                        >
+                          <ChevronLeft size={16} />
+                          Previous
+                        </button>
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: totalDayPassHistoryPages }, (_, i) => i + 1).map(page => (
+                            <button
+                              key={page}
+                              onClick={() => setDayPassHistoryPage(page)}
+                              className={`px-3 py-1.5 text-sm rounded-lg ${
+                                page === dayPassHistoryPage
+                                  ? 'bg-primary text-white'
+                                  : 'border border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => setDayPassHistoryPage(p => Math.min(totalDayPassHistoryPages, p + 1))}
+                          disabled={dayPassHistoryPage === totalDayPassHistoryPages}
+                          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                        >
+                          Next
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>
