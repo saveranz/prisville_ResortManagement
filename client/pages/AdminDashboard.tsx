@@ -774,7 +774,7 @@ export default function AdminDashboard() {
       case 'room-walkins':
         filename = `room_walkins_${dateStr}.csv`;
         csvContent = toCsv([
-          ['Walk-in ID', 'Guest Name', 'Room Number', 'Contact Number', 'Number of Pax', 'Total Amount', 'Down Payment', 'Balance', 'Payment Status', 'Created At'],
+          ['Walk-in ID', 'Guest Name', 'Room Number', 'Contact Number', 'Number of Pax', 'Total Amount', 'Payment Status', 'Created At'],
           ...(reportData.walkIns || []).map((walkIn: any) => [
             `#${walkIn.id}`,
             walkIn.guest_name || '-',
@@ -782,8 +782,6 @@ export default function AdminDashboard() {
             walkIn.contact_number || '-',
             walkIn.number_of_pax || 0,
             walkIn.total_amount || '₱0.00',
-            walkIn.down_payment || '₱0.00',
-            walkIn.balance || '₱0.00',
             walkIn.payment_status || '-',
             walkIn.created_at ? formatDateTime(walkIn.created_at) : '-'
           ])
@@ -2056,7 +2054,7 @@ export default function AdminDashboard() {
                   {reportType === 'room-walkins' && (
                     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[1000px]">
+                        <table className="w-full min-w-[800px]">
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">ID</th>
@@ -2064,9 +2062,7 @@ export default function AdminDashboard() {
                               <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Room</th>
                               <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Contact</th>
                               <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Pax</th>
-                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total</th>
-                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Down Payment</th>
-                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Balance</th>
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total Amount</th>
                               <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
                             </tr>
                           </thead>
@@ -2079,8 +2075,6 @@ export default function AdminDashboard() {
                                 <td className="px-4 py-3 text-sm text-gray-700">{walkIn.contact_number || '-'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{walkIn.number_of_pax || 0}</td>
                                 <td className="px-4 py-3 text-sm font-semibold text-gray-900">{walkIn.total_amount || '₱0.00'}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.down_payment || '₱0.00'}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">{walkIn.balance || '₱0.00'}</td>
                                 <td className="px-4 py-3 text-sm">
                                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                                     walkIn.payment_status === 'paid' ? 'bg-green-100 text-green-700' :
@@ -2092,7 +2086,7 @@ export default function AdminDashboard() {
                               </tr>
                             )) : (
                               <tr>
-                                <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">No room walk-ins found.</td>
+                                <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">No room walk-ins found.</td>
                               </tr>
                             )}
                           </tbody>
