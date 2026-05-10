@@ -3193,7 +3193,7 @@ export default function ReceptionistDashboard() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-sm font-semibold text-black">
-                              {stay.room_numbers ? `Room ${stay.room_numbers}` : '-'}
+                              {stay.room_numbers || '-'}
                             </td>
                             <td className="px-4 py-3 text-sm text-black">
                               {stay.actual_check_in ? new Date(stay.actual_check_in).toLocaleString() : '-'}
